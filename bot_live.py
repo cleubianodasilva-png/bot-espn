@@ -257,12 +257,13 @@ def get_jogos_espn():
                                     state  = "in"
                             except:
                                 pass
-                    # Aceita "in" (ao vivo) ou "post" só na janela 80-88min (Escanteio FT)
-                    if state == "post" and not (80 <= minuto <= 88):
+                    # Aceita "in" (ao vivo) — ignora "post" (encerrado)
+                    if state not in ("in",):
                         continue
-                    if state not in ("in", "post"):
-                        continue
+                    # Calcula period corretamente
                     period = comp.get("status", {}).get("period", 1)
+                    if not period or period == 0:
+                        period = 2 if minuto > 45 else 1
                     teams  = comp.get("competitors", [])
                     if len(teams) < 2:
                         continue
@@ -617,11 +618,21 @@ def run():
 
         print(f"[Analisando] {h} x {a} | {placar} | {m}min")
 
-        # Determinar favorito pelas odds — obrigatório, sem fallback
+        # Determinar favorito pelas odds — usa chutes como fallback se odds não disponível
         fav_final = get_favorito_odds(h, a)
         if not fav_final:
-            print(f"[SKIP] {h} x {a} — favorito não identificado pelas odds, jogo ignorado")
-            continue
+            # Fallback: favorito pelo placar (time que está vencendo) ou chutes (da ESPN)
+            stats_pre = get_stats_espn(fid, h, a)
+            ch = stats_pre.get("chutes_tot_h", 0)
+            ca = stats_pre.get("chutes_tot_a", 0)
+            if ch > ca:
+                fav_final = "h"
+            elif ca > ch:
+                fav_final = "a"
+            else:
+                # Sem dados suficientes: trata o time da casa como favorito
+                fav_final = "h"
+            print(f"[FAV-FALLBACK] {h} x {a} — favorito definido por chutes/casa: {fav_final}")
 
         # Buscar cartão vermelho do favorito via ESPN
         stats = get_stats_espn(fid, h, a)
@@ -678,9 +689,10 @@ def run():
         # MERCADO 5: ESCANTEIO LIMITE HT (30-38 min, fav empatando ou perdendo por 1, sem vermelho do fav)
         if p == 1 and 30 <= m <= 38 and (fav_empatando or fav_perdendo_1) and red_fav == 0:
             key = f"{fid}_cht"
-            tem_dados = stats.get("corner_data_h") or stats.get("corner_data_a") if stats else False
-            cantos = (stats.get("escanteios_h", 0) + stats.get("escanteios_a", 0)) if tem_dados else 0
-            if key not in sent and tem_dados:
+            cantos_h = stats.get("escanteios_h", 0) if stats else 0
+            cantos_a = stats.get("escanteios_a", 0) if stats else 0
+            cantos = max(0, cantos_h) + max(0, cantos_a)  # -1 vira 0
+            if key not in sent:
                 mid = send_telegram(msg_universal(h, a, m, liga, 5, "CORNER_HT", "", placar, cantos_atual=cantos, stats=stats, sh=sh, sa=sa, fav_final=fav_final))
                 if mid:
                     sent.add(key); total_env += 1
@@ -689,9 +701,10 @@ def run():
         # MERCADO 6: ESCANTEIO LIMITE FT (80-88 min, fav empatando ou perdendo por 1, sem vermelho do fav)
         if p == 2 and 80 <= m <= 88 and (fav_empatando or fav_perdendo_1) and red_fav == 0:
             key = f"{fid}_cft"
-            tem_dados = stats.get("corner_data_h") or stats.get("corner_data_a") if stats else False
-            cantos = (stats.get("escanteios_h", 0) + stats.get("escanteios_a", 0)) if tem_dados else 0
-            if key not in sent and tem_dados:
+            cantos_h = stats.get("escanteios_h", 0) if stats else 0
+            cantos_a = stats.get("escanteios_a", 0) if stats else 0
+            cantos = max(0, cantos_h) + max(0, cantos_a)  # -1 vira 0
+            if key not in sent:
                 mid = send_telegram(msg_universal(h, a, m, liga, 5, "CORNER_FT", "", placar, cantos_atual=cantos, stats=stats, sh=sh, sa=sa, fav_final=fav_final))
                 if mid:
                     sent.add(key); total_env += 1
