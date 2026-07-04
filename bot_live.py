@@ -460,10 +460,17 @@ def gerar_motivo(mercado, stats, sh, sa, fav_final, cantos_atual=0):
     total_cantos = cantos_h + cantos_a
     tem_dados    = total_chutes > 0 or total_cantos > 0
 
-    if not tem_dados:
-        return "✅ Estatísticas não disponíveis para esta liga"
+    if fav_final == "h":
+        fav_label = "🏠 Casa"
+    elif fav_final == "a":
+        fav_label = "✈️ Fora"
+    else:
+        fav_label = "⚠️ Consultar casa de apostas"
 
-    partes = []
+    if not tem_dados:
+        return f"⭐️ Favorito: {fav_label}\n✅ Estatísticas não disponíveis para esta liga"
+
+    partes = [f"⭐️ Favorito: {fav_label}"]
 
     # Volume de jogo
     if total_chutes >= 10:
