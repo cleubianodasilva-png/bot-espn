@@ -324,14 +324,19 @@ def get_stats_espn(eid, home, away):
                 if "corner"  in label:
                     stats[f"escanteios_{side}"] = val
                     stats[f"corner_data_{side}"] = True
-                if label == "shots":   stats[f"chutes_tot_{side}"]  = val
-                if "on goal" in label: stats[f"chutes_gol_{side}"]  = val
-                if "red"     in label: stats[f"red_cards_{side}"]   = val
+                if label == "shots":                    stats[f"chutes_tot_{side}"]   = val
+                if "on goal" in label:                  stats[f"chutes_gol_{side}"]   = val
+                if "red"     in label:                  stats[f"red_cards_{side}"]    = val
+                if "possession" in label:
+                    try: stats[f"posse_{side}"] = float(s.get("displayValue", 0))
+                    except: stats[f"posse_{side}"] = 0.0
+                if s.get("name","") == "accuratePasses": stats[f"passes_precisos_{side}"] = val
 
-        # Garante defaults — escanteios ficam -1 se não encontrado (indica liga sem dados)
+        # Garante defaults
         for side in ["h", "a"]:
-            for k in ["chutes_tot", "chutes_gol", "red_cards"]:
+            for k in ["chutes_tot", "chutes_gol", "red_cards", "passes_precisos"]:
                 stats.setdefault(f"{k}_{side}", 0)
+            stats.setdefault(f"posse_{side}", 0.0)
         # Escanteios: -1 = sem dados (liga não suportada)
         stats.setdefault("escanteios_h", -1)
         stats.setdefault("escanteios_a", -1)
@@ -436,12 +441,28 @@ def gerar_motivo(mercado, stats, sh, sa, fav_final, cantos_atual=0):
     chutes_gol_a = stats.get("chutes_gol_a", 0) if stats else 0
     cantos_h     = max(0, stats.get("escanteios_h", 0)) if stats else 0
     cantos_a     = max(0, stats.get("escanteios_a", 0)) if stats else 0
+    red_h        = stats.get("red_cards_h", 0) if stats else 0
+    red_a        = stats.get("red_cards_a", 0) if stats else 0
+    passes_h     = stats.get("passes_precisos_h", 0) if stats else 0
+    passes_a     = stats.get("passes_precisos_a", 0) if stats else 0
+    posse_h      = stats.get("posse_h", 0.0) if stats else 0.0
+    posse_a      = stats.get("posse_a", 0.0) if stats else 0.0
     fav_label    = "Casa" if fav_final == "h" else "Fora"
+
+    # Formata posse como inteiro percentual
+    try: ph = int(round(float(posse_h) * 100)) if posse_h <= 1 else int(round(float(posse_h)))
+    except: ph = 0
+    try: pa = int(round(float(posse_a) * 100)) if posse_a <= 1 else int(round(float(posse_a)))
+    except: pa = 0
+
     return (
-        f"👟 Chutes: <b>{chutes_h}</b> (casa) x <b>{chutes_a}</b> (fora)\n"
-        f"🎯 Chutes no gol: <b>{chutes_gol_h}</b> (casa) x <b>{chutes_gol_a}</b> (fora)\n"
-        f"⛳️ Escanteios: <b>{cantos_h}</b> (casa) x <b>{cantos_a}</b> (fora)\n"
-        f"⭐️ Favorito: <b>{fav_label}</b>"
+        f"⭐️ Favorito: <b>{fav_label}</b>\n"
+        f"⌛ Posse de bola: <b>{ph}%</b> - <b>{pa}%</b>\n"
+        f"🔥 Passes precisos: <b>{passes_h}</b> - <b>{passes_a}</b>\n"
+        f"⛳ Escanteios: <b>{cantos_h}</b> - <b>{cantos_a}</b>\n"
+        f"🎯 Chutes Totais: <b>{chutes_h}</b> - <b>{chutes_a}</b>\n"
+        f"🎯 Chutes no alvo: <b>{chutes_gol_h}</b> - <b>{chutes_gol_a}</b>\n"
+        f"🟥 Cartões vermelhos: <b>{red_h}</b> - <b>{red_a}</b>"
     )
 
 
