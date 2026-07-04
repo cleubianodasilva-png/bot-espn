@@ -210,7 +210,7 @@ def enviar_relatorio_diario():
         f"🔴 <b>RED:</b> {reds}\n"
         f"📈 <b>TOTAL DE ENTRADAS:</b> {total}\n"
         f"🎯 <b>ASSERTIVIDADE:</b> {taxa:.1f}%\n{sep}\n"
-        f"💰 <i>Máquina de Greens — Resultados do dia!</i>"
+        f"⚠️👆<i>Resultados do dia</i>👆⚠️"
     )
     if send_telegram(msg, botoes=False):
         sent_ctrl.add(hoje_key)
