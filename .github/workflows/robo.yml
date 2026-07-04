@@ -12,9 +12,19 @@ jobs:
   rodar-bot:
     runs-on: ubuntu-latest
     timeout-minutes: 4
+    # Evita execucoes paralelas — so 1 por vez
+    concurrency:
+      group: bot-run
+      cancel-in-progress: false
+
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout codigo
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
 
       - name: Instalar Python
         uses: actions/setup-python@v4
@@ -24,26 +34,14 @@ jobs:
       - name: Instalar dependencias
         run: pip install requests
 
-      - name: Restaurar cache de sinais enviados
-        uses: actions/cache@v3
-        with:
-          path: |
-            sent_live_signals.json
-            sinais_registrados.json
-            resultados.json
-          key: bot-state-${{ runner.os }}
-          restore-keys: |
-            bot-state-${{ runner.os }}
-
       - name: Rodar o robo
         run: python bot_live.py
 
-      - name: Salvar cache de sinais enviados
-        uses: actions/cache/save@v3
+      - name: Salvar estado no repositorio
         if: always()
-        with:
-          path: |
-            sent_live_signals.json
-            sinais_registrados.json
-            resultados.json
-          key: bot-state-${{ runner.os }}-${{ github.run_id }}
+        run: |
+          git config user.name "bot-state"
+          git config user.email "bot@state.local"
+          git add -f sent_live_signals.json sinais_registrados.json resultados.json 2>/dev/null || true
+          git diff --cached --quiet || git commit -m "state: atualiza sinais enviados [skip ci]"
+          git push || true
