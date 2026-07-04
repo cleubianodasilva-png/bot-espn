@@ -787,8 +787,8 @@ def run():
                 fav_final = "?"
                 print(f"[SKIP-FAV] {h} x {a} — sem dados suficientes para identificar favorito")
 
-        # fav_confirmado = odds confirmada (usado nos mercados de escanteio)
-        fav_confirmado = fav_por_odds
+        # fav_confirmado = odds OU fallback por estatísticas (chutes/escanteios)
+        fav_confirmado = fav_por_odds or (fav_final in ("h", "a"))
         if fav_final not in ("h", "a"):
             # Sem odds e sem fallback — pula escanteio mas continua outros mercados com "h"
             fav_final = "h"
