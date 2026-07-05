@@ -1159,27 +1159,17 @@ def run():
             continue
 
         if not fav_por_odds:
-            # Fallback 1: maior volume de chutes
-            ch = stats.get("chutes_tot_h", 0) if stats else 0
-            ca = stats.get("chutes_tot_a", 0) if stats else 0
-            eh = max(0, stats.get("escanteios_h", 0)) if stats else 0
-            ea = max(0, stats.get("escanteios_a", 0)) if stats else 0
-            if ch > ca:
+            # Fallback: quem está ganhando no placar é o favorito presumido
+            # Se empate, assume Casa como favorita (convenção padrão)
+            if sh > sa:
                 fav_final = "h"
-                print(f"[FAV-FALLBACK] {h} x {a} — Casa favorita por chutes ({ch}x{ca})")
-            elif ca > ch:
+                print(f"[FAV-FALLBACK] {h} x {a} — Casa favorita por placar ({sh}x{sa})")
+            elif sa > sh:
                 fav_final = "a"
-                print(f"[FAV-FALLBACK] {h} x {a} — Fora favorita por chutes ({ca}x{ch})")
-            # Fallback 2: maior número de escanteios (empate nos chutes)
-            elif eh > ea:
-                fav_final = "h"
-                print(f"[FAV-FALLBACK] {h} x {a} — Casa favorita por escanteios ({eh}x{ea})")
-            elif ea > eh:
-                fav_final = "a"
-                print(f"[FAV-FALLBACK] {h} x {a} — Fora favorita por escanteios ({ea}x{eh})")
+                print(f"[FAV-FALLBACK] {h} x {a} — Fora favorita por placar ({sa}x{sh})")
             else:
-                fav_final = "?"
-                print(f"[SKIP-FAV] {h} x {a} — sem dados suficientes para identificar favorito")
+                fav_final = "h"
+                print(f"[FAV-FALLBACK] {h} x {a} — empate, assume Casa como favorita")
 
         # fav_confirmado = odds OU fallback por estatísticas (chutes/escanteios)
         fav_confirmado = fav_por_odds or (fav_final in ("h", "a"))
