@@ -1069,11 +1069,16 @@ def check_status_command(total_jogos_live=0, jogos_live=None, jogos_na_janela=No
         new_last_id = last_id
         radar_respondido = False
         relatorio_respondido = False
+        agora_ts = datetime.now(timezone.utc).timestamp()
         for update in r.get("result", []):
             new_last_id = update["update_id"]
             msg     = update.get("message", {})
             text    = msg.get("text", "")
             chat_id = str(msg.get("chat", {}).get("id", ""))
+            msg_ts  = msg.get("date", 0)
+            # Ignora comandos com mais de 6 minutos (evita processar acúmulo antigo)
+            if agora_ts - msg_ts > 360:
+                continue
             if chat_id != str(CHAT_IDS[0]):
                 continue
             if text == "/relatorio" and not relatorio_respondido:
