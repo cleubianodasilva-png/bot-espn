@@ -377,19 +377,52 @@ def save_sent(sent):
         except Exception as e:
             print(f"[SENT] Erro GitHub save: {e}")
 
-def registrar_sinal(fid, mercado, home, away, message_id, extra_val=None):
-    sinais = []
+def _load_sinais_github():
+    """Carrega sinais_pendentes.json do GitHub."""
+    import base64 as _b64
+    if GITHUB_TOKEN and GITHUB_REPO:
+        try:
+            url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/sinais_pendentes.json"
+            r = requests.get(url, headers=_github_headers(), timeout=8)
+            if r.status_code == 200:
+                return json.loads(_b64.b64decode(r.json()["content"]).decode())
+        except Exception as e:
+            print(f"[SINAIS] Erro load GitHub: {e}")
     if os.path.exists(SINAIS_FILE):
         try:
-            with open(SINAIS_FILE, 'r') as f: sinais = json.load(f)
+            with open(SINAIS_FILE, 'r') as f: return json.load(f)
         except: pass
+    return []
+
+def _save_sinais_github(sinais):
+    """Salva sinais_pendentes.json no GitHub E localmente."""
+    import base64 as _b64
+    with open(SINAIS_FILE, 'w') as f: json.dump(sinais, f)
+    if GITHUB_TOKEN and GITHUB_REPO:
+        try:
+            url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/sinais_pendentes.json"
+            r = requests.get(url, headers=_github_headers(), timeout=8)
+            sha = r.json().get("sha", "") if r.status_code == 200 else ""
+            content_b64 = _b64.b64encode(json.dumps(sinais).encode()).decode()
+            payload = {"message": "state: atualiza sinais_pendentes [skip ci]", "content": content_b64}
+            if sha: payload["sha"] = sha
+            r2 = requests.put(url, headers=_github_headers(), json=payload, timeout=10)
+            if r2.status_code in (200, 201):
+                print(f"[SINAIS] Salvo no GitHub: {len(sinais)} pendentes")
+            else:
+                print(f"[SINAIS] Erro GitHub save: {r2.status_code}")
+        except Exception as e:
+            print(f"[SINAIS] Erro save GitHub: {e}")
+
+def registrar_sinal(fid, mercado, home, away, message_id, extra_val=None):
+    sinais = _load_sinais_github()
     sinais.append({
         "fixture_id": fid, "mercado": mercado,
         "home": home, "away": away,
         "message_id": message_id, "extra_val": extra_val,
         "timestamp": datetime.now(BRT).isoformat()
     })
-    with open(SINAIS_FILE, 'w') as f: json.dump(sinais, f)
+    _save_sinais_github(sinais)
 
 def _load_resultados_github():
     """Carrega resultados.json do GitHub. Retorna lista de registros."""
@@ -1238,21 +1271,22 @@ def run():
 
     save_sent(sent)
 
-    # Validação de resultados pendentes
-    if os.path.exists(SINAIS_FILE):
-        try:
-            with open(SINAIS_FILE, 'r') as f: sinais_p = json.load(f)
-            rest = []
-            for s in sinais_p:
-                res = checar_resultado(s)
-                if res:
-                    emoji = "🟢 GREEN CONFIRMADO 🟢" if res == "green" else "🔴 RED CONFIRMADO 🔴"
-                    send_telegram(emoji, botoes=False, reply_to=s.get("message_id"))
-                    salvar_resultado(res)
-                else:
-                    rest.append(s)
-            with open(SINAIS_FILE, 'w') as f: json.dump(rest, f)
-        except: pass
+    # Validação de resultados pendentes — lê e salva via GitHub
+    try:
+        sinais_p = _load_sinais_github()
+        rest = []
+        for s in sinais_p:
+            res = checar_resultado(s)
+            if res:
+                emoji = "🟢 GREEN CONFIRMADO 🟢" if res == "green" else "🔴 RED CONFIRMADO 🔴"
+                send_telegram(emoji, botoes=False, reply_to=s.get("message_id"))
+                salvar_resultado(res)
+            else:
+                rest.append(s)
+        _save_sinais_github(rest)
+        print(f"[SINAIS] {len(sinais_p) - len(rest)} resultados confirmados, {len(rest)} ainda pendentes")
+    except Exception as e:
+        print(f"[SINAIS] Erro validação: {e}")
 
     print(f"Finalizado. Enviados: {total_env}")
 
