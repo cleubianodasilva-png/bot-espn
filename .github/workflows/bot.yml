@@ -5,6 +5,10 @@ on:
   schedule:
     - cron: '*/1 * * * *'
 
+concurrency:
+  group: bot-zapia
+  cancel-in-progress: false
+
 jobs:
   run-bot:
     runs-on: ubuntu-latest
