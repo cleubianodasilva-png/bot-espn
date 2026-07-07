@@ -1350,10 +1350,17 @@ def run():
         fav_final = get_favorito_odds(h, a, fid=fid, league=j.get("liga_slug", j.get("liga", "")))
         fav_por_odds = fav_final in ("h", "a")
 
-        # Sem odds = sem favorito confiável, pula o jogo
+        # Sem odds = usa stats (chutes) como fallback para definir favorito
         if not fav_por_odds:
-            print(f"[SKIP-FAV] {h} x {a} — sem odds, favorito desconhecido, pulando")
-            continue
+            if stats and stats.get("fav_side") in ("h", "a"):
+                fav_final = stats["fav_side"]
+                print(f"[FAV-STATS] {h} x {a} — sem odds, favorito pelo chutes: {fav_final}")
+            elif stats and (stats.get("chutes_tot_h", 0) > 0 or stats.get("chutes_tot_a", 0) > 0):
+                fav_final = "h" if stats.get("chutes_tot_h", 0) >= stats.get("chutes_tot_a", 0) else "a"
+                print(f"[FAV-STATS] {h} x {a} — sem odds, favorito pelo chutes: {fav_final}")
+            else:
+                fav_final = "h"
+                print(f"[FAV-HOME] {h} x {a} — sem odds e sem stats, assumindo mandante como favorito")
 
         red_fav = stats.get(f"red_cards_{fav_final}", 0) if stats else 0
 
