@@ -913,6 +913,67 @@ def get_favorito_odds(home, away, fid=None, league=None):
 # ═══════════════════════════════════════════════════════════════════════════════
 # FILTRO DE JANELAS
 # ═══════════════════════════════════════════════════════════════════════════════
+def get_odd_favorito_num(home, away, fid=None, league=None):
+    """Retorna a odd decimal do favorito (numero). Usa ESPN primeiro, depois Odds API."""
+    if fid and league:
+        try:
+            url = f"https://site.api.espn.com/apis/site/v2/sports/soccer/{league}/scoreboard"
+            r = requests.get(url, timeout=6)
+            for ev in r.json().get("events", []):
+                comp = ev.get("competitions", [{}])[0]
+                if str(comp.get("id", "")) != str(fid):
+                    continue
+                for odd in comp.get("odds", []):
+                    if not odd:
+                        continue
+                    ml = odd.get("moneyline", {})
+                    if ml:
+                        def _get_ml(side):
+                            for key in ("current", "close", "open"):
+                                v = ml.get(side, {}).get(key, {}).get("odds")
+                                if v:
+                                    return v
+                            return 99
+                        odd_h = _moneyline_to_decimal(_get_ml("home"))
+                        odd_a = _moneyline_to_decimal(_get_ml("away"))
+                        if odd_h < 90 and odd_a < 90:
+                            return min(odd_h, odd_a)
+        except:
+            pass
+    try:
+        r = requests.get("https://api.the-odds-api.com/v4/sports/soccer/odds/",
+                         params={"apiKey": ODDS_API_KEY, "regions": "eu",
+                                 "markets": "h2h", "oddsFormat": "decimal"}, timeout=10)
+        if r.status_code == 200:
+            for evento in r.json():
+                nomes = [evento.get("home_team","").lower(), evento.get("away_team","").lower()]
+                if home.lower() in nomes and away.lower() in nomes:
+                    for book in evento.get("bookmakers", []):
+                        for mkt in book.get("markets", []):
+                            if mkt["key"] == "h2h":
+                                outcomes = {o["name"].lower(): o["price"] for o in mkt["outcomes"]}
+                                odd_h = outcomes.get(home.lower(), 99)
+                                odd_a = outcomes.get(away.lower(), 99)
+                                return min(odd_h, odd_a)
+    except:
+        pass
+    return 99
+
+def calcular_prob_gols_ht(chutes_tot, chutes_gol, minuto):
+    """Estima prob de gols usando taxa de chutes como proxy de xG."""
+    import math as _math
+    taxa_conversao = 0.10
+    xg = chutes_gol * taxa_conversao + chutes_tot * 0.04
+    min_restantes_ht = max(45 - minuto, 1)
+    min_restantes_ft = max(90 - minuto, 1)
+    taxa_por_min = xg / max(minuto, 1)
+    xg_rest_ht = taxa_por_min * min_restantes_ht
+    xg_rest_ft = taxa_por_min * min_restantes_ft
+    xg_total_ft = xg + xg_rest_ft
+    prob_05_ht = round((1 - _math.exp(-max(xg_rest_ht, 0.05))) * 100, 1)
+    prob_15_ft = round((1 - _math.exp(-max(xg_total_ft - 1, 0.1))) * 100, 1)
+    return prob_15_ft, prob_05_ht
+
 def filtrar_janelas(jogos):
     resultado = []
     for j in jogos:
@@ -1047,6 +1108,7 @@ def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_v
         "BTTS"     : "⚽️🔥<b>AMBAS MARCAM</b>🔥⚽️",
         "OFT"      : "⚽️🔥<b>OVER 1.5 GOLS PARTIDA</b>🔥⚽️",
         "OVERGOAL" : "⚽️🔥<b>OVER GOL PARTIDA</b>🔥⚽️",
+        "LIMITEHT" : "⚽️🔥<b>OVER GOL LIMITE HT</b>🔥⚽️",
         "CORNER_HT": "⛳️🔥<b>ESCANTEIO LIMITE HT</b>🔥⛳️",
         "CORNER_FT": "⛳️🔥<b>ESCANTEIO LIMITE FT</b>🔥⛳️",
     }
@@ -1102,6 +1164,10 @@ def checar_resultado(sinal):
             return "green" if total >= 2 else "red"
         elif mercado == "OVERGOAL":
             return "green" if total >= 1 else "red"
+        elif mercado == "LIMITEHT":
+            linescore = competitors[0].get("linescores", [])
+            ht_total  = sum(int(l.get("displayValue", 0) or 0) for l in linescore[:1])
+            return "green" if ht_total >= 1 else "red"
         elif mercado in ["CORNER_HT", "CORNER_FT"]:
             stats = get_stats_espn(eid, sinal.get("home",""), sinal.get("away",""))
             c_final = stats.get("escanteios_h", 0) + stats.get("escanteios_a", 0)
@@ -1312,6 +1378,24 @@ def run():
                 if mid:
                     sent.add(key); total_env += 1
                     registrar_sinal(fid, "HT", h, a, mid)
+
+        # MERCADO 1B: OVER GOL LIMITE HT (15-25 min, 0x0, odd fav ≤ 1.50, prob 1.5 FT ≥ 75%, prob 0.5 HT ≥ 65%, APPM fav ≥ 1)
+        if p == 1 and 15 <= m <= 25 and stot == 0 and red_fav == 0:
+            odd_fav_num = get_odd_favorito_num(h, a, fid=fid, league=j.get("liga_slug", j.get("liga", "")))
+            chutes_tot_total = (stats.get("chutes_tot_h", 0) + stats.get("chutes_tot_a", 0)) if stats else 0
+            chutes_gol_total = (stats.get("chutes_gol_h", 0) + stats.get("chutes_gol_a", 0)) if stats else 0
+            chutes_gol_fav   = stats.get(f"chutes_gol_{fav_final}", 0) if stats else 0
+            prob_15_ft, prob_05_ht = calcular_prob_gols_ht(chutes_tot_total, chutes_gol_total, m)
+            appm_fav = chutes_gol_fav
+            print(f"[LIMITE-HT] {h} x {a} | odd_fav={odd_fav_num} | prob_15ft={prob_15_ft}% | prob_05ht={prob_05_ht}% | appm={appm_fav}")
+            if (odd_fav_num <= 1.50 and prob_15_ft >= 75 and prob_05_ht >= 65 and appm_fav >= 1):
+                hoje = datetime.now(BRT).strftime('%Y%m%d')
+                key = f"{fid}_limiteht_{hoje}"
+                if key not in sent:
+                    mid = send_telegram(msg_universal(h, a, m, liga, 4, "LIMITEHT", "Over 0.5 HT", placar, stats=stats, sh=sh, sa=sa, fav_final=fav_final), marca=key, home=h, away=a)
+                    if mid:
+                        sent.add(key); total_env += 1
+                        registrar_sinal(fid, "LIMITEHT", h, a, mid)
 
         # MERCADO 2: AMBAS MARCAM BTTS (60-75 min, fav perdendo por 1, sem vermelho do fav)
         if p == 2 and 60 <= m <= 75 and fav_perdendo_1 and red_fav == 0:
