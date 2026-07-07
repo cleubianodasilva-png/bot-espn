@@ -1339,8 +1339,20 @@ def run():
         if p == 2 and 60 <= m <= 75 and overgoal_valido and red_fav == 0:
             hoje = datetime.now(BRT).strftime('%Y%m%d')
             key = f"{fid}_overgoal_{hoje}"
+            # Linha dinâmica: sempre acima do total de gols atual
+            total_gols = sh + sa
+            if total_gols == 0:
+                linha_over = "Over 0.5 FT"
+            elif total_gols == 1:
+                linha_over = "Over 1.5 FT"
+            elif total_gols == 2:
+                linha_over = "Over 2.5 FT"
+            elif total_gols == 3:
+                linha_over = "Over 3.5 FT"
+            else:
+                linha_over = f"Over {total_gols + 0.5:.1f} FT"
             if key not in sent:
-                mid = send_telegram(msg_universal(h, a, m, liga, 4, "OVERGOAL", "Over 0.5 FT", placar, stats=stats, sh=sh, sa=sa, fav_final=fav_final), marca=key, home=h, away=a)
+                mid = send_telegram(msg_universal(h, a, m, liga, 4, "OVERGOAL", linha_over, placar, stats=stats, sh=sh, sa=sa, fav_final=fav_final), marca=key, home=h, away=a)
                 if mid:
                     sent.add(key); total_env += 1
                     registrar_sinal(fid, "OVERGOAL", h, a, mid)
