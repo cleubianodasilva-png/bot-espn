@@ -531,6 +531,7 @@ def enviar_relatorio_diario():
         save_sent(sent_ctrl)
         print(f"[Relatório] Enviado e registrado ({hoje_key})")
 
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # API 1 — ESPN: lista de jogos ao vivo em TODAS as ligas
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -1198,19 +1199,18 @@ def check_status_command(total_jogos_live=0, jogos_live=None, jogos_na_janela=No
                 continue
             if chat_id not in [str(c) for c in CHAT_IDS]:
                 continue
-            if text == "/relatorio" and not relatorio_respondido:
+                        if text == "/relatorio" and not relatorio_respondido:
                 enviar_relatorio_diario()
                 relatorio_respondido = True
             elif text == "/radar" and not radar_respondido:
                 jogos_live = jogos_live or []
                 jogos_na_janela = jogos_na_janela or []
-                # Monta lista de jogos na janela
-                if jogos_na_janela:
-                    linhas_janela = "
+                total_jogos_live = len(jogos_live)
+                linhas_janela = "
 ".join([f"⚽️ {j['home']} x {j['away']} ({j['minuto']}')" for j in jogos_na_janela]) or "—
 "
                 linhas_fora = "
-".join([f"⚪️ {j['home']} x {j['away']} ({j['minuto']}')" for j in (jogos_live if jogos_live else []) if j not in jogos_na_janela]) or "—
+".join([f"⚪️ {j['home']} x {j['away']} ({j['minuto']}')" for j in jogos_live if j not in jogos_na_janela]) or "—
 "
                 msg_radar = (
                     f"{sep}
@@ -1231,12 +1231,6 @@ def check_status_command(total_jogos_live=0, jogos_live=None, jogos_na_janela=No
                     f"<b>⏳ FORA DA JANELA:</b>
 {linhas_fora}
 "
-                    f"{sep}"
-                )} na janela alvo</b>\n"
-                    f"{sep}\n"
-                    f"<b>🎯 NA JANELA:</b>\n{linhas_janela}"
-                    f"{sep}\n"
-                    f"<b>⏳ FORA DA JANELA:</b>\n{linhas_fora}"
                     f"{sep}"
                 )
                 send_telegram(msg_radar, botoes=False)
