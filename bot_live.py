@@ -1470,32 +1470,21 @@ def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_v
         "CORNER_FT": "⛳️🔥<b>ESCANTEIO LIMITE FT</b>🔥⛳️",
     }
     title = titles.get(mercado, f"⚽️🔥<b>{mercado}</b>🔥⚽️")
-
-    if "CORNER" in mercado:
-        return (
-            f"{sep}\n{title}\n⚽️ Placar: {placar}\n🌏 Liga: {liga}\n"
-            f"📡 <b>{home}</b> x <b>{away}</b>\n⏰️ Minuto: <b>{minuto}'</b>\n{sep}\n"
-            f"📊 <b>Análise ao Vivo da Entrada:</b>\n📝 {motivo}\n"
-            f"💰 Odd Mínima Recomendada: 1.70\n{sep}\n"
-            f"⛳️ Escanteios Atuais: <b>{cantos_atual}</b>\n"
-            f"📌 Entrada: <b>{entrada}</b>\n"
-            f"✅ Critérios: <b>{n}/6</b>\n{sep}\n"
-            f"⚠️Jogue com responsabilidade⚠️"
-        )
-    return (
-        f"{sep}\n{title}\n⚽️ Placar: {placar}\n🌏 Liga: {liga}\n"
-        f"📡 <b>{home}</b> x <b>{away}</b>\n⏰️ Minuto: <b>{minuto}'</b>\n{sep}\n"
-        f"📊 <b>Análise ao Vivo da Entrada:</b>\n📝 {motivo}\n"
-        f"💰 Odd Mínima Recomendada: 1.70\n{sep}\n"
-        f"📌 Entrada: <b>{entrada}</b>\n✅ Critérios: <b>{n}/6</b>\n{sep}\n"
-        f"⚠️Jogue com responsabilidade⚠️"
-    )
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# VALIDAÇÃO DE RESULTADOS (usa ESPN para checar placar final)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-
+    stats_visual = ""
+    if stats:
+        ch_h = stats.get("chutes_tot_h", 0); ch_a = stats.get("chutes_tot_a", 0)
+        cg_h = stats.get("chutes_gol_h", 0); cg_a = stats.get("chutes_gol_a", 0)
+        cn_h = max(0, stats.get("escanteios_h", 0)); cn_a = max(0, stats.get("escanteios_a", 0))
+        ph_raw = stats.get("posse_h", 0.0); pa_raw = stats.get("posse_a", 0.0)
+        ph = int(round(float(ph_raw) * 100)) if float(ph_raw) <= 1 else int(round(float(ph_raw)))
+        pa = int(round(float(pa_raw) * 100)) if float(pa_raw) <= 1 else int(round(float(pa_raw)))
+        stats_visual = f"📊 <b>Estatísticas ao Vivo:</b>\n📈 Posse: {ph}% - {pa}%\n🚀 Chutes: {ch_h} - {ch_a}\n🎯 No Alvo: {cg_h} - {cg_a}\n⛳️ Cantos: {cn_h} - {cn_a}\n{sep}\n"
+    header = f"{sep}\n{title}\n⚽️ Placar: {placar}\n🌏 Liga: {liga}\n📡 <b>{home}</b> x <b>{away}</b>\n⏰️ Minuto: <b>{minuto}'</b>\n{sep}\n"
+    body = f"{stats_visual}📝 <b>Análise Técnica:</b>\n{motivo}\n\n💰 Odd Mínima: 1.70\n{sep}\n"
+    footer = ""
+    if "CORNER" in mercado: footer += f"⛳️ Escanteios Atuais: <b>{cantos_atual}</b>\n"
+    footer += f"📌 Entrada: <b>{entrada}</b>\n✅ Critérios: <b>{n}/6</b>\n{sep}\n⚠️Jogue com responsabilidade⚠️"
+    return header + body + footer
 
 def checar_resultado(sinal):
     try:
