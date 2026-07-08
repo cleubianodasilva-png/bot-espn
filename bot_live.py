@@ -806,7 +806,6 @@ def get_stats_espn(eid, home, away):
 # ═══════════════════════════════════════════════════════════════════════════════
 # FALLBACK — API-Football: estatísticas (usado se ESPN falhar)
 # ═══════════════════════════════════════════════════════════════════════════════
-def get_stats_apifootball(fid):
     for key in API_FOOTBALL_KEYS:
         try:
             r     = requests.get(f"{API_FOOTBALL_URL}/fixtures/statistics",
@@ -1331,7 +1330,7 @@ def run():
 
     # Junta tudo — ESPN tem prioridade (stats mais ricas via summary)
     jogos_live = jogos_espn + jogos_apif
-    print(f"[Total] {len(jogos_live)} jogos ao vivo (ESPN={len(jogos_espn)} + API-Football={len(jogos_apif)})")
+    print(f"[Total] {len(jogos_live)} jogos ao vivo (ESPN={len(jogos_espn)} + API-Football=0)")
 
     # PASSO 2: Filtra janelas alvo
     jogos_na_janela = filtrar_janelas(jogos_live)
@@ -1363,8 +1362,6 @@ def run():
             stats = get_stats_apifootball_live(fid)
         else:
             stats = get_stats_espn(fid, h, a)
-            if not stats:
-                stats = get_stats_apifootball(fid)
 
         # Verifica se tem dados reais — sem stats E sem odds, pula o jogo
         tem_stats = stats and (
@@ -1538,3 +1535,4 @@ def run():
 
 if __name__ == "__main__":
     run()
+
