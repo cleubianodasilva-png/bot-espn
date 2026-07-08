@@ -806,46 +806,6 @@ def get_stats_espn(eid, home, away):
 # ═══════════════════════════════════════════════════════════════════════════════
 # FALLBACK — API-Football: estatísticas (usado se ESPN falhar)
 # ═══════════════════════════════════════════════════════════════════════════════
-    for key in API_FOOTBALL_KEYS:
-        try:
-            r     = requests.get(f"{API_FOOTBALL_URL}/fixtures/statistics",
-                                 params={"fixture": fid},
-                                 headers={"x-apisports-key": key}, timeout=10)
-            rjson = r.json()
-            if (r.headers.get("x-ratelimit-requests-remaining") == "0"
-                    or (isinstance(rjson.get("errors"), dict) and rjson.get("errors", {}).get("requests"))
-                    or (isinstance(rjson.get("errors"), dict) and rjson.get("errors", {}).get("access"))):
-                print(f"[API-Football] Chave {key[:8]}... indisponível")
-                continue
-            data = rjson.get("response", [])
-            if not data: continue
-            stats   = {}
-            home_id = data[0]["team"]["id"]
-            for team in data:
-                side = "h" if team["team"]["id"] == home_id else "a"
-                for s in team["statistics"]:
-                    k   = s["type"].lower().replace(" ", "_")
-                    val = s["value"] or 0
-                    if k == "corner_kicks":  stats[f"escanteios_{side}"] = val
-                    if k == "total_shots":   stats[f"chutes_tot_{side}"]  = val
-                    if k == "shots_on_goal": stats[f"chutes_gol_{side}"]  = val
-            r2     = requests.get(f"{API_FOOTBALL_URL}/fixtures/events",
-                                  params={"fixture": fid},
-                                  headers={"x-apisports-key": key}, timeout=10)
-            events = r2.json().get("response", [])
-            red_h, red_a = 0, 0
-            for ev in events:
-                if ev.get("type") == "Card" and "Red" in (ev.get("detail") or ""):
-                    if ev.get("team", {}).get("id") == home_id: red_h += 1
-                    else: red_a += 1
-            stats["red_cards_h"], stats["red_cards_a"] = red_h, red_a
-            stats["fav_side"] = "h" if stats.get("chutes_tot_h", 0) >= stats.get("chutes_tot_a", 0) else "a"
-            print(f"[API-Football] Stats OK chave {key[:8]}...")
-            return stats
-        except:
-            continue
-    return {}
-
 # ═══════════════════════════════════════════════════════════════════════════════
 # API 3 — ODDS: favorito pela menor odd (ESPN moneyline ou The Odds API)
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -1362,6 +1322,8 @@ def run():
             stats = get_stats_apifootball_live(fid)
         else:
             stats = get_stats_espn(fid, h, a)
+            if stats: j.update(stats)
+            if not stats:
 
         # Verifica se tem dados reais — sem stats E sem odds, pula o jogo
         tem_stats = stats and (
@@ -1535,4 +1497,3 @@ def run():
 
 if __name__ == "__main__":
     run()
-
