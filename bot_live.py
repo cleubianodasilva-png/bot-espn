@@ -1494,46 +1494,75 @@ def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_v
 # ═══════════════════════════════════════════════════════════════════════════════
 # VALIDAÇÃO DE RESULTADOS (usa ESPN para checar placar final)
 # ═══════════════════════════════════════════════════════════════════════════════
+
+
+
 def checar_resultado(sinal):
     try:
         eid     = str(sinal.get("fixture_id"))
         mercado = sinal.get("mercado")
-        # Busca via ESPN summary
+        
+        # 1. Busca via ESPN Summary
         r    = requests.get(ESPN_SUMMARY, params={"event": eid}, timeout=10)
         data = r.json()
-        status_obj = data.get("header", {}).get("competitions", [{}])[0].get("status", {})
-        state      = status_obj.get("type", {}).get("state", "")
-        if state != "post": return None
-        competitors = data.get("header", {}).get("competitions", [{}])[0].get("competitors", [])
+        header = data.get("header", {})
+        comps  = header.get("competitions", [])
+        if not comps: return None
+        comp   = comps[0]
+        status = comp.get("status", {})
+        state  = status.get("type", {}).get("state", "").lower()
+        
+        # Só audita se o jogo acabou ('post') ou se estamos checando HT e o jogo está no 2H ou post.
+        is_final = (state == "post")
+        is_2h    = (state == "in" and int(status.get("period", 0)) >= 2)
+        
+        if not (is_final or (mercado in ["HT", "LIMITEHT", "CORNER_HT"] and is_2h)):
+            return None
+
+        # Placar Final (ou atual se is_2h)
         gh, ga = 0, 0
+        competitors = comp.get("competitors", [])
         for c in competitors:
             if c.get("homeAway") == "home": gh = int(c.get("score", 0) or 0)
             if c.get("homeAway") == "away": ga = int(c.get("score", 0) or 0)
-        total = gh + ga
-        if mercado == "HT":
-            # Pega placar do HT nos linescores
-            linescore = competitors[0].get("linescores", [])
-            ht_total  = sum(int(l.get("displayValue", 0) or 0) for l in linescore[:1])
-            return "green" if ht_total >= 1 else "red"
+        total_final = gh + ga
+
+        # Placar HT (Extraído dos linescores)
+        gh_ht, ga_ht = 0, 0
+        for c in competitors:
+            ls = c.get("linescores", [])
+            if len(ls) > 0:
+                val = int(ls[0].get("displayValue", 0) or 0)
+                if c.get("homeAway") == "home": gh_ht = val
+                else: ga_ht = val
+        total_ht = gh_ht + ga_ht
+
+        # Lógica por Mercado
+        if mercado in ["HT", "LIMITEHT"]:
+            return "green" if total_ht >= 1 else ("red" if (is_2h or is_final) else None)
+        
         elif mercado == "BTTS":
-            return "green" if gh >= 1 and ga >= 1 else "red"
+            return "green" if (gh >= 1 and ga >= 1) else ("red" if is_final else None)
+        
         elif mercado == "OFT":
-            return "green" if total >= 2 else "red"
+            return "green" if total_final >= 2 else ("red" if is_final else None)
+            
         elif mercado == "OVERGOAL":
-            return "green" if total >= 1 else "red"
-        elif mercado == "LIMITEHT":
-            linescore = competitors[0].get("linescores", [])
-            ht_total  = sum(int(l.get("displayValue", 0) or 0) for l in linescore[:1])
-            return "green" if ht_total >= 1 else "red"
+            gols_entrada = sinal.get("extra_val", 0)
+            return "green" if total_final > gols_entrada else ("red" if is_final else None)
+            
         elif mercado in ["CORNER_HT", "CORNER_FT"]:
             stats = get_stats_espn(eid, sinal.get("home",""), sinal.get("away",""))
             c_final = stats.get("escanteios_h", 0) + stats.get("escanteios_a", 0)
-            c_entrada = sinal.get("extra_val", 0)  # cantos no momento do sinal
-            # Green se cantos finais > cantos no momento do sinal (linha = cantos_entrada + 0.5)
-            return "green" if c_final > c_entrada else "red"
+            c_entrada = sinal.get("extra_val", 0)
+            if c_final > c_entrada: return "green"
+            return "red" if is_final else None
+
         return None
-    except:
-        return None
+    except: return None
+
+
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # COMANDOS TELEGRAM (/relatorio e /radar)
@@ -1858,7 +1887,7 @@ def run():
                 mid = send_telegram(msg_universal(h, a, m, liga, 4, "OVERGOAL", linha_over, placar, stats=stats, sh=sh, sa=sa, fav_final=fav_final), marca=key, home=h, away=a)
                 if mid:
                     sent.add(key); total_env += 1
-                    registrar_sinal(fid, "OVERGOAL", h, a, mid)
+                    registrar_sinal(fid, "OVERGOAL", h, a, mid, extra_val=total_gols)
 
         # MERCADO 5: ESCANTEIO LIMITE HT (30-38 min, fav confirmado, empatando ou perdendo por 1, sem vermelho)
         if p == 1 and 30 <= m <= 38 and (fav_empatando or fav_perdendo_1) and red_fav == 0:
