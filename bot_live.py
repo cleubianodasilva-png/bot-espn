@@ -840,7 +840,7 @@ def get_favorito_odds(home, away, fid=None, league=None):
                     if ml:
                         # Tenta current (ao vivo), depois close (pré-jogo), depois open
                         def _get_ml(side):
-                            for key in ("current", "close", "open"):
+                            for key in ("close", "open", "current"):
                                 v = ml.get(side, {}).get(key, {}).get("odds")
                                 if v:
                                     return v
@@ -917,7 +917,7 @@ def get_odd_favorito_num(home, away, fid=None, league=None):
                     ml = odd.get("moneyline", {})
                     if ml:
                         def _get_ml(side):
-                            for key in ("current", "close", "open"):
+                            for key in ("close", "open", "current"):
                                 v = ml.get(side, {}).get(key, {}).get("odds")
                                 if v:
                                     return v
@@ -1092,45 +1092,42 @@ def gerar_motivo(mercado, stats, sh, sa, fav_final, cantos_atual=0):
     return f"Jogo equilibrado, ambas criando chances — {chutes_h} chutes de Casa x {chutes_a} de Fora{posse_txt}{vermelho}"
 
 def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_val=None, cantos_atual=0, stats=None, sh=0, sa=0, fav_final="h"):
-    sep    = "━━━━━━━━━━━━━━━━━━━━"
-    motivo = gerar_motivo(mercado, stats, sh, sa, fav_final, cantos_atual)
+    sep = "━━━━━━━━━━━━━━━━━━━━"
+    if not stats: stats = {}
+    cg_h, cg_a = stats.get("chutes_gol_h", 0), stats.get("chutes_gol_a", 0)
+    ct_h, ct_a = stats.get("chutes_tot_h", 0), stats.get("chutes_tot_a", 0)
+    cf_h, cf_a = max(0, ct_h - cg_h), max(0, ct_a - cg_a)
+    ap_h, ap_a = stats.get("atq_perigosos_h", stats.get("dangerous_attacks_h", 0)), stats.get("atq_perigosos_a", stats.get("dangerous_attacks_a", 0))
+    pos_h, pos_a = stats.get("posse_h", 50), stats.get("posse_a", 50)
+    esc_h, esc_a = stats.get("escanteios_h", 0), stats.get("escanteios_a", 0)
     if "CORNER" in mercado:
-        linha  = cantos_atual + 0.5
+        linha = cantos_atual + 0.5
         entrada = f"Mais de {linha} Cantos"
     titles = {
-        "HT"       : "⚽️🔥<b>OVER GOL INTERVALO</b>🔥⚽️",
-        "BTTS"     : "⚽️🔥<b>AMBAS MARCAM</b>🔥⚽️",
-        "OFT"      : "⚽️🔥<b>OVER 1.5 GOLS PARTIDA</b>🔥⚽️",
-        "OVERGOAL" : "⚽️🔥<b>OVER GOL PARTIDA</b>🔥⚽️",
-        "LIMITEHT" : "⚽️🔥<b>OVER GOL LIMITE HT</b>🔥⚽️",
+        "HT": "⚽️🔥<b>OVER GOL INTERVALO</b>🔥⚽️",
+        "BTTS": "⚽️🔥<b>AMBAS MARCAM</b>🔥⚽️",
+        "OFT": "⚽️🔥<b>OVER 1.5 GOLS PARTIDA</b>🔥⚽️",
+        "OVERGOAL": "⚽️🔥<b>OVER GOL PARTIDA</b>🔥⚽️",
+        "LIMITEHT": "⚽️🔥<b>OVER GOL LIMITE HT</b>🔥⚽️",
         "CORNER_HT": "⛳️🔥<b>ESCANTEIO LIMITE HT</b>🔥⛳️",
-        "CORNER_FT": "⛳️🔥<b>ESCANTEIO LIMITE FT</b>🔥⛳️",
+        "CORNER_FT": "⛳️🔥<b>ESCANTEIO LIMITE FT</b>🔥⛳️"
     }
     title = titles.get(mercado, f"⚽️🔥<b>{mercado}</b>🔥⚽️")
-
-    if "CORNER" in mercado:
-        return (
-            f"{sep}\n{title}\n⚽️ Placar: {placar}\n🌏 Liga: {liga}\n"
-            f"📡 <b>{home}</b> x <b>{away}</b>\n⏰️ Minuto: <b>{minuto}'</b>\n{sep}\n"
-            f"📊 <b>Análise ao Vivo da Entrada:</b>\n📝 {motivo}\n"
-            f"💰 Odd Mínima Recomendada: 1.70\n{sep}\n"
-            f"⛳️ Escanteios Atuais: <b>{cantos_atual}</b>\n"
-            f"📌 Entrada: <b>{entrada}</b>\n"
-            f"✅ Critérios: <b>{n}/6</b>\n{sep}\n"
-            f"⚠️Jogue com responsabilidade⚠️"
-        )
-    return (
-        f"{sep}\n{title}\n⚽️ Placar: {placar}\n🌏 Liga: {liga}\n"
-        f"📡 <b>{home}</b> x <b>{away}</b>\n⏰️ Minuto: <b>{minuto}'</b>\n{sep}\n"
-        f"📊 <b>Análise ao Vivo da Entrada:</b>\n📝 {motivo}\n"
-        f"💰 Odd Mínima Recomendada: 1.70\n{sep}\n"
-        f"📌 Entrada: <b>{entrada}</b>\n✅ Critérios: <b>{n}/6</b>\n{sep}\n"
-        f"⚠️Jogue com responsabilidade⚠️"
-    )
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# VALIDAÇÃO DE RESULTADOS (usa ESPN para checar placar final)
-# ═══════════════════════════════════════════════════════════════════════════════
+    eb = (f"🎯 Chutes no Gol: <b>{cg_h} - {cg_a}</b>\n"
+          f"🚀 Chutes Fora: <b>{cf_h} - {cf_a}</b>\n"
+          f"🔥 Ataques Perigosos: <b>{ap_h} - {ap_a}</b>\n"
+          f"📈 Posse de Bola: <b>{pos_h}% - {pos_a}%</b>\n"
+          f"⛳ Escanteios: <b>{esc_h} - {esc_a}</b>")
+    msg = (f"{sep}\n{title}\n"
+           f"⚽️ Placar: <b>{placar}</b>\n"
+           f"🌏 Liga: <b>{liga}</b>\n"
+           f"📡 <b>{home}</b> x <b>{away}</b>\n"
+           f"⏰️ Minuto: <b>{minuto}'</b>\n{sep}\n"
+           f"📊 <b>Análise ao Vivo da Entrada:</b>\n{eb}\n"
+           f"💰 Odd Mínima Recomendada: 1.70\n{sep}\n")
+    if "CORNER" in mercado: msg += f"⛳️ Escanteios Atuais: <b>{cantos_atual}</b>\n"
+    msg += f"📌 Entrada: <b>{entrada}</b>\n✅ Critérios: <b>{n}/6</b>\n{sep}\n⚠️Jogue com responsabilidade⚠️"
+    return msg
 def checar_resultado(sinal):
     try:
         eid     = str(sinal.get("fixture_id"))
@@ -1323,7 +1320,6 @@ def run():
         else:
             stats = get_stats_espn(fid, h, a)
             if stats: j.update(stats)
-            if not stats:
 
         # Verifica se tem dados reais — sem stats E sem odds, pula o jogo
         tem_stats = stats and (
@@ -1337,17 +1333,10 @@ def run():
         fav_final = get_favorito_odds(h, a, fid=fid, league=j.get("liga_slug", j.get("liga", "")))
         fav_por_odds = fav_final in ("h", "a")
 
-        # Sem odds = usa stats (chutes) como fallback para definir favorito
+        # Sem odds = favorito indefinido (regra restrita por odds pré-live)
         if not fav_por_odds:
-            if stats and stats.get("fav_side") in ("h", "a"):
-                fav_final = stats["fav_side"]
-                print(f"[FAV-STATS] {h} x {a} — sem odds, favorito pelo chutes: {fav_final}")
-            elif stats and (stats.get("chutes_tot_h", 0) > 0 or stats.get("chutes_tot_a", 0) > 0):
-                fav_final = "h" if stats.get("chutes_tot_h", 0) >= stats.get("chutes_tot_a", 0) else "a"
-                print(f"[FAV-STATS] {h} x {a} — sem odds, favorito pelo chutes: {fav_final}")
-            else:
-                fav_final = "h"
-                print(f"[FAV-HOME] {h} x {a} — sem odds e sem stats, assumindo mandante como favorito")
+            fav_final = None
+            print(f"[FAV-SKIP] {h} x {a} — sem odds disponíveis")
 
         red_fav = stats.get(f"red_cards_{fav_final}", 0) if stats else 0
 
@@ -1372,7 +1361,7 @@ def run():
         )
 
         # MERCADO 1: OVER 0.5 HT (15-27 min, 0x0, favorito empatando, sem vermelho do fav)
-        if p == 1 and 15 <= m <= 27 and fav_empatando and red_fav == 0:
+        if p == 1 and 15 <= m <= 27 and fav_por_odds and fav_empatando and red_fav == 0:
             hoje = datetime.now(BRT).strftime('%Y%m%d')
             key = f"{fid}_ht_{hoje}"
             if key not in sent:
@@ -1400,7 +1389,7 @@ def run():
                         registrar_sinal(fid, "LIMITEHT", h, a, mid)
 
         # MERCADO 2: AMBAS MARCAM BTTS (60-75 min, fav perdendo por 1, sem vermelho do fav)
-        if p == 2 and 60 <= m <= 75 and fav_perdendo_1 and red_fav == 0:
+        if p == 2 and 60 <= m <= 75 and fav_por_odds and fav_perdendo_1 and red_fav == 0:
             hoje = datetime.now(BRT).strftime('%Y%m%d')
             key = f"{fid}_btts_{hoje}"
             if key not in sent:
@@ -1410,7 +1399,7 @@ def run():
                     registrar_sinal(fid, "BTTS", h, a, mid)
 
         # MERCADO 3: OVER 1.5 FT (60-75 min, fav empatando ou perdendo por 1, placares: 0x0/1x0/0x1/1x1, sem vermelho do fav)
-        if p == 2 and 60 <= m <= 75 and oft_valido and red_fav == 0:
+        if p == 2 and 60 <= m <= 75 and fav_por_odds and oft_valido and red_fav == 0:
             hoje = datetime.now(BRT).strftime('%Y%m%d')
             key = f"{fid}_oft_{hoje}"
             if key not in sent:
@@ -1423,7 +1412,7 @@ def run():
         overgoal_placar = (sh == 0 and sa == 0) or (sh == 1 and sa == 1) or (sh == 0 and sa == 1) or (sh == 1 and sa == 0)
         # 0x0 e 1x1 = sempre validos; 1x0 e 0x1 exigem favorito empatando ou perdendo por 1
         overgoal_valido = overgoal_placar and ((sh == 0 and sa == 0) or (sh == 1 and sa == 1) or fav_empatando or fav_perdendo_1)
-        if p == 2 and 60 <= m <= 75 and overgoal_valido and red_fav == 0:
+        if p == 2 and 60 <= m <= 75 and fav_por_odds and overgoal_valido and red_fav == 0:
             hoje = datetime.now(BRT).strftime('%Y%m%d')
             key = f"{fid}_overgoal_{hoje}"
             # Linha dinâmica: sempre acima do total de gols atual
