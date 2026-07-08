@@ -1928,7 +1928,7 @@ def run():
         for s in sinais_p:
             res = checar_resultado(s)
             if res:
-                emoji = "🟢 GREEN CONFIRMADO 🟢" if res == "green" else "🔴 RED CONFIRMADO 🔴"
+                emoji = "🟢GREEN CONFIRMADO🟢" if res == "green" else "🔴RED CONFIRMADO🔴"
                 send_telegram(emoji, botoes=False, reply_to=s.get("message_id"))
                 salvar_resultado(res)
             else:
