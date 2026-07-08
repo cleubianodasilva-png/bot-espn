@@ -302,7 +302,25 @@ RAPIDAPI_HEADERS = {
     "x-rapidapi-host": "free-api-live-football-data.p.rapidapi.com"
 }
 
-# ═══════════════════════════════════════════════════════════════════════════════
+
+# APIs Secundárias (Ativas)
+APIFOOTBALL_COM_KEY = "312c2ecc90136b390d19c765711088d8121b195418b9c2e8006b9e8f7ed8e4ed"
+BZZOIRO_TOKEN   = "0c594407931777d114db6c3ccaefea54fa10c0ef"
+BZZOIRO_URL     = "https://sports.bzzoiro.com"
+
+
+# APIs Secundárias (Ativas)
+APIFOOTBALL_COM_KEY = "312c2ecc90136b390d19c765711088d8121b195418b9c2e8006b9e8f7ed8e4ed"
+BZZOIRO_TOKEN   = "0c594407931777d114db6c3ccaefea54fa10c0ef"
+BZZOIRO_URL     = "https://sports.bzzoiro.com"
+
+
+# APIs Secundárias (Ativas)
+APIFOOTBALL_COM_KEY = "312c2ecc90136b390d19c765711088d8121b195418b9c2e8006b9e8f7ed8e4ed"
+BZZOIRO_TOKEN   = "0c594407931777d114db6c3ccaefea54fa10c0ef"
+BZZOIRO_URL     = "https://sports.bzzoiro.com"
+
+# ═══════════════+++
 # TELEGRAM
 # ═══════════════════════════════════════════════════════════════════════════════
 def send_telegram(msg, botoes=True, reply_to=None, marca=None, home="", away=""):
@@ -746,6 +764,144 @@ def get_stats_apifootball_live(fid):
 # ═══════════════════════════════════════════════════════════════════════════════
 # API 2 — ESPN: estatísticas do jogo (chutes, cantos, cartões)
 # ═══════════════════════════════════════════════════════════════════════════════
+
+def get_jogos_bzzoiro(fids_existentes):
+    try:
+        headers = {"Authorization": "Token " + BZZOIRO_TOKEN}
+        r = requests.get(BZZOIRO_URL + "/api/v2/events/live/", headers=headers, timeout=15)
+        data = r.json()
+        results = data.get("results", [])
+        jogos = []
+        for ev in results:
+            fid = "bzz_" + str(ev.get("id", ""))
+            if fid in fids_existentes: continue
+            sh, sa = int(ev.get("home_score") or 0), int(ev.get("away_score") or 0)
+            minuto = ev.get("current_minute") or 0
+            period_raw = ev.get("period", "") or ""
+            period = 1 if "1" in period_raw or minuto <= 45 else 2
+            liga = ev.get("league", {}) or {}
+            liga_nome = liga.get("name", "Desconhecida") if isinstance(liga, dict) else str(liga)
+            jogos.append({
+                "fid": fid, "fid_raw": str(ev.get("id", "")),
+                "home": ev.get("home_team", ""), "away": ev.get("away_team", ""),
+                "sh": sh, "sa": sa, "minuto": minuto,
+                "period": period, "liga": liga_nome, "source": "bzzoiro"
+            })
+        return jogos
+    except: return []
+
+def get_stats_bzzoiro(fid_raw, home, away):
+    try:
+        headers = {"Authorization": "Token " + BZZOIRO_TOKEN}
+        r = requests.get(f"{BZZOIRO_URL}/api/v2/events/{fid_raw}/stats/", headers=headers, timeout=10)
+        data = r.json()
+        raw_stats = data.get("stats", {})
+        stats = {}
+        for side, key in [("home", "h"), ("away", "a")]:
+            side_data = raw_stats.get(side, {})
+            shots = side_data.get("shots", {})
+            if isinstance(shots, dict):
+                stats[f"chutes_tot_{key}"] = int(shots.get("total", 0) or 0)
+                stats[f"chutes_gol_{key}"] = int(shots.get("on_target", 0) or 0)
+            stats[f"escanteios_{key}"] = int(side_data.get("corners", 0) or 0)
+            cards = side_data.get("cards", {})
+            if isinstance(cards, dict):
+                stats[f"red_cards_{key}"] = int(cards.get("red", 0) or 0)
+        return stats
+    except: return {}
+
+
+def get_jogos_bzzoiro(fids_existentes):
+    try:
+        headers = {"Authorization": "Token " + BZZOIRO_TOKEN}
+        r = requests.get(BZZOIRO_URL + "/api/v2/events/live/", headers=headers, timeout=15)
+        data = r.json()
+        results = data.get("results", [])
+        jogos = []
+        for ev in results:
+            fid = "bzz_" + str(ev.get("id", ""))
+            if fid in fids_existentes: continue
+            sh, sa = int(ev.get("home_score") or 0), int(ev.get("away_score") or 0)
+            minuto = ev.get("current_minute") or 0
+            period_raw = ev.get("period", "") or ""
+            period = 1 if "1" in period_raw or minuto <= 45 else 2
+            liga = ev.get("league", {}) or {}
+            liga_nome = liga.get("name", "Desconhecida") if isinstance(liga, dict) else str(liga)
+            jogos.append({
+                "fid": fid, "fid_raw": str(ev.get("id", "")),
+                "home": ev.get("home_team", ""), "away": ev.get("away_team", ""),
+                "sh": sh, "sa": sa, "minuto": minuto,
+                "period": period, "liga": liga_nome, "source": "bzzoiro"
+            })
+        return jogos
+    except: return []
+
+def get_stats_bzzoiro(fid_raw, home, away):
+    try:
+        headers = {"Authorization": "Token " + BZZOIRO_TOKEN}
+        r = requests.get(f"{BZZOIRO_URL}/api/v2/events/{fid_raw}/stats/", headers=headers, timeout=10)
+        data = r.json()
+        raw_stats = data.get("stats", {})
+        stats = {}
+        for side, key in [("home", "h"), ("away", "a")]:
+            side_data = raw_stats.get(side, {})
+            shots = side_data.get("shots", {})
+            if isinstance(shots, dict):
+                stats[f"chutes_tot_{key}"] = int(shots.get("total", 0) or 0)
+                stats[f"chutes_gol_{key}"] = int(shots.get("on_target", 0) or 0)
+            stats[f"escanteios_{key}"] = int(side_data.get("corners", 0) or 0)
+            cards = side_data.get("cards", {})
+            if isinstance(cards, dict):
+                stats[f"red_cards_{key}"] = int(cards.get("red", 0) or 0)
+        return stats
+    except: return {}
+
+
+def get_jogos_bzzoiro(fids_existentes):
+    try:
+        headers = {"Authorization": "Token " + BZZOIRO_TOKEN}
+        r = requests.get(BZZOIRO_URL + "/api/v2/events/live/", headers=headers, timeout=15)
+        data = r.json()
+        results = data.get("results", [])
+        jogos = []
+        for ev in results:
+            fid = "bzz_" + str(ev.get("id", ""))
+            if fid in fids_existentes: continue
+            sh, sa = int(ev.get("home_score") or 0), int(ev.get("away_score") or 0)
+            minuto = ev.get("current_minute") or 0
+            period_raw = ev.get("period", "") or ""
+            period = 1 if "1" in period_raw or minuto <= 45 else 2
+            liga = ev.get("league", {}) or {}
+            liga_nome = liga.get("name", "Desconhecida") if isinstance(liga, dict) else str(liga)
+            jogos.append({
+                "fid": fid, "fid_raw": str(ev.get("id", "")),
+                "home": ev.get("home_team", ""), "away": ev.get("away_team", ""),
+                "sh": sh, "sa": sa, "minuto": minuto,
+                "period": period, "liga": liga_nome, "source": "bzzoiro"
+            })
+        return jogos
+    except: return []
+
+def get_stats_bzzoiro(fid_raw, home, away):
+    try:
+        headers = {"Authorization": "Token " + BZZOIRO_TOKEN}
+        r = requests.get(f"{BZZOIRO_URL}/api/v2/events/{fid_raw}/stats/", headers=headers, timeout=10)
+        data = r.json()
+        raw_stats = data.get("stats", {})
+        stats = {}
+        for side, key in [("home", "h"), ("away", "a")]:
+            side_data = raw_stats.get(side, {})
+            shots = side_data.get("shots", {})
+            if isinstance(shots, dict):
+                stats[f"chutes_tot_{key}"] = int(shots.get("total", 0) or 0)
+                stats[f"chutes_gol_{key}"] = int(shots.get("on_target", 0) or 0)
+            stats[f"escanteios_{key}"] = int(side_data.get("corners", 0) or 0)
+            cards = side_data.get("cards", {})
+            if isinstance(cards, dict):
+                stats[f"red_cards_{key}"] = int(cards.get("red", 0) or 0)
+        return stats
+    except: return {}
+
 def get_stats_espn(eid, home, away):
     """Busca estatísticas de um jogo via ESPN summary. Sem custo."""
     try:
@@ -1361,6 +1517,18 @@ def run():
         if source == "apifootball":
             stats = get_stats_apifootball_live(fid)
         else:
+            source = j.get("source", "espn")
+        if source == "bzzoiro":
+            stats = get_stats_bzzoiro(j["fid_raw"], h, a)
+        else:
+            source = j.get("source", "espn")
+        if source == "bzzoiro":
+            stats = get_stats_bzzoiro(j["fid_raw"], h, a)
+        else:
+            source = j.get("source", "espn")
+        if source == "bzzoiro":
+            stats = get_stats_bzzoiro(j["fid_raw"], h, a)
+        else:
             stats = get_stats_espn(fid, h, a)
 
         # Verifica se tem dados reais — sem stats E sem odds, pula o jogo
@@ -1374,6 +1542,45 @@ def run():
         # Determinar favorito pelas odds (ESPN primeiro, depois Odds API)
         fav_final = get_favorito_odds(h, a, fid=fid, league=j.get("liga_slug", j.get("liga", "")))
         fav_por_odds = fav_final in ("h", "a")
+
+        try:
+            r_odd = requests.get("https://apiv3.apifootball.com/",
+                             params={"action": "get_odds", "match_id": fid, "APIkey": APIFOOTBALL_COM_KEY}, timeout=8)
+            odds_data = r_odd.json()
+            if isinstance(odds_data, list) and odds_data:
+                odd = odds_data[0]
+                odd_h, odd_a = float(odd.get("odd_1", 0)), float(odd.get("odd_2", 0))
+                if odd_h > 1 and odd_a > 1:
+                    fav_final = "h" if odd_h <= odd_a else "a"
+                    fav_por_odds = True
+        except: pass
+
+    if not fav_por_odds:
+        try:
+            r = requests.get("https://apiv3.apifootball.com/",
+                             params={"action": "get_odds", "match_id": fid, "APIkey": APIFOOTBALL_COM_KEY}, timeout=8)
+            odds_data = r.json()
+            if isinstance(odds_data, list) and odds_data:
+                odd = odds_data[0]
+                odd_h, odd_a = float(odd.get("odd_1", 0)), float(odd.get("odd_2", 0))
+                if odd_h > 1 and odd_a > 1:
+                    fav_final = "h" if odd_h <= odd_a else "a"
+                    fav_por_odds = True
+        except: pass
+
+    if not fav_por_odds:
+        try:
+            r = requests.get("https://apiv3.apifootball.com/",
+                             params={"action": "get_odds", "match_id": fid, "APIkey": APIFOOTBALL_COM_KEY}, timeout=8)
+            odds_data = r.json()
+            if isinstance(odds_data, list) and odds_data:
+                odd = odds_data[0]
+                odd_h, odd_a = float(odd.get("odd_1", 0)), float(odd.get("odd_2", 0))
+                if odd_h > 1 and odd_a > 1:
+                    fav_final = "h" if odd_h <= odd_a else "a"
+                    fav_por_odds = True
+        except: pass
+
 
         # Sem odds = usa stats (chutes) como fallback para definir favorito
         if not fav_por_odds:
