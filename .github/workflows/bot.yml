@@ -3,11 +3,7 @@ name: Bot Zapia - BOOT IA INTELIGENTE
 on:
   workflow_dispatch:
   schedule:
-    - cron: '*/1 * * * *'
-
-concurrency:
-  group: bot-zapia
-  cancel-in-progress: false
+    - cron: '*/5 * * * *'
 
 jobs:
   run-bot:
@@ -22,6 +18,4 @@ jobs:
       - name: Executar bot
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
-          TG_TOKEN: ${{ secrets.TG_TOKEN }}
-          TG_GROUP_ID: ${{ secrets.TG_GROUP_ID }}
         run: python bot_live.py
