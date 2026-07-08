@@ -15,8 +15,8 @@ LAST_UPDATE_FILE= os.path.join(BASE_DIR, "last_update.json")
 BRT             = timezone(timedelta(hours=-3))
 
 # ─── Credenciais ───────────────────────────────────────────────────────────────
-TELEGRAM_TOKEN  = os.environ.get("TG_TOKEN", "")
-CHAT_IDS        = [os.environ.get("TG_GROUP_ID", "")]  # BOOT IA INTELIGENTE (Zapia)
+TELEGRAM_TOKEN  = "8856016328:AAF_YztIUJOopqRYNE-Wxtj5UkPh1JF1_lo"
+CHAT_IDS        = ["-1003530439409", "-1003910012105"]  # BOOT IA INTELIGENTE (Zapia)
 ODDS_API_KEY    = "74e3ecb93cc2333874cb7038b9f682c0"
 RAPIDAPI_KEY    = "f72be1a7cdmsha226030291845afp131cd7jsn00f5979540aa"
 
@@ -370,7 +370,7 @@ def send_telegram(msg, botoes=True, reply_to=None, marca=None, home="", away="")
 # ═══════════════════════════════════════════════════════════════════════════════
 # ARQUIVOS LOCAIS
 # ═══════════════════════════════════════════════════════════════════════════════
-GITHUB_TOKEN = os.environ.get("GH_PAT", "")
+GITHUB_TOKEN = "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"
 GITHUB_REPO  = os.environ.get("GITHUB_REPOSITORY", "cleubianodasilva-png/boot-ia-inteligente-bot")
 SENT_API_PATH      = "sent_live_signals.json"
 RESULTADO_API_PATH = "resultados.json"
