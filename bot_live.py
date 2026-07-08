@@ -1106,7 +1106,7 @@ def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_v
            f"📡 <b>{home}</b> x <b>{away}</b>\n"
            f"⏰️ Minuto: <b>{minuto}</b>\n{sep}\n"
            f"📊 <b>Análise ao Vivo da Entrada:</b>\n{eb}\n"
-           f"💰 Odd Mínima Recomendada: 1.70\n{sep}\n")
+           f"💰 Odd Mínima Recomendada: <b>1.70</b>\n{sep}\n")
     if "CORNER" in mercado: msg += f"⛳️ Escanteios Atuais: <b>{cantos_atual}</b>\n"
     msg += f"📌 Entrada: <b>{entrada}</b>\n✅ Critérios: <b>{n}/6</b>\n{sep}\n⚠️Jogue com responsabilidade⚠️"
     return msg
