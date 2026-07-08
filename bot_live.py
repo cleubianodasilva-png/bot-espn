@@ -1480,7 +1480,7 @@ def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_v
         pa = int(round(float(pa_raw) * 100)) if float(pa_raw) <= 1 else int(round(float(pa_raw)))
         stats_visual = f"📊 <b>Estatísticas ao Vivo:</b>\n📈 Posse: {ph}% - {pa}%\n🚀 Chutes: {ch_h} - {ch_a}\n🎯 No Alvo: {cg_h} - {cg_a}\n⛳️ Cantos: {cn_h} - {cn_a}\n{sep}\n"
     header = f"{sep}\n{title}\n⚽️ Placar: {placar}\n🌏 Liga: {liga}\n📡 <b>{home}</b> x <b>{away}</b>\n⏰️ Minuto: <b>{minuto}'</b>\n{sep}\n"
-    body = f"{stats_visual}📝 <b>Análise Técnica:</b>\n{motivo}\n\n💰 Odd Mínima: <b>1.70</b>\n{sep}\n"
+    body = f"{stats_visual}📝 <b>Análise Técnica:</b>\n{motivo}\n💰 Odd Mínima: <b>1.70</b>\n{sep}\n"
     footer = ""
     if "CORNER" in mercado: footer += f"⛳️ Escanteios Atuais: <b>{cantos_atual}</b>\n"
     footer += f"📌 Entrada: <b>{entrada}</b>\n✅ Critérios: <b>{n}/6</b>\n{sep}\n⚠️Jogue com responsabilidade⚠️"
