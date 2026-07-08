@@ -21,11 +21,11 @@ ODDS_API_KEY    = "74e3ecb93cc2333874cb7038b9f682c0"
 RAPIDAPI_KEY    = "f72be1a7cdmsha226030291845afp131cd7jsn00f5979540aa"
 
 # apifootball (fallback quando ESPN não tiver o jogo)
-API_FOOTBALL_KEYS = [
+API_FOOTBALL_KEYS = ["312c2ecc90136b390d19c765711088d8121b195418b9c2e8006b9e8f7ed8e4ed", # Chave Mestra Ativa
     "77c645149c00ea5bbcca2c348e8a46c8",   # Chave do irmão (principal)
     "7fa6994f1e4103991a95ad53d2e7cc6b",   # Chave própria (fallback)
 ]
-API_FOOTBALL_URL = "https://v3.football.api-sports.io"
+API_FOOTBALL_URL = "https://apiv3.apifootball.com"
 
 # ESPN (principal — pública, sem chave, sem limite)
 ESPN_SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/soccer/{liga}/scoreboard"
