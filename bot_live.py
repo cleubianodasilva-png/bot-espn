@@ -1410,7 +1410,7 @@ def run():
         )
 
         # MERCADO 1: OVER 0.5 HT (15-27 min, 0x0, favorito empatando, sem vermelho do fav)
-        if p == 1 and 15 <= m <= 27 and fav_empatando and red_fav == 0:
+        if p == 1 and 15 <= m <= 27 and sh == 0 and sa == 0 and fav_empatando and red_fav == 0:
             hoje = datetime.now(BRT).strftime('%Y%m%d')
             key = f"{fid}_ht_{hoje}"
             if key not in sent:
@@ -1438,7 +1438,7 @@ def run():
                         registrar_sinal(fid, "LIMITEHT", h, a, mid)
 
         # MERCADO 2: AMBAS MARCAM BTTS (60-75 min, fav perdendo por 1, sem vermelho do fav)
-        if p == 2 and 60 <= m <= 75 and fav_perdendo_1 and red_fav == 0:
+        if p == 2 and 60 <= m <= 75 and ((sh == 1 and sa == 0) or (sh == 0 and sa == 1)) and fav_perdendo_1 and red_fav == 0:
             hoje = datetime.now(BRT).strftime('%Y%m%d')
             key = f"{fid}_btts_{hoje}"
             if key not in sent:
@@ -1448,7 +1448,7 @@ def run():
                     registrar_sinal(fid, "BTTS", h, a, mid)
 
         # MERCADO 3: OVER 1.5 FT (60-75 min, fav empatando ou perdendo por 1, placares: 0x0/1x0/0x1/1x1, sem vermelho do fav)
-        if p == 2 and 60 <= m <= 75 and oft_valido and red_fav == 0:
+        if p == 2 and 60 <= m <= 75 and ((sh == 1 and sa == 0) or (sh == 0 and sa == 1)) and fav_perdendo_1 and red_fav == 0:
             hoje = datetime.now(BRT).strftime('%Y%m%d')
             key = f"{fid}_oft_{hoje}"
             if key not in sent:
@@ -1458,9 +1458,7 @@ def run():
                     registrar_sinal(fid, "OFT", h, a, mid)
 
         # MERCADO 4: OVER GOL PARTIDA (60-75 min, placares 0x0/1x1/0x1/1x0, favorito empatando ou perdendo por 1)
-        overgoal_placar = (sh == 0 and sa == 0) or (sh == 1 and sa == 1) or (sh == 0 and sa == 1) or (sh == 1 and sa == 0)
-        # 0x0 e 1x1 = sempre validos; 1x0 e 0x1 exigem favorito empatando ou perdendo por 1
-        overgoal_valido = overgoal_placar and ((sh == 0 and sa == 0) or (sh == 1 and sa == 1) or fav_empatando or fav_perdendo_1)
+        overgoal_valido = (fav_empatando or fav_perdendo_1)
         if p == 2 and 60 <= m <= 75 and overgoal_valido and red_fav == 0:
             hoje = datetime.now(BRT).strftime('%Y%m%d')
             key = f"{fid}_overgoal_{hoje}"
@@ -1483,7 +1481,7 @@ def run():
                     registrar_sinal(fid, "OVERGOAL", h, a, mid)
 
         # MERCADO 5: ESCANTEIO LIMITE HT (30-38 min, fav confirmado, empatando ou perdendo por 1, sem vermelho)
-        if p == 1 and 30 <= m <= 38 and fav_por_odds and corner_valido and red_fav == 0:
+        if p == 1 and 30 <= m <= 38 and (fav_empatando or fav_perdendo_1) and red_fav == 0:
             hoje = datetime.now(BRT).strftime('%Y%m%d')
             key = f"{fid}_cht_{hoje}"
             cantos_h = stats.get("escanteios_h", -1) if stats else -1
@@ -1498,7 +1496,7 @@ def run():
                     registrar_sinal(fid, "CORNER_HT", h, a, mid, extra_val=cantos)
 
         # MERCADO 6: ESCANTEIO LIMITE FT (80-88 min, fav confirmado, empatando ou perdendo por 1, sem vermelho)
-        if p == 2 and 80 <= m <= 88 and fav_por_odds and corner_valido and red_fav == 0:
+        if p == 2 and 80 <= m <= 88 and (fav_empatando or fav_perdendo_1) and red_fav == 0:
             hoje = datetime.now(BRT).strftime('%Y%m%d')
             key = f"{fid}_cft_{hoje}"
             cantos_h = stats.get("escanteios_h", -1) if stats else -1
