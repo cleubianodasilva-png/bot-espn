@@ -315,8 +315,8 @@ def send_telegram(msg, botoes=True, reply_to=None, marca=None, home="", away="")
         if botoes:
             import urllib.parse
             query = urllib.parse.quote(f"{home} vs {away}") if home and away else ""
-            bet365_url   = "https://www.bet365.bet.br/#/AZ/"
-            paripesa_url = "https://paripesa.com/pt/live"
+            bet365_url   = "https://www.bet365.com/"
+            paripesa_url = "https://paripesa.com/"
             payload["reply_markup"] = json.dumps({"inline_keyboard": [[
                 {"text": "🟣 BET365",   "url": bet365_url},
                 {"text": "🔵 PARIPESA", "url": paripesa_url}
@@ -1104,7 +1104,7 @@ def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_v
            f"⚽️ Placar: <b>{placar}</b>\n"
            f"🌏 Liga: <b>{liga}</b>\n"
            f"📡 <b>{home}</b> x <b>{away}</b>\n"
-           f"⏰️ Minuto: <b>{minuto}'</b>\n{sep}\n"
+           f"⏰️ Minuto: <b>{minuto}</b>\n{sep}\n"
            f"📊 <b>Análise ao Vivo da Entrada:</b>\n{eb}\n"
            f"💰 Odd Mínima Recomendada: 1.70\n{sep}\n")
     if "CORNER" in mercado: msg += f"⛳️ Escanteios Atuais: <b>{cantos_atual}</b>\n"
