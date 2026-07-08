@@ -641,19 +641,43 @@ def _fetch_liga(liga_slug):
     return resultado
 
 
-def get_jogos_espn():
-    from concurrent.futures import ThreadPoolExecutor, as_completed
-    jogos  = []
-    vistos = set()
-    with ThreadPoolExecutor(max_workers=20) as executor:
-        futures = {executor.submit(_fetch_liga, slug): slug for slug in ESPN_LIGAS}
-        for future in as_completed(futures):
-            for j in future.result():
-                if j["fid"] not in vistos:
-                    vistos.add(j["fid"])
-                    jogos.append(j)
-    print(f"[ESPN] {len(jogos)} jogos ao vivo ({len(ESPN_LIGAS)} ligas monitoradas)")
-    return jogos
+
+def get_jogos_espn_global():
+    url = "https://site.api.espn.com/apis/site/v2/sports/soccer/all/scoreboard"
+    try:
+        r = requests.get(url, timeout=15)
+        events = r.json().get("events", [])
+        jogos = []
+        for e in events:
+            comp = e.get("competitions", [{}])[0]
+            status = comp.get("status", {}).get("type", {})
+            if status.get("state") != "in": continue
+            
+            # Extração de dados básica
+            h_team = comp.get("competitors", [{}])[0]
+            a_team = comp.get("competitors", [{}])[1]
+            
+            # Normalização de nomes
+            home_name = h_team.get("team", {}).get("displayName", "Home")
+            away_name = a_team.get("team", {}).get("displayName", "Away")
+            
+            jogos.append({
+                "fid": "espn_" + str(e.get("id")),
+                "fid_raw": str(e.get("id")),
+                "home": home_name,
+                "away": away_name,
+                "sh": int(h_team.get("score", 0)),
+                "sa": int(a_team.get("score", 0)),
+                "minuto": int(comp.get("status", {}).get("clock", 0) // 60),
+                "period": comp.get("status", {}).get("period", 1),
+                "liga": e.get("season", {}).get("displayName", "Soccer"),
+                "source": "espn"
+            })
+        return jogos
+    except Exception as e:
+        print(f"[ESPN Global] Erro: {e}")
+        return []
+
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
