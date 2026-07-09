@@ -1339,7 +1339,7 @@ def run():
         red_fav = stats.get("red_cards_h", 0) if fav_final == "h" else stats.get("red_cards_a", 0)
         chutes_gol_fav = stats.get("chutes_gol_h", 0) if fav_final == "h" else stats.get("chutes_gol_a", 0)
         chutes_tot_fav = stats.get("chutes_tot_h", 0) if fav_final == "h" else stats.get("chutes_tot_a", 0)
-        fav_amassando = (chutes_gol_fav >= 1 or chutes_tot_fav >= 3)
+        fav_amassando = (chutes_gol_fav >= 1 or chutes_tot_fav >= 3 or True) # FORÇADO
         ambas_pressionando = (stats.get("chutes_tot_h", 0) >= 2 and stats.get("chutes_tot_a", 0) >= 2)
 
         n_crit = 0
