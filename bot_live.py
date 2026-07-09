@@ -1304,6 +1304,11 @@ def run():
     jogos_live = jogos_apif + [j for j in jogos_espn if j["fid"] not in fids_existentes] + jogos_bzz
     print(f"[SCAN] Total: {len(jogos_live)} jogos ao vivo")
 
+    print(f"[RAW-DEBUG] Primeiros 5 jogos encontrados:")
+    for j in jogos_live[:5]:
+        print(f"  - {j.get('home')} x {j.get('away')} | Min: {j.get('minuto')} | P: {j.get('period')}")
+
+
     jogos_na_janela = filtrar_janelas(jogos_live)
     check_status_command(total_jogos_live=len(jogos_live), jogos_live=jogos_live, jogos_na_janela=jogos_na_janela)
 
@@ -1315,7 +1320,12 @@ def run():
         liga = str(j.get("liga", ""))
         source = j.get("source", "espn")
 
+        
+        # --- DEBUG DETALHADO ---
+        print(f"[DEBUG] {h}x{a} | Min: {m} | Placar: {placar} | Janela: {'Sim' if (15<=m<=27 or 30<=m<=38 or 60<=m<=75 or 80<=m<=88) else 'Não'}")
+        
         # BUSCA DE ESTATÍSTICAS PROFUNDAS
+
         stats = get_stats_apifootball_v3(j.get("fid_raw", fid))
         if not stats:
             if source == "bzzoiro": stats = get_stats_bzzoiro(j["fid_raw"], h, a)
@@ -1326,12 +1336,18 @@ def run():
             continue
 
         # FAVORITO E PRESSÃO
-        fav_final = get_favorito_odds(h, a, fid=fid, league=j.get("liga_slug", liga))
+        fav_final = get_odd_favorito_num(h, a, fid=fid, league=j.get("liga_slug", liga))
         chutes_gol_fav = stats.get("chutes_gol_h", 0) if fav_final == "h" else stats.get("chutes_gol_a", 0)
         chutes_tot_fav = stats.get("chutes_tot_h", 0) if fav_final == "h" else stats.get("chutes_tot_a", 0)
         
         fav_amassando = (chutes_gol_fav >= 1 or chutes_tot_fav >= 3)
         ambas_pressionando = (stats.get("chutes_tot_h", 0) >= 2 and stats.get("chutes_tot_a", 0) >= 2)
+        
+        if not (fav_amassando or ambas_pressionando):
+            print(f"  [X] Sem Pressão: Gol Fav: {chutes_gol_fav} | Tot Fav: {chutes_tot_fav} | Ambas: {ambas_pressionando}")
+        else:
+            print(f"  [V] Pressão OK: Gol Fav: {chutes_gol_fav} | Tot Fav: {chutes_tot_fav}")
+
         
         fav_empatando = (sh == sa)
         fav_perdendo_1 = (fav_final == "h" and sa == sh + 1) or (fav_final == "a" and sh == sa + 1)
@@ -1389,3 +1405,11 @@ def run():
 if __name__ == "__main__":
     run()
 
+
+def get_stats_espn(fid, home, away):
+    # Stub para evitar erro, a apifootball mestre já deve prover os dados
+    return {}
+
+def get_stats_bzzoiro(fid, home, away):
+    # Stub para evitar erro
+    return {}
