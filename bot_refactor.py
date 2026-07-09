@@ -655,11 +655,14 @@ def enviar_relatorio_diario():
     total = greens + reds
     taxa  = (greens / total * 100) if total > 0 else 0
     msg = (
-        f"{sep}📊 <b>RELATÓRIO DIÁRIO — {hoje}</b>{sep}"
-        f"✅ <b>GREEN:</b> {greens}"
-        f"🔴 <b>RED:</b> {reds}"
-        f"📈 <b>TOTAL DE ENTRADAS:</b> {total}"
-        f"🎯 <b>ASSERTIVIDADE:</b> {taxa:.1f}%{sep}"
+        f"{sep}\n"
+        f"📊 <b>RELATÓRIO DIÁRIO — {hoje}</b>\n"
+        f"{sep}\n"
+        f"✅ <b>GREEN:</b> {greens}\n"
+        f"🔴 <b>RED:</b> {reds}\n"
+        f"📈 <b>TOTAL DE ENTRADAS:</b> {total}\n"
+        f"🎯 <b>ASSERTIVIDADE:</b> {taxa:.1f}%\n"
+        f"{sep}\n"
         f"⚠️👆<i>Resultados do dia</i>👆⚠️"
     )
     if send_telegram(msg, botoes=False):
