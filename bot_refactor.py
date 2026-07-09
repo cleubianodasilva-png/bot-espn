@@ -1787,7 +1787,7 @@ def check_status_command(total_jogos_live=0, jogos_live=None, jogos_na_janela=No
                     linhas_fora = "—"
                 msg_radar = (
                     f"{sep}\n"
-                    f"📡 <b>RADAR AO VIVO</b> 📡\n"
+                    f"📡👉<b>RADAR DE JOGOS AO VIVO</b>👈📡\n"
                     f"{sep}\n"
                     f"🔴 <b>{total_jogos_live} jogos ao vivo</b>\n"
                     f"🎯 <b>{len(jogos_na_janela)} na janela alvo</b>\n"
