@@ -928,7 +928,7 @@ def get_jogos_bzzoiro(fids_existentes):
         headers = {"Authorization": "Token " + BZZOIRO_TOKEN}
         r = requests.get(BZZOIRO_URL + "/api/v2/events/live/", headers=headers, timeout=15)
         data = r.json()
-        results = data.get("results", [])
+        results = data.get("events", [])
         jogos = []
         for ev in results:
             fid = "bzz_" + str(ev.get("id", ""))
@@ -1023,7 +1023,7 @@ def get_jogos_bzzoiro(fids_existentes):
         headers = {"Authorization": "Token " + BZZOIRO_TOKEN}
         r = requests.get(BZZOIRO_URL + "/api/v2/events/live/", headers=headers, timeout=15)
         data = r.json()
-        results = data.get("results", [])
+        results = data.get("events", [])
         jogos = []
         for ev in results:
             fid = "bzz_" + str(ev.get("id", ""))
@@ -1118,7 +1118,7 @@ def get_jogos_bzzoiro(fids_existentes):
         headers = {"Authorization": "Token " + BZZOIRO_TOKEN}
         r = requests.get(BZZOIRO_URL + "/api/v2/events/live/", headers=headers, timeout=15)
         data = r.json()
-        results = data.get("results", [])
+        results = data.get("events", [])
         jogos = []
         for ev in results:
             fid = "bzz_" + str(ev.get("id", ""))
