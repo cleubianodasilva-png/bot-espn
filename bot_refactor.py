@@ -114,6 +114,7 @@ def obter_nome_liga(game, fonte):
 # FONTES: ESPN PÚBLICA + BZZOIRO (TOKEN ATIVO) + APIFOOTBALL (V3 ATIVA)
 # ═══════════════════════════════════════════════════════════════════════════════
 import os, json, requests, time
+APIFOOTBALL_KEY = os.getenv("APIFOOTBALL_KEY", "")
 from datetime import datetime, timezone, timedelta
 
 # ─── Caminhos e Fuso ───────────────────────────────────────────────────────────
