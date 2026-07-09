@@ -1595,7 +1595,7 @@ def check_status_command(total_jogos_live=0, jogos_live=None, jogos_na_janela=No
             chat_id = str(msg.get("chat", {}).get("id", ""))
             msg_ts  = msg.get("date", 0)
             # Ignora comandos com mais de 30 minutos (evita processar acúmulo muito antigo)
-            if agora_ts - msg_ts > 1800:
+            if agora_ts - msg_ts > 600: # Ignora comandos com mais de 10 minutos
                 continue
             if chat_id not in [str(c) for c in CHAT_IDS]:
                 continue
