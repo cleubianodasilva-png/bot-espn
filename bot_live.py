@@ -862,25 +862,51 @@ def get_jogos_bzzoiro(fids_existentes):
 
 
 
+
 def get_stats_apifootball_v3(match_id):
     """Busca estatísticas detalhadas no endpoint get_statistics (mais confiável)."""
+    if not match_id: return None
     url = f"https://apiv3.apifootball.com/?action=get_statistics&match_id={match_id}&APIkey={APIFOOTBALL_KEY}"
     try:
         r = requests.get(url, timeout=10)
         data = r.json()
-        if isinstance(data, dict):
-            game_stats = data.get(str(match_id), {})
-            stats_list = game_stats.get("statistics", [])
-            res = {}
-            for s in stats_list:
-                t = s["type"].lower()
-                h, a = s["home"] or 0, s["away"] or 0
-                if "corners" in t: res["escanteios_h"], res["escanteios_a"] = int(h), int(a)
-                if "shots total" in t or "total shots" in t: res["chutes_tot_h"], res["chutes_tot_a"] = int(h), int(a)
-                if "on target" in t: res["chutes_gol_h"], res["chutes_gol_a"] = int(h), int(a)
-            if res: return res
+        
+        # A apifootball.com v3 pode retornar:
+        # 1. Uma lista de dicionários (um para cada time)
+        # 2. Um dicionário com o match_id como chave (formato antigo)
+        # 3. Um dicionário com erro
+        
+        stats_list = []
+        if isinstance(data, list):
+            stats_list = data
+        elif isinstance(data, dict):
+            if str(match_id) in data:
+                stats_list = data[str(match_id)].get("statistics", [])
+            elif "result" in data:
+                stats_list = data["result"]
+        
+        if not stats_list: return None
+        
+        res = {"escanteios_h": 0, "escanteios_a": 0, "chutes_tot_h": 0, "chutes_tot_a": 0, "chutes_gol_h": 0, "chutes_gol_a": 0, "red_cards_h": 0, "red_cards_a": 0}
+        
+        # Formato de lista de tipos (ex: [{"type": "Corners", "home": "5", "away": "2"}, ...])
+        for s in stats_list:
+            t = str(s.get("type", "")).lower()
+            h = str(s.get("home", "0")).strip() or "0"
+            a = str(s.get("away", "0")).strip() or "0"
+            
+            try:
+                val_h, val_a = int(h), int(a)
+                if "corners" in t: res["escanteios_h"], res["escanteios_a"] = val_h, val_a
+                elif "shots total" in t or "total shots" in t: res["chutes_tot_h"], res["chutes_tot_a"] = val_h, val_a
+                elif "on target" in t: res["chutes_gol_h"], res["chutes_gol_a"] = val_h, val_a
+                elif "red cards" in t: res["red_cards_h"], res["red_cards_a"] = val_h, val_a
+            except: continue
+            
+        return res
     except: pass
     return None
+
 
 
 
