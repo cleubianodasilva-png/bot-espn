@@ -92,7 +92,7 @@ def gerar_layout_radar(jogos_ao_vivo, jogos_na_janela):
         texto_fora = "—"
     corpo = (
         f"{sep}\n"
-        f"📡👉<b>RADAR DE JOGOS AO VIVO</b>👇📡\n"
+        f"📡👉<b>RADAR DE JOGOS AO VIVO</b>👈📡\n"
         f"{sep}\n"
         f"⚠️ <b>{len(jogos_ao_vivo)} jogos ao vivo</b>\n"
         f"🎯 <b>{len(jogos_na_janela)} na janela alvo</b>\n"
