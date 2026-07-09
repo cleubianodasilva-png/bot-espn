@@ -20,8 +20,8 @@ CHAT_IDS = [os.environ.get("TG_GROUP_ID", "")]  # BOOT IA INTELIGENTE (Zapia)
 
 # apifootball (fallback quando ESPN não tiver o jogo)
 API_FOOTBALL_KEYS = [
-    "77c645149c00ea5bbcca2c348e8a46c8",   # Chave do irmão (principal)
-    "7fa6994f1e4103991a95ad53d2e7cc6b",   # Chave própria (fallback)
+    "os.getenv("ODDS_API_KEY")",   # Chave do irmão (principal)
+    "os.getenv("ODDS_API_KEY")",   # Chave própria (fallback)
 ]
 API_FOOTBALL_URL = "https://apiv3.apifootball.com"
 
