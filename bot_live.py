@@ -17,8 +17,6 @@ BRT             = timezone(timedelta(hours=-3))
 # ─── Credenciais ───────────────────────────────────────────────────────────────
 TELEGRAM_TOKEN  = os.environ.get("TG_TOKEN", "")
 CHAT_IDS = [os.environ.get("TG_GROUP_ID", "")]  # BOOT IA INTELIGENTE (Zapia)
-ODDS_API_KEY = os.environ.get("ODDS_API_KEY", "")
-RAPIDAPI_KEY = os.environ.get("RAPIDAPI_KEY", "")
 
 # apifootball (fallback quando ESPN não tiver o jogo)
 API_FOOTBALL_KEYS = [
@@ -661,7 +659,7 @@ def get_jogos_espn():
 # ═══════════════════════════════════════════════════════════════════════════════
 def get_jogos_apifootball(fids_espn):
     """Busca todos os jogos ao vivo na apifootball e retorna os que ESPN não tem."""
-    for key in API_FOOTBALL_KEYS:
+    for key in [APIFOOTBALL_COM_KEY]:
         try:
             r = requests.get(
                 f"{API_FOOTBALL_URL}/fixtures",
@@ -718,7 +716,7 @@ def get_jogos_apifootball(fids_espn):
 # ═══════════════════════════════════════════════════════════════════════════════
 def get_stats_apifootball_live(fid):
     """Busca stats ao vivo de um fixture da apifootball."""
-    for key in API_FOOTBALL_KEYS:
+    for key in [APIFOOTBALL_COM_KEY]:
         try:
             r = requests.get(
                 f"{API_FOOTBALL_URL}/fixtures",
@@ -1129,7 +1127,7 @@ def get_stats_espn(eid, home, away):
 # ═══════════════════════════════════════════════════════════════════════════════
 # FALLBACK — apifootball: estatísticas (usado se ESPN falhar)
 # ═══════════════════════════════════════════════════════════════════════════════
-    for key in API_FOOTBALL_KEYS:
+    for key in [APIFOOTBALL_COM_KEY]:
         try:
             r     = requests.get(f"{API_FOOTBALL_URL}/fixtures/statistics",
                                  params={"fixture": fid},
