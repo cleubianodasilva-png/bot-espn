@@ -410,7 +410,7 @@ ESPN_LIGAS = [
 # RapidAPI (fallback de lista)
 RAPIDAPI_URL     = "https://free-api-live-football-data.p.rapidapi.com"
 RAPIDAPI_HEADERS = {
-    "x-rapidapi-key":  APIFOOTBALL_COM_KEY,
+    "x-rapidapi-key":  API_FOOTBALL_KEYS[0],
     "x-rapidapi-host": "free-api-live-football-data.p.rapidapi.com"
 }
 
