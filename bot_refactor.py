@@ -2161,6 +2161,8 @@ def processar_comandos_pendentes(token, chat_id, jogos_live=None, jogos_na_janel
                     print(f"[CMD] Radar respondido com {len(jogos_live)} jogos live, {len(jogos_na_janela)} na janela")
                 elif "/relatorio" in text:
                     enviar_relatorio_diario()
+        if max_id > 0:
+            salvar_cmd_offset(max_id + 1)
     except Exception as e:
         print(f"[CMD] Erro processar comandos: {e}")
 
