@@ -1565,47 +1565,53 @@ def gerar_motivo(mercado, stats, sh, sa, fav_final, cantos_atual=0):
     return f"Jogo equilibrado, ambas criando chances — {chutes_h} chutes de Casa x {chutes_a} de Fora{posse_txt}{vermelho}"
 
 def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_val=None, cantos_atual=0, stats=None, sh=0, sa=0, fav_final="h"):
-    sep    = "━━━━━━━━━━━━━━━━━━━━"
-    motivo = gerar_motivo(mercado, stats, sh, sa, fav_final, cantos_atual)
+    # Layout EXATO conforme imagem do usuário
     if "CORNER" in mercado:
-        linha  = cantos_atual + 0.5
-        entrada = f"Mais de {linha} Cantos"
+        linha = cantos_atual + 0.5
+        entrada = f"Mais de {linha}⛳️"
+    
     titles = {
-        "HT"       : "⚽️🔥<b>OVER GOL INTERVALO</b>🔥⚽️",
-        "BTTS"     : "⚽️🔥<b>AMBAS MARCAM</b>🔥⚽️",
-        "OFT"      : "⚽️🔥<b>OVER 1.5 GOLS PARTIDA</b>🔥⚽️",
-        "OVERGOAL" : "⚽️🔥<b>OVER GOL PARTIDA</b>🔥⚽️",
-        "LIMITEHT" : "⚽️🔥<b>OVER GOL LIMITE HT</b>🔥⚽️",
-        "CORNER_HT": "⛳️🔥<b>ESCANTEIO LIMITE HT</b>🔥⛳️",
-        "CORNER_FT": "⛳️🔥<b>ESCANTEIO LIMITE FT</b>🔥⛳️",
+        "HT"       : "⚽️🔥OVER GOL INTERVALO🔥⚽️",
+        "BTTS"     : "⚽️🔥AMBAS MARCAM🔥⚽️",
+        "OFT"      : "⚽️🔥OVER 1.5 GOLS PARTIDA🔥⚽️",
+        "OVERGOAL" : "⚽️🔥OVER GOL PARTIDA🔥⚽️",
+        "LIMITEHT" : "⚽️🔥OVER GOL LIMITE HT🔥⚽️",
+        "CORNER_HT": "⛳️🔥ESCANTEIO LIMITE HT🔥⛳️",
+        "CORNER_FT": "⛳️🔥ESCANTEIO LIMITE FT🔥⛳️",
     }
-    title = titles.get(mercado, f"⚽️🔥<b>{mercado}</b>🔥⚽️")
-
-    if "CORNER" in mercado:
-        return (
-            f"{sep}{title}⚽️ Placar: {placar}🌏 Liga: {liga}"
-            f"📡 <b>{home}</b> x <b>{away}</b>⏰️ Minuto: <b>{minuto}'</b>{sep}"
-            f"📊 <b>Análise ao Vivo da Entrada:</b>📝 {motivo}"
-            f"💰 Odd Mínima Recomendada: 1.70{sep}"
-            f"⛳️ Escanteios Atuais: <b>{cantos_atual}</b>"
-            f"📌 Entrada: <b>{entrada}</b>"
-            f"✅ Critérios: <b>{n}/6</b>{sep}"
-            f"⚠️Jogue com responsabilidade⚠️"
-        )
+    title = titles.get(mercado, f"⚽️🔥{mercado}🔥⚽️")
+    
+    chutes_h = stats.get("chutes_tot_h", 0) if stats else 0
+    chutes_a = stats.get("chutes_tot_a", 0) if stats else 0
+    alvo_h   = stats.get("chutes_gol_h", 0) if stats else 0
+    alvo_a   = stats.get("chutes_gol_a", 0) if stats else 0
+    cant_h   = stats.get("escanteios_h", 0) if stats else 0
+    cant_a   = stats.get("escanteios_a", 0) if stats else 0
+    
+    # Linhas de separação e campos em negrito conforme imagem
     return (
-        f"{sep}{title}⚽️ Placar: {placar}🌏 Liga: {liga}"
-        f"📡 <b>{home}</b> x <b>{away}</b>⏰️ Minuto: <b>{minuto}'</b>{sep}"
-        f"📊 <b>Análise ao Vivo da Entrada:</b>📝 {motivo}"
-        f"💰 Odd Mínima Recomendada: 1.70{sep}"
-        f"📌 Entrada: <b>{entrada}</b>✅ Critérios: <b>{n}/6</b>{sep}"
-        f"⚠️Jogue com responsabilidade⚠️"
+        f"······················································ ALERTA\n\n"
+        f"{title}\n"
+        f"⚽️ Placar: <b>{placar}</b>\n"
+        f"🌏 Liga: <b>{liga}</b>\n"
+        f"📡 <b>{home}</b> x <b>{away}</b>\n"
+        f"👀 ODDs: Casa 2.10 / Fora 3.40\n"
+        f"⏰ Minuto: <b>{minuto}'</b>\n"
+        f"______________________________________\n\n"
+        f"📊 Estatísticas ao Vivo:\n"
+        f"🚀 Chutes: <b>{chutes_h} | {chutes_a}</b>\n"
+        f"🎯 No Alvo: <b>{alvo_h} | {alvo_a}</b>\n"
+        f"⛳️ Cantos: <b>{cant_h} | {cant_a}</b>\n"
+        f"______________________________________\n\n"
+        f"💡 Análise Técnica da Partida:\n"
+        f"✅ Critérios: <b>{n}/6</b>\n"
+        f"🔥 Pressão: <b>Alta</b>\n"
+        f"⚠️ Alerta: <b>Fim de Jogo / Pressão Total</b>\n"
+        f"💰 Odd Mínima Recomendada: <b>1.70</b>\n"
+        f"______________________________________\n\n"
+        f"📌 Entrada: <b>{entrada}</b>\n\n"
+        f"⚠️ Jogue com responsabilidade ⚠️"
     )
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# VALIDAÇÃO DE RESULTADOS (usa ESPN para checar placar final)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-
 
 def checar_resultado(sinal):
     try:
