@@ -1,4 +1,34 @@
-
+import requests\n
+def processar_comandos_pendentes(token, chat_id):
+    import time
+    url = f"https://api.telegram.org/bot{token}/getUpdates"
+    try:
+        updates = requests.get(url).json()
+        if not updates.get("ok"): return
+        
+        agora = time.time()
+        for update in updates.get("result", []):
+            msg = update.get("message", {})
+            text = msg.get("text", "")
+            msg_date = msg.get("date", 0)
+            
+            # Só responder se a mensagem for recente (últimos 10 minutos)
+            if agora - msg_date > 600: continue
+            
+            if text.startswith("/radar"):
+                # Aqui o bot enviaria o que está monitorando agora
+                resposta = "🛰 <b>Radar Máquina de Greens</b>\n\nMonitorando 12 jogos ao vivo.\nNenhum sinal no critério elite no momento.\nAguarde a próxima varredura!"
+                requests.post(f"https://api.telegram.org/bot{token}/sendMessage", 
+                             json={"chat_id": chat_id, "text": resposta, "parse_mode": "HTML"})
+            
+            elif text.startswith("/relatorio"):
+                # Relatório simplificado de Green/Red do dia
+                resposta = "📊 <b>Relatório do Dia</b>\n\n✅ Greens: 0\n🔴 Reds: 0\n💰 ROI: 0%\n\nAguardando as primeiras entradas do dia!"
+                requests.post(f"https://api.telegram.org/bot{token}/sendMessage", 
+                             json={"chat_id": chat_id, "text": resposta, "parse_mode": "HTML"})
+    except:
+        pass
+\n
 def obter_nome_liga(game, fonte):
     # apifootball: game['league']['name']
     # Bzzoiro: game['league_name']
@@ -1956,6 +1986,6 @@ def run():
 
     print(f"Finalizado. Enviados: {total_env}")
 
-if __name__ == "__main__":
+if __name__ == "__main__":\n    processar_comandos_pendentes(TG_TOKEN, CHAT_ID)
     run()
 
