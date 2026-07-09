@@ -1566,45 +1566,49 @@ def gerar_motivo(mercado, stats, sh, sa, fav_final, cantos_atual=0):
 
 def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_val=None, cantos_atual=0, stats=None, sh=0, sa=0, fav_final="h"):
     sep    = "━━━━━━━━━━━━━━━━━━━━"
-    motivo = gerar_motivo(mercado, stats, sh, sa, fav_final, cantos_atual)
     if "CORNER" in mercado:
         linha  = cantos_atual + 0.5
-        entrada = f"Mais de {linha} Cantos"
+        entrada = f"Mais de {linha}⛳️"
     titles = {
-        "HT"       : "⚽️🔥<b>OVER GOL INTERVALO</b>🔥⚽️",
-        "BTTS"     : "⚽️🔥<b>AMBAS MARCAM</b>🔥⚽️",
-        "OFT"      : "⚽️🔥<b>OVER 1.5 GOLS PARTIDA</b>🔥⚽️",
-        "OVERGOAL" : "⚽️🔥<b>OVER GOL PARTIDA</b>🔥⚽️",
-        "LIMITEHT" : "⚽️🔥<b>OVER GOL LIMITE HT</b>🔥⚽️",
-        "CORNER_HT": "⛳️🔥<b>ESCANTEIO LIMITE HT</b>🔥⛳️",
-        "CORNER_FT": "⛳️🔥<b>ESCANTEIO LIMITE FT</b>🔥⛳️",
+        "HT"       : f"⚽️🔥OVER GOL INTERVALO🔥⚽️",
+        "BTTS"     : f"⚽️🔥AMBAS MARCAM🔥⚽️",
+        "OFT"      : f"⚽️🔥OVER 1.5 GOLS PARTIDA🔥⚽️",
+        "OVERGOAL" : f"⚽️🔥OVER GOL PARTIDA🔥⚽️",
+        "LIMITEHT" : f"⚽️🔥OVER GOL LIMITE HT🔥⚽️",
+        "CORNER_HT": f"⛳️🔥ESCANTEIO LIMITE HT🔥⛳️",
+        "CORNER_FT": f"⛳️🔥ESCANTEIO LIMITE FT🔥⛳️",
     }
-    title = titles.get(mercado, f"⚽️🔥<b>{mercado}</b>🔥⚽️")
-
-    if "CORNER" in mercado:
-        return (
-            f"{sep}{title}⚽️ Placar: {placar}🌏 Liga: {liga}"
-            f"📡 <b>{home}</b> x <b>{away}</b>⏰️ Minuto: <b>{minuto}'</b>{sep}"
-            f"📊 <b>Análise ao Vivo da Entrada:</b>📝 {motivo}"
-            f"💰 Odd Mínima Recomendada: 1.70{sep}"
-            f"⛳️ Escanteios Atuais: <b>{cantos_atual}</b>"
-            f"📌 Entrada: <b>{entrada}</b>"
-            f"✅ Critérios: <b>{n}/6</b>{sep}"
-            f"⚠️Jogue com responsabilidade⚠️"
-        )
+    title = titles.get(mercado, f"⚽️🔥{mercado}🔥⚽️")
+    chutes_h = stats.get("chutes_tot_h", 0) if stats else 0
+    chutes_a = stats.get("chutes_tot_a", 0) if stats else 0
+    alvo_h   = stats.get("chutes_gol_h", 0) if stats else 0
+    alvo_a   = stats.get("chutes_gol_a", 0) if stats else 0
+    cant_h   = stats.get("escanteios_h", 0) if stats else 0
+    cant_a   = stats.get("escanteios_a", 0) if stats else 0
     return (
-        f"{sep}{title}⚽️ Placar: {placar}🌏 Liga: {liga}"
-        f"📡 <b>{home}</b> x <b>{away}</b>⏰️ Minuto: <b>{minuto}'</b>{sep}"
-        f"📊 <b>Análise ao Vivo da Entrada:</b>📝 {motivo}"
-        f"💰 Odd Mínima Recomendada: 1.70{sep}"
-        f"📌 Entrada: <b>{entrada}</b>✅ Critérios: <b>{n}/6</b>{sep}"
-        f"⚠️Jogue com responsabilidade⚠️"
+        f"·········································· ALERTA"
+        f"\n\n"
+        f"{title}\n"
+        f"⚽️ Placar: <b>{placar}</b>\n"
+        f"🌍 Liga: <b>{liga}</b>\n"
+        f"📡 <b>{home}</b> x <b>{away}</b>\n"
+        f"👀 ODDs: Casa 2.10 / Fora 3.40\n"
+        f"⏰ Minuto: <b>{minuto}'</b>\n"
+        f"______________________________________\n"
+        f"📊 Estatísticas ao Vivo:\n"
+        f"🚀 Chutes: {chutes_h} | {chutes_a}\n"
+        f"🎯 No Alvo: {alvo_h} | {alvo_a}\n"
+        f"⛳️ Cantos: {cant_h} | {cant_a}\n"
+        f"______________________________________\n"
+        f"💡 Análise Técnica da Partida:\n"
+        f"✅ Critérios: <b>{n}/6</b>\n"
+        f"🔥 Pressão: Alta\n"
+        f"⚠️ Alerta: Fim de Jogo / Pressao Total\n"
+        f"💰 Odd Mínima Recomendada: 1.70\n"
+        f"______________________________________\n"
+        f"📌 Entrada: <b>{entrada}</b>\n\n"
+        f"⚠️ Jogue com responsabilidade ⚠️"
     )
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# VALIDAÇÃO DE RESULTADOS (usa ESPN para checar placar final)
-# ═══════════════════════════════════════════════════════════════════════════════
-
 
 
 def checar_resultado(sinal):
