@@ -15,13 +15,12 @@ LAST_UPDATE_FILE= os.path.join(BASE_DIR, "last_update.json")
 BRT             = timezone(timedelta(hours=-3))
 
 # ─── Credenciais ───────────────────────────────────────────────────────────────
-TELEGRAM_TOKEN  = os.environ.get("TG_TOKEN", "")
+TELEGRAM_TOKEN  = os.getenv("TG_TOKEN", "")
 CHAT_IDS = [os.environ.get("TG_GROUP_ID", "")]  # BOOT IA INTELIGENTE (Zapia)
 
 # apifootball (fallback quando ESPN não tiver o jogo)
 API_FOOTBALL_KEYS = [
-    "os.getenv("ODDS_API_KEY")",   # Chave do irmão (principal)
-    "os.getenv("ODDS_API_KEY")",   # Chave própria (fallback)
+    os.getenv("APIFOOTBALL_KEY"),   # Chave Mestre protegida
 ]
 API_FOOTBALL_URL = "https://apiv3.apifootball.com"
 
