@@ -67,25 +67,41 @@ def gerar_layout_relatorio(greens, reds, data_str):
     )
     return corpo
 def gerar_layout_radar(jogos_ao_vivo, jogos_na_janela):
-    sep = "━━━━━━━━━━━━━━━━━━━━"
-    texto_janela = "Nenhum jogo na janela no momento."
-    if jogos_na_janela:
-        texto_janela = ""
-        for j in jogos_na_janela:
-            texto_janela += f"⚽️ {j['times']} ({j['minuto']})\n"
-
+    sep = "━" * 25
+    texto_jan = ""
+    for j in jogos_na_janela:
+        h = j.get("home","") or getattr(j,"home","")
+        a = j.get("away","") or getattr(j,"away","")
+        m = j.get("minuto","") or getattr(j,"minuto","")
+        sh = j.get("sh",0) or getattr(j,"sh",0)
+        sa = j.get("sa",0) or getattr(j,"sa",0)
+        liga = j.get("liga","") or getattr(j,"liga","")
+        texto_jan += f"\U0001f3af <b>{h} x {a}</b> | {m}' | {sh}x{sa} | {liga}\n"
+    if not texto_jan:
+        texto_jan = "Nenhum jogo na janela no momento."
+    fora = [j for j in jogos_ao_vivo if j not in jogos_na_janela][:10]
+    texto_fora = ""
+    for j in fora:
+        h = j.get("home","") or getattr(j,"home","")
+        a = j.get("away","") or getattr(j,"away","")
+        m = j.get("minuto","") or getattr(j,"minuto","")
+        sh = j.get("sh",0) or getattr(j,"sh",0)
+        sa = j.get("sa",0) or getattr(j,"sa",0)
+        texto_fora += f"⏳ <b>{h} x {a}</b> | {m}' | {sh}x{sa}\n"
+    if not texto_fora:
+        texto_fora = "—"
     corpo = (
         f"{sep}\n"
-        f"📡 RADAR AO VIVO 📡\n"
+        f"📡👉<b>RADAR DE JOGOS AO VIVO</b>👇📡\n"
         f"{sep}\n"
-        f"🔴 {len(jogos_ao_vivo)} jogos ao vivo\n"
-        f"🎯 {len(jogos_na_janela)} na janela alvo\n"
+        f"⚠️ <b>{len(jogos_ao_vivo)} jogos ao vivo</b>\n"
+        f"🎯 <b>{len(jogos_na_janela)} na janela alvo</b>\n"
         f"{sep}\n"
-        f"🎯 NA JANELA:\n"
-        f"{texto_janela}\n"
+        f"🚨<b>JOGOS NO ALVO:</b>\n"
+        f"{texto_jan}"
         f"{sep}\n"
-        f"⏳ FORA DA JANELA:\n"
-        f"—\n"
+        f"<b>⏳ FORA DA JANELA:</b>\n"
+        f"{texto_fora}"
         f"{sep}"
     )
     return corpo
@@ -2159,7 +2175,6 @@ def processar_comandos_pendentes(token, chat_id, jogos_live=None, jogos_na_janel
                                   json={"chat_id": chat_id, "text": msg_radar, "parse_mode": "HTML"})
                     print(f"[CMD] Radar respondido com {len(jogos_live)} jogos live, {len(jogos_na_janela)} na janela")
                 elif "/relatorio" in text:
-                    from relatorio import enviar_relatorio_diario
                     enviar_relatorio_diario()
     except Exception as e:
         print(f"[CMD] Erro processar comandos: {e}")
