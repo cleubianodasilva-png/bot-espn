@@ -1779,7 +1779,7 @@ def check_status_command(total_jogos_live=0, jogos_live=None, jogos_na_janela=No
                         m = j.get("minuto", 0)
                         sh = j.get("sh", 0)
                         sa = j.get("sa", 0)
-                        linhas_fora += f"⏳ {h} x {a} | {m}' | {sh}x{sa}"
+                        linhas_fora += f"⏳ {h} x {a} | {m}' | {sh}x{sa}\n"
                     if len(fora_janela) > 10:
                         linhas_fora += f"... e mais {len(fora_janela)-10} jogos"
                 else:
@@ -1791,9 +1791,9 @@ def check_status_command(total_jogos_live=0, jogos_live=None, jogos_na_janela=No
                     f"🔴 <b>{total_jogos_live} jogos ao vivo</b>\n"
                     f"🎯 <b>{len(jogos_na_janela)} na janela alvo</b>\n"
                     f"{sep}\n"
-                    f"🚨<b>JOGOS NO ALVO:</b>\n{linhas_janela}\n"
+                    f"🚨<b>JOGOS NO ALVO:</b>\n{linhas_janela}"
                     f"{sep}\n"
-                    f"<b>⏳ FORA DA JANELA:</b>\n{linhas_fora}\n"
+                    f"<b>⏳ FORA DA JANELA:</b>\n{linhas_fora}"
                     f"{sep}"
                 )
                 requests.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage", json={"chat_id": chat_orig, "text": msg_radar, "parse_mode": "HTML"}, timeout=10)
