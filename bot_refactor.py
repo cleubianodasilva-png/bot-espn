@@ -49,49 +49,47 @@ def analisar_e_disparar(game, stats, p, m, sh, sa, odd_h, odd_a, sent_vistos):
 
     return None, None
 
-\n
 def gerar_layout_relatorio(greens, reds, data_str):
     sep = "━━━━━━━━━━━━━━━━━━━━"
     total = greens + reds
     assertividade = (greens / total * 100) if total > 0 else 0.0
     
     corpo = (
-        f"{sep}\n"
-        f"📊 RELATÓRIO DIÁRIO — {data_str}\n"
-        f"{sep}\n"
-        f"✅ GREEN: <b>{greens}</b>\n"
-        f"🔴 RED: <b>{reds}</b>\n"
-        f"📈 TOTAL DE ENTRADAS: <b>{total}</b>\n"
-        f"🎯 ASSERTIVIDADE: <b>{assertividade:.1f}%</b>\n"
-        f"{sep}\n"
+        f"{sep}"
+        f"📊 RELATÓRIO DIÁRIO — {data_str}"
+        f"{sep}"
+        f"✅ GREEN: <b>{greens}</b>"
+        f"🔴 RED: <b>{reds}</b>"
+        f"📈 TOTAL DE ENTRADAS: <b>{total}</b>"
+        f"🎯 ASSERTIVIDADE: <b>{assertividade:.1f}%</b>"
+        f"{sep}"
         f"⚠️👆Resultados do dia👆⚠️"
     )
     return corpo
-\n
 def gerar_layout_radar(jogos_ao_vivo, jogos_na_janela):
     sep = "━━━━━━━━━━━━━━━━━━━━"
     texto_janela = "Nenhum jogo na janela no momento."
     if jogos_na_janela:
         texto_janela = ""
         for j in jogos_na_janela:
-            texto_janela += f"⚽️ {j['times']} ({j['minuto']})\n"
+            texto_janela += f"⚽️ {j['times']} ({j['minuto']})"
 
     corpo = (
-        f"{sep}\n"
-        f"📡 RADAR AO VIVO 📡\n"
-        f"{sep}\n"
-        f"🔴 {len(jogos_ao_vivo)} jogos ao vivo\n"
-        f"🎯 {len(jogos_na_janela)} na janela alvo\n"
-        f"{sep}\n"
-        f"🎯 NA JANELA:\n"
-        f"{texto_janela}\n"
-        f"{sep}\n"
-        f"⏳ FORA DA JANELA:\n"
-        f"—\n"
+        f"{sep}"
+        f"📡 RADAR AO VIVO 📡"
+        f"{sep}"
+        f"🔴 {len(jogos_ao_vivo)} jogos ao vivo"
+        f"🎯 {len(jogos_na_janela)} na janela alvo"
+        f"{sep}"
+        f"🎯 NA JANELA:"
+        f"{texto_janela}"
+        f"{sep}"
+        f"⏳ FORA DA JANELA:"
+        f"—"
         f"{sep}"
     )
     return corpo
-\nimport requests\n
+import requests
 
 def obter_nome_liga(game, fonte):
     # apifootball: game['league']['name']
@@ -111,7 +109,6 @@ def obter_nome_liga(game, fonte):
         liga = game.get('league_name') or game.get('competition_name') or game.get('league') or "Liga Não Identificada"
         
     return liga
-\n
 # ═══════════════════════════════════════════════════════════════════════════════
 # BOT MÁQUINA DE GREENS / ZAPIA - VERSÃO ELITE 100% AUTOMÁTICA
 # FONTES: ESPN PÚBLICA + BZZOIRO (TOKEN ATIVO) + APIFOOTBALL (V3 ATIVA)
@@ -658,11 +655,11 @@ def enviar_relatorio_diario():
     total = greens + reds
     taxa  = (greens / total * 100) if total > 0 else 0
     msg = (
-        f"{sep}\n📊 <b>RELATÓRIO DIÁRIO — {hoje}</b>\n{sep}\n"
-        f"✅ <b>GREEN:</b> {greens}\n"
-        f"🔴 <b>RED:</b> {reds}\n"
-        f"📈 <b>TOTAL DE ENTRADAS:</b> {total}\n"
-        f"🎯 <b>ASSERTIVIDADE:</b> {taxa:.1f}%\n{sep}\n"
+        f"{sep}📊 <b>RELATÓRIO DIÁRIO — {hoje}</b>{sep}"
+        f"✅ <b>GREEN:</b> {greens}"
+        f"🔴 <b>RED:</b> {reds}"
+        f"📈 <b>TOTAL DE ENTRADAS:</b> {total}"
+        f"🎯 <b>ASSERTIVIDADE:</b> {taxa:.1f}%{sep}"
         f"⚠️👆<i>Resultados do dia</i>👆⚠️"
     )
     if send_telegram(msg, botoes=False):
@@ -1583,21 +1580,21 @@ def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_v
 
     if "CORNER" in mercado:
         return (
-            f"{sep}\n{title}\n⚽️ Placar: {placar}\n🌏 Liga: {liga}\n"
-            f"📡 <b>{home}</b> x <b>{away}</b>\n⏰️ Minuto: <b>{minuto}'</b>\n{sep}\n"
-            f"📊 <b>Análise ao Vivo da Entrada:</b>\n📝 {motivo}\n"
-            f"💰 Odd Mínima Recomendada: 1.70\n{sep}\n"
-            f"⛳️ Escanteios Atuais: <b>{cantos_atual}</b>\n"
-            f"📌 Entrada: <b>{entrada}</b>\n"
-            f"✅ Critérios: <b>{n}/6</b>\n{sep}\n"
+            f"{sep}{title}⚽️ Placar: {placar}🌏 Liga: {liga}"
+            f"📡 <b>{home}</b> x <b>{away}</b>⏰️ Minuto: <b>{minuto}'</b>{sep}"
+            f"📊 <b>Análise ao Vivo da Entrada:</b>📝 {motivo}"
+            f"💰 Odd Mínima Recomendada: 1.70{sep}"
+            f"⛳️ Escanteios Atuais: <b>{cantos_atual}</b>"
+            f"📌 Entrada: <b>{entrada}</b>"
+            f"✅ Critérios: <b>{n}/6</b>{sep}"
             f"⚠️Jogue com responsabilidade⚠️"
         )
     return (
-        f"{sep}\n{title}\n⚽️ Placar: {placar}\n🌏 Liga: {liga}\n"
-        f"📡 <b>{home}</b> x <b>{away}</b>\n⏰️ Minuto: <b>{minuto}'</b>\n{sep}\n"
-        f"📊 <b>Análise ao Vivo da Entrada:</b>\n📝 {motivo}\n"
-        f"💰 Odd Mínima Recomendada: 1.70\n{sep}\n"
-        f"📌 Entrada: <b>{entrada}</b>\n✅ Critérios: <b>{n}/6</b>\n{sep}\n"
+        f"{sep}{title}⚽️ Placar: {placar}🌏 Liga: {liga}"
+        f"📡 <b>{home}</b> x <b>{away}</b>⏰️ Minuto: <b>{minuto}'</b>{sep}"
+        f"📊 <b>Análise ao Vivo da Entrada:</b>📝 {motivo}"
+        f"💰 Odd Mínima Recomendada: 1.70{sep}"
+        f"📌 Entrada: <b>{entrada}</b>✅ Critérios: <b>{n}/6</b>{sep}"
         f"⚠️Jogue com responsabilidade⚠️"
     )
 
@@ -1728,9 +1725,9 @@ def check_status_command(total_jogos_live=0, jogos_live=None, jogos_na_janela=No
                         sh = j.get("sh", 0)
                         sa = j.get("sa", 0)
                         liga = j.get("liga", "")
-                        linhas_janela += f"🎯 <b>{h} x {a}</b> | {m}' | {sh}x{sa} | {liga}\n"
+                        linhas_janela += f"🎯 <b>{h} x {a}</b> | {m}' | {sh}x{sa} | {liga}"
                 else:
-                    linhas_janela = "Nenhum jogo na janela no momento.\n"
+                    linhas_janela = "Nenhum jogo na janela no momento."
                 # Monta lista de jogos ao vivo fora da janela (até 10)
                 fora_janela = [j for j in jogos_live if j not in jogos_na_janela]
                 if fora_janela:
@@ -1741,19 +1738,19 @@ def check_status_command(total_jogos_live=0, jogos_live=None, jogos_na_janela=No
                         m = j.get("minuto", 0)
                         sh = j.get("sh", 0)
                         sa = j.get("sa", 0)
-                        linhas_fora += f"⏳ {h} x {a} | {m}' | {sh}x{sa}\n"
+                        linhas_fora += f"⏳ {h} x {a} | {m}' | {sh}x{sa}"
                     if len(fora_janela) > 10:
-                        linhas_fora += f"... e mais {len(fora_janela)-10} jogos\n"
+                        linhas_fora += f"... e mais {len(fora_janela)-10} jogos"
                 else:
-                    linhas_fora = "—\n"
+                    linhas_fora = "—"
                 msg_radar = (
-                    f"{sep}\n📡 <b>RADAR AO VIVO</b> 📡\n{sep}\n"
-                    f"🔴 <b>{total_jogos_live} jogos ao vivo</b>\n"
-                    f"🎯 <b>{len(jogos_na_janela)} na janela alvo</b>\n"
-                    f"{sep}\n"
-                    f"<b>🎯 NA JANELA:</b>\n{linhas_janela}"
-                    f"{sep}\n"
-                    f"<b>⏳ FORA DA JANELA:</b>\n{linhas_fora}"
+                    f"{sep}📡 <b>RADAR AO VIVO</b> 📡{sep}"
+                    f"🔴 <b>{total_jogos_live} jogos ao vivo</b>"
+                    f"🎯 <b>{len(jogos_na_janela)} na janela alvo</b>"
+                    f"{sep}"
+                    f"<b>🎯 NA JANELA:</b>{linhas_janela}"
+                    f"{sep}"
+                    f"<b>⏳ FORA DA JANELA:</b>{linhas_fora}"
                     f"{sep}"
                 )
                 send_telegram(msg_radar, botoes=False)
@@ -2062,15 +2059,15 @@ def processar_comandos_pendentes(token, chat_id):
                 text = msg.get("text", "")
                 sep = "━━━━━━━━━━━━━━━━━━━━"
                 if "/radar" in text:
-                    msg = f"{sep}\n📡 RADAR AO VIVO 📡\n{sep}\n🔴 Verificando jogos...\n{sep}"
+                    msg = f"{sep}📡 RADAR AO VIVO 📡{sep}🔴 Verificando jogos...{sep}"
                     requests.post(f"https://api.telegram.org/bot{token}/sendMessage", json={"chat_id": chat_id, "text": msg, "parse_mode": "HTML"})
                 elif "/relatorio" in text:
-                    msg = f"{sep}\n📊 RELATÓRIO DIÁRIO\n{sep}\n✅ Processando dados...\n{sep}"
+                    msg = f"{sep}📊 RELATÓRIO DIÁRIO{sep}✅ Processando dados...{sep}"
                     requests.post(f"https://api.telegram.org/bot{token}/sendMessage", json={"chat_id": chat_id, "text": msg, "parse_mode": "HTML"})
     except:
         pass
 
 
-if __name__ == "__main__":\n    processar_comandos_pendentes(TG_TOKEN, CHAT_ID)
+if __name__ == "__main__":    processar_comandos_pendentes(TG_TOKEN, CHAT_ID)
     run()
 
