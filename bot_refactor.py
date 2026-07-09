@@ -1620,6 +1620,49 @@ def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_v
 
     sep = "━━━━━━━━━━━━━━━━━━━━"
     
+    # --- ANALISE DINAMICA ---
+    total_chutes = chutes_h + chutes_a
+    total_alvo = alvo_h + alvo_a
+    total_cantos = cant_h + cant_a
+    if minuto > 0:
+        chutes_por_min = round(total_chutes / minuto, 2)
+        cantos_por_min = round(total_cantos / minuto, 2)
+    else:
+        chutes_por_min = 0
+        cantos_por_min = 0
+
+    if (chutes_por_min >= 0.4 and alvo_h + alvo_a >= 3) or (cantos_por_min >= 0.25):
+        pressao = "Alta 🔥"
+    elif chutes_por_min >= 0.2 or total_alvo >= 1:
+        pressao = "Média 💪"
+    else:
+        pressao = "Baixa 💮"
+
+    if "ESCANTEIO" in mercado or "CORNER" in mercado:
+        alerta = f"Já saiu {total_cantos} escanteios até o {minuto}\u0027"
+    elif total_alvo >= 4 and minuto >= 50:
+        alerta = f"Total de {total_alvo} finalizações no alvo - ofensividade alta"
+    elif total_chutes >= 8:
+        alerta = f"Total de {total_chutes} chutes - pressão constante"
+    elif sh + sa >= 1 and minuto >= 60:
+        alerta = "Jogo aberto - gols podem sair"
+    else:
+        alerta = f"{total_chutes} chutes totais e {total_alvo} no alvo"
+
+    if total_chutes >= 10 or total_alvo >= 5 or total_cantos >= 8:
+        odd_rec = "1.50 - 1.70"
+    elif total_chutes >= 5 or total_alvo >= 2:
+        odd_rec = "1.70 - 2.00"
+    else:
+        odd_rec = "2.00+"
+
+    if fav_final == "h":
+        fav_nome = home
+    elif fav_final == "a":
+        fav_nome = away
+    else:
+        fav_nome = "—"
+
     return (
         sep + "\n"
         + "<b>" + title + "</b>\n"
@@ -1630,16 +1673,16 @@ def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_v
         + "👀 ODDs: <b>Casa 2.10 / Fora 3.40</b>\n"
         + "⏰ Minuto: <b>" + str(minuto) + "'</b>\n"
         + sep + "\n"
-        + "📊 <b>Estatísticas ao Vivo da Partida:</b>\n"
+        + "📊 <b>Estatísticas ao Vivo:</b>\n"
         + "🚀 Chutes: <b>" + str(chutes_h) + " | " + str(chutes_a) + "</b>\n"
         + "🎯 No Alvo: <b>" + str(alvo_h) + " | " + str(alvo_a) + "</b>\n"
         + "⛳️ Cantos: <b>" + str(cant_h) + " | " + str(cant_a) + "</b>\n"
         + sep + "\n"
-        + "💡 <b>Análise Técnica da Partida:</b>\n"
-        + "✅ Critérios: <b>" + str(n) + "/6</b>\n"
-        + "🔥 Pressão: <b>Alta</b>\n"
-        + "⚠️ Alerta: <b>Fim de Jogo / Pressao Total</b>\n"
-        + "💰 Odd Mínima Recomendada: <b>1.70</b>\n"
+        + "💡 <b>Análise Técnica:</b>\n"
+        + "🎯 Favorito: <b>" + str(fav_nome) + "</b>\n"
+        + "🔥 Pressão: <b>" + pressao + "</b>\n"
+        + "⚠️ Alerta: <b>" + alerta + "</b>\n"
+        + "💰 Odd Recomendada: <b>" + odd_rec + "</b>\n"
         + sep + "\n"
         + "📌 Entrada: <b>" + str(entrada) + "</b>\n"
         + sep + "\n"
