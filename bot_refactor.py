@@ -2134,7 +2134,7 @@ def processar_comandos_pendentes(token, chat_id, jogos_live=None, jogos_na_janel
                         h = j.get("home",""); a = j.get("away","")
                         m = j.get("minuto",""); sh = j.get("sh",0); sa = j.get("sa",0)
                         liga = j.get("liga","")
-                        linhas_jan += f"\U0001f3af {h} x {a} | {m}' | {sh}x{sa} | {liga}\n"
+                        linhas_jan += f"\U0001f3af <b>{h} x {a}</b> | {m}' | {sh}x{sa} | {liga}\n"
                     if not linhas_jan:
                         linhas_jan = "Nenhum jogo na janela no momento."
                     fora = [j for j in jogos_live if j not in jogos_na_janela][:10]
@@ -2146,12 +2146,12 @@ def processar_comandos_pendentes(token, chat_id, jogos_live=None, jogos_na_janel
                     if not linhas_fora: linhas_fora = "\u2014"
                     msg_radar = (
                         f"{sep}"
-                        f"\U0001f4e1 <b>RADAR AO VIVO</b> \U0001f4e1\n"
+                        f"\U0001f4e1\U0001f449<b>RADAR DE JOGOS AO VIVO</b>\U0001f448\U0001f4e1\n"
                         f"{sep}"
                         f"\U0001f534 <b>{len(jogos_live)} jogos ao vivo</b>\n"
                         f"\U0001f3af <b>{len(jogos_na_janela)} na janela alvo</b>\n"
                         f"{sep}"
-                        f"<b>\U0001f3af NA JANELA:</b>\n{linhas_jan}"
+                        f"\U0001f6a8<b>JOGOS NO ALVO:</b>\n{linhas_jan}"
                         f"{sep}"
                         f"<b>\u23f3 FORA DA JANELA:</b>\n{linhas_fora}"
                         f"{sep}"
