@@ -2117,18 +2117,21 @@ def run():
 
 
 def processar_comandos_pendentes(token, chat_id, jogos_live=None, jogos_na_janela=None):
-    """Processa comandos /relatorio e /radar com dados reais."""
+    """Processa comandos /relatorio e /radar com checkpoint de update_id."""
     if jogos_live is None: jogos_live = []
     if jogos_na_janela is None: jogos_na_janela = []
+    max_id = 0
     try:
-        r = requests.get(f"https://api.telegram.org/bot{token}/getUpdates?offset=-5", timeout=10).json()
+        r = requests.get(f"https://api.telegram.org/bot{token}/getUpdates", timeout=10).json()
         if r.get("ok"):
             for update in r.get("result", []):
+                uid = update.get("update_id", 0)
+                if uid > max_id: max_id = uid
                 msg = update.get("message", {})
-                text = msg.get("text", "")
-                sep = "\n" + "━" * 25 + "\n"
+                text = (msg.get("text", "") or "").strip()
+                chat_orig = msg.get("chat", {}).get("id", 0)
+                sep = "\n" + "\u2501" * 25 + "\n"
                 if "/radar" in text:
-                    # Monta radar com dados reais
                     linhas_jan = ""
                     for j in jogos_na_janela:
                         h = j.get("home",""); a = j.get("away","")
@@ -2145,28 +2148,29 @@ def processar_comandos_pendentes(token, chat_id, jogos_live=None, jogos_na_janel
                         linhas_fora += f"\u23f3 {h} x {a} | {m}' | {sh}x{sa}\n"
                     if not linhas_fora: linhas_fora = "\u2014"
                     msg_radar = (
-                        f"{sep}"
+                        f"{sep}\n"
                         f"\U0001f4e1\U0001f449<b>RADAR DE JOGOS AO VIVO</b>\U0001f448\U0001f4e1\n"
-                        f"{sep}"
-                        f"\U0001f534 <b>{len(jogos_live)} jogos ao vivo</b>\n"
+                        f"{sep}\n"
+                        f"\u26a0\ufe0f <b>{len(jogos_live)} jogos ao vivo</b>\n"
                         f"\U0001f3af <b>{len(jogos_na_janela)} na janela alvo</b>\n"
-                        f"{sep}"
+                        f"{sep}\n"
                         f"\U0001f6a8<b>JOGOS NO ALVO:</b>\n{linhas_jan}"
-                        f"{sep}"
+                        f"{sep}\n"
                         f"<b>\u23f3 FORA DA JANELA:</b>\n{linhas_fora}"
                         f"{sep}"
                     )
                     requests.post(f"https://api.telegram.org/bot{token}/sendMessage",
-                                  json={"chat_id": chat_id, "text": msg_radar, "parse_mode": "HTML"})
+                                  json={"chat_id": chat_orig, "text": msg_radar, "parse_mode": "HTML"})
                     print(f"[CMD] Radar respondido com {len(jogos_live)} jogos live, {len(jogos_na_janela)} na janela")
                 elif "/relatorio" in text:
-                    enviar_relatorio_diario()
+                    try: enviar_relatorio_diario()
+                    except: pass
         if max_id > 0:
-            salvar_cmd_offset(max_id + 1)
+            try:
+                off = max_id
+                requests.get(f"https://api.telegram.org/bot{token}/getUpdates?offset={off+1}", timeout=5)
+            except: pass
     except Exception as e:
         print(f"[CMD] Erro processar comandos: {e}")
-
-
-
 if __name__ == "__main__":
     run()
