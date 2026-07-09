@@ -72,7 +72,7 @@ def gerar_layout_radar(jogos_ao_vivo, jogos_na_janela):
     if jogos_na_janela:
         texto_janela = ""
         for j in jogos_na_janela:
-            texto_janela += f"⚽️ {j['times']} ({j['minuto']})"
+            texto_janela += f"⚽️ {j['times']} ({j['minuto']})\n"
 
     corpo = (
         f"{sep}\n"
@@ -1725,7 +1725,7 @@ def check_status_command(total_jogos_live=0, jogos_live=None, jogos_na_janela=No
                         sh = j.get("sh", 0)
                         sa = j.get("sa", 0)
                         liga = j.get("liga", "")
-                        linhas_janela += f"🎯 <b>{h} x {a}</b> | {m}' | {sh}x{sa} | {liga}"
+                        linhas_janela += f"🎯 <b>{h} x {a}</b> | {m}' | {sh}x{sa} | {liga}\n"
                 else:
                     linhas_janela = "Nenhum jogo na janela no momento."
                 # Monta lista de jogos ao vivo fora da janela (até 10)
@@ -2074,3 +2074,4 @@ def processar_comandos_pendentes(token, chat_id):
 if __name__ == "__main__":
     processar_comandos_pendentes(TG_TOKEN, CHAT_ID)
     run()
+)
