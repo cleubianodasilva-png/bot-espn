@@ -1899,9 +1899,9 @@ def run():
         stats = {}
         for src_nome, src in [("ESPN", stats_espn), ("Bzzoiro", stats_bzz), ("apifootball", stats_apif)]:
             for campo in ["chutes_tot_h","chutes_tot_a","chutes_gol_h","chutes_gol_a","escanteios_h","escanteios_a","red_cards_h","red_cards_a","posse_h","posse_a"]:
-                if campo not in stats or not stats[campo] or stats[campo] in (-1, 0):
+                if stats.get(campo, -1) == -1:
                     val = src.get(campo, 0)
-                    if isinstance(val, (int,float)) and val > 0:
+                    if isinstance(val, (int,float)) and val >= 0:
                         stats[campo] = val
                         stats["_fonte_"+campo] = src_nome
         for k in ["chutes_tot_h","chutes_tot_a","chutes_gol_h","chutes_gol_a"]:
@@ -1936,31 +1936,7 @@ def run():
                     fav_por_odds = True
         except: pass
 
-    if not fav_por_odds:
-        try:
-            r = requests.get("https://apiv3.apifootball.com/",
-                             params={"action": "get_odds", "match_id": fid, "APIkey": APIFOOTBALL_COM_KEY}, timeout=8)
-            odds_data = r.json()
-            if isinstance(odds_data, list) and odds_data:
-                odd = odds_data[0]
-                odd_h, odd_a = float(odd.get("odd_1", 0)), float(odd.get("odd_2", 0))
-                if odd_h > 1 and odd_a > 1:
-                    fav_final = "h" if odd_h <= odd_a else "a"
-                    fav_por_odds = True
-        except: pass
 
-    if not fav_por_odds:
-        try:
-            r = requests.get("https://apiv3.apifootball.com/",
-                             params={"action": "get_odds", "match_id": fid, "APIkey": APIFOOTBALL_COM_KEY}, timeout=8)
-            odds_data = r.json()
-            if isinstance(odds_data, list) and odds_data:
-                odd = odds_data[0]
-                odd_h, odd_a = float(odd.get("odd_1", 0)), float(odd.get("odd_2", 0))
-                if odd_h > 1 and odd_a > 1:
-                    fav_final = "h" if odd_h <= odd_a else "a"
-                    fav_por_odds = True
-        except: pass
 
 
         # Sem odds = usa stats (chutes) como fallback para definir favorito
