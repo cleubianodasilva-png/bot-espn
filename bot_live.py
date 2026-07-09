@@ -914,54 +914,48 @@ def get_stats_apifootball_v3(match_id):
 # FILTRO DE JANELAS
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 def get_odd_favorito_num(home, away, fid=None, league=None):
-    """Retorna a odd decimal do favorito. Tenta apifootball_v3 primeiro (Mestre)."""
-    # 1. Tenta APIFOOTBALL V3 (Mestre) - Busca no endpoint de odds
+    """Retorna 'h' ou 'a'. Tenta APIFOOTBALL V3, depois ESPN Geral."""
+    # 1. APIFOOTBALL V3
     if fid and str(fid).isdigit():
         try:
             url = f"https://apiv3.apifootball.com/?action=get_odds&match_id={fid}&APIkey={APIFOOTBALL_KEY}"
-            r = requests.get(url, timeout=7)
+            r = requests.get(url, timeout=5)
             data = r.json()
             if isinstance(data, list) and len(data) > 0:
-                # Pega a primeira casa de aposta (geralmente 1xBet ou Bet365)
-                mkt = data[0].get("odd_1x2", [])
-                if not mkt and "odds" in data[0]: mkt = data[0]["odds"].get("1x2", [])
-                
-                if mkt:
-                    # Formato pode variar, tentando extrair odds h, d, a
-                    try:
-                        o_h = float(mkt[0].get("home", 99))
-                        o_a = float(mkt[0].get("away", 99))
-                        if o_h < 90 or o_a < 90:
-                            return "h" if o_h < o_a else "a"
-                    except: pass
+                o = data[0].get("odds", {}).get("1x2", []) or data[0].get("odd_1x2", [])
+                if o:
+                    oh, oa = float(o[0].get("home", 99)), float(o[0].get("away", 99))
+                    if oh < oa: return "h"
+                    if oa < oh: return "a"
         except: pass
 
-    # 2. Tenta ESPN (Legado)
-    if fid and league and not str(fid).isdigit():
+    # 2. ESPN - Busca no scoreboard geral se a liga for desconhecida
+    ligas_teste = [league, "arg.1", "bra.1", "bra.2", "libertadores", "sudamericana", "usa.1"]
+    for l in [lg for lg in ligas_teste if lg]:
         try:
-            url = f"https://site.api.espn.com/apis/site/v2/sports/soccer/{league}/scoreboard"
-            r = requests.get(url, timeout=6)
+            url = f"https://site.api.espn.com/apis/site/v2/sports/soccer/{l}/scoreboard"
+            r = requests.get(url, timeout=5)
             for ev in r.json().get("events", []):
-                if str(ev.get("id")) == str(fid):
-                    comp = ev.get("competitions", [{}])[0]
-                    for odd in comp.get("odds", []):
+                nom_h = ev["competitions"][0]["competitors"][0]["team"]["name"].lower()
+                nom_a = ev["competitions"][0]["competitors"][1]["team"]["name"].lower()
+                if home.lower() in nom_h or away.lower() in nom_a or home.lower() in nom_a or away.lower() in nom_h:
+                    for odd in ev["competitions"][0].get("odds", []):
                         ml = odd.get("moneyline", {})
                         if ml:
-                            # Converte Moneyline (+120, -150) para Decimal
-                            def _conv(v):
-                                try:
-                                    v = float(v)
-                                    if v > 0: return (v / 100) + 1
-                                    else: return (100 / abs(v)) + 1
-                                except: return 99
-                            oh = _conv(ml.get("home", {}).get("odds"))
-                            oa = _conv(ml.get("away", {}).get("odds"))
-                            if oh < oa: return "h"
-                            elif oa < oh: return "a"
+                            oh, oa = float(ml.get("home", {}).get("odds", 0)), float(ml.get("away", {}).get("odds", 0))
+                            if oh != 0 and oa != 0:
+                                return "h" if oh < oa else "a"
         except: pass
-    
-    return None # Retorna None se não achar favorito real
+
+    # 3. IDENTIFICAÇÃO POR NOME (Último Recurso para não ficar sem sinal)
+    # Se o Boca Juniors está jogando em casa contra o Athletico-PR e não temos odds,
+    # em muitos casos de Live, o favorito é o time da casa ou o de maior expressão.
+    # Mas para ser seguro, vamos retornar None e logar.
+    print(f"  [ODDS-WARN] Sem odds para {home} x {away}")
+    return None
+
 
 def calcular_prob_gols_ht(chutes_tot, chutes_gol, minuto):
     """Estima prob de gols usando taxa de chutes como proxy de xG."""
