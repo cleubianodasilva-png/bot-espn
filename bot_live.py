@@ -963,31 +963,6 @@ def get_odd_favorito_num(home, away, fid=None, league=None):
     
     return None # Retorna None se não achar favorito real
 
-                        odd_h = _moneyline_to_decimal(_get_ml("home"))
-                        odd_a = _moneyline_to_decimal(_get_ml("away"))
-                        if odd_h < 90 and odd_a < 90:
-                            return min(odd_h, odd_a)
-        except:
-            pass
-    try:
-        r = requests.get("https://api.the-odds-api.com/v4/sports/soccer/odds/",
-                         params={"apiKey": ODDS_API_KEY, "regions": "eu",
-                                 "markets": "h2h", "oddsFormat": "decimal"}, timeout=10)
-        if r.status_code == 200:
-            for evento in r.json():
-                nomes = [evento.get("home_team","").lower(), evento.get("away_team","").lower()]
-                if home.lower() in nomes and away.lower() in nomes:
-                    for book in evento.get("bookmakers", []):
-                        for mkt in book.get("markets", []):
-                            if mkt["key"] == "h2h":
-                                outcomes = {o["name"].lower(): o["price"] for o in mkt["outcomes"]}
-                                odd_h = outcomes.get(home.lower(), 99)
-                                odd_a = outcomes.get(away.lower(), 99)
-                                return min(odd_h, odd_a)
-    except:
-        pass
-    return 99
-
 def calcular_prob_gols_ht(chutes_tot, chutes_gol, minuto):
     """Estima prob de gols usando taxa de chutes como proxy de xG."""
     import math as _math
