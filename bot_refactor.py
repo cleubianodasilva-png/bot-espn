@@ -920,6 +920,7 @@ def get_jogos_apifootball_v3(fids_existentes):
                 "liga": ev.get("league_name", ""),
                 "source": "apifootball"
             })
+        print(f"[APIF-v3] {len(jogos)} novos jogos (de {len(data)} totais)")
         return jogos
     except: return []
 
@@ -945,6 +946,7 @@ def get_jogos_bzzoiro(fids_existentes):
                 "sh": sh, "sa": sa, "minuto": minuto,
                 "period": period, "liga": liga_nome, "source": "bzzoiro"
             })
+        print(f"[APIF-v3] {len(jogos)} novos jogos (de {len(data)} totais)")
         return jogos
     except: return []
 
@@ -981,11 +983,9 @@ def get_stats_bzzoiro(fid_raw, home, away):
         stats = {}
         for side, key in [("home", "h"), ("away", "a")]:
             side_data = raw_stats.get(side, {})
-            shots = side_data.get("shots", {})
-            if isinstance(shots, dict):
-                stats[f"chutes_tot_{key}"] = int(shots.get("total", 0) or 0)
-                stats[f"chutes_gol_{key}"] = int(shots.get("on_target", 0) or 0)
-            stats[f"escanteios_{key}"] = int(side_data.get("corners", 0) or 0)
+            stats[f"chutes_tot_{key}"] = int(side_data.get("total_shots", 0) or 0)
+            stats[f"chutes_gol_{key}"] = int(side_data.get("shots_on_target", 0) or 0)
+            stats[f"escanteios_{key}"] = int(side_data.get("corner_kicks", 0) or 0)
             cards = side_data.get("cards", {})
             if isinstance(cards, dict):
                 stats[f"red_cards_{key}"] = int(cards.get("red", 0) or 0)
@@ -1015,6 +1015,7 @@ def get_jogos_apifootball_v3(fids_existentes):
                 "liga": ev.get("league_name", ""),
                 "source": "apifootball"
             })
+        print(f"[APIF-v3] {len(jogos)} novos jogos (de {len(data)} totais)")
         return jogos
     except: return []
 
@@ -1040,6 +1041,7 @@ def get_jogos_bzzoiro(fids_existentes):
                 "sh": sh, "sa": sa, "minuto": minuto,
                 "period": period, "liga": liga_nome, "source": "bzzoiro"
             })
+        print(f"[APIF-v3] {len(jogos)} novos jogos (de {len(data)} totais)")
         return jogos
     except: return []
 
@@ -1076,11 +1078,9 @@ def get_stats_bzzoiro(fid_raw, home, away):
         stats = {}
         for side, key in [("home", "h"), ("away", "a")]:
             side_data = raw_stats.get(side, {})
-            shots = side_data.get("shots", {})
-            if isinstance(shots, dict):
-                stats[f"chutes_tot_{key}"] = int(shots.get("total", 0) or 0)
-                stats[f"chutes_gol_{key}"] = int(shots.get("on_target", 0) or 0)
-            stats[f"escanteios_{key}"] = int(side_data.get("corners", 0) or 0)
+            stats[f"chutes_tot_{key}"] = int(side_data.get("total_shots", 0) or 0)
+            stats[f"chutes_gol_{key}"] = int(side_data.get("shots_on_target", 0) or 0)
+            stats[f"escanteios_{key}"] = int(side_data.get("corner_kicks", 0) or 0)
             cards = side_data.get("cards", {})
             if isinstance(cards, dict):
                 stats[f"red_cards_{key}"] = int(cards.get("red", 0) or 0)
@@ -1110,6 +1110,7 @@ def get_jogos_apifootball_v3(fids_existentes):
                 "liga": ev.get("league_name", ""),
                 "source": "apifootball"
             })
+        print(f"[APIF-v3] {len(jogos)} novos jogos (de {len(data)} totais)")
         return jogos
     except: return []
 
@@ -1135,6 +1136,7 @@ def get_jogos_bzzoiro(fids_existentes):
                 "sh": sh, "sa": sa, "minuto": minuto,
                 "period": period, "liga": liga_nome, "source": "bzzoiro"
             })
+        print(f"[APIF-v3] {len(jogos)} novos jogos (de {len(data)} totais)")
         return jogos
     except: return []
 
@@ -1171,11 +1173,9 @@ def get_stats_bzzoiro(fid_raw, home, away):
         stats = {}
         for side, key in [("home", "h"), ("away", "a")]:
             side_data = raw_stats.get(side, {})
-            shots = side_data.get("shots", {})
-            if isinstance(shots, dict):
-                stats[f"chutes_tot_{key}"] = int(shots.get("total", 0) or 0)
-                stats[f"chutes_gol_{key}"] = int(shots.get("on_target", 0) or 0)
-            stats[f"escanteios_{key}"] = int(side_data.get("corners", 0) or 0)
+            stats[f"chutes_tot_{key}"] = int(side_data.get("total_shots", 0) or 0)
+            stats[f"chutes_gol_{key}"] = int(side_data.get("shots_on_target", 0) or 0)
+            stats[f"escanteios_{key}"] = int(side_data.get("corner_kicks", 0) or 0)
             cards = side_data.get("cards", {})
             if isinstance(cards, dict):
                 stats[f"red_cards_{key}"] = int(cards.get("red", 0) or 0)
@@ -1831,8 +1831,19 @@ def run():
         print("Finalizado. Enviados: 0")
         return
 
-    # PASSO 3: Analisa cada jogo na janela
+    # PASSO 3: Dedup por nome dos times (mesmo jogo de APIs diferentes)
+    jogos_dedup = []
+    vistos_jogos = set()
     for j in jogos_na_janela:
+        chave = (j["home"].lower().strip(), j["away"].lower().strip())
+        if chave not in vistos_jogos:
+            vistos_jogos.add(chave)
+            jogos_dedup.append(j)
+        else:
+            print(f"[DEDUP] ignorando duplicata de {j['home']} x {j['away']} ({j.get('source','?')})")
+    print(f"[Dedup] {len(jogos_na_janela)} -> {len(jogos_dedup)} jogos unicos")
+    
+    for j in jogos_dedup:
         fid    = j["fid"]
         h, a   = j["home"], j["away"]
         m, p   = j["minuto"], j["period"]
