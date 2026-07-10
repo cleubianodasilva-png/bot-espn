@@ -851,18 +851,26 @@ def get_stats_apifootball_live(fid):
             elif "off target" in tipo:
                 stats["chutes_tot_h"] = stats.get("chutes_tot_h", 0) + int(h_val)
                 stats["chutes_tot_a"] = stats.get("chutes_tot_a", 0) + int(a_val)
+            elif "shots total" in tipo:
+                stats["chutes_tot_h"] = max(stats.get("chutes_tot_h", 0), int(h_val))
+                stats["chutes_tot_a"] = max(stats.get("chutes_tot_a", 0), int(a_val))
             elif "red cards" in tipo:
                 stats["red_cards_h"], stats["red_cards_a"] = int(h_val), int(a_val)
             elif tipo == "attacks":
                 stats["ataques_h"], stats["ataques_a"] = int(h_val), int(a_val)
             elif tipo == "dangerous attacks":
                 stats["ataques_perigosos_h"], stats["ataques_perigosos_a"] = int(h_val), int(a_val)
-        # Soma on target + off target = total de chutes
-        if "chutes_gol_h" in stats:
-            stats["chutes_tot_h"] = stats.get("chutes_tot_h", 0) + stats["chutes_gol_h"]
-            stats["chutes_tot_a"] = stats.get("chutes_tot_a", 0) + stats["chutes_gol_a"]
+            elif "possession" in tipo or "ball possession" in tipo:
+                stats["posse_h"], stats["posse_a"] = int(h_val), int(a_val)
+        # Garantir chutes_tot se tivermos chutes_gol mas nao chutes_tot
+        if "chutes_gol_h" in stats and "chutes_tot_h" not in stats:
+            stats["chutes_tot_h"] = stats["chutes_gol_h"]
+            stats["chutes_tot_a"] = stats["chutes_gol_a"]
+        elif "chutes_gol_h" in stats:
+            stats["chutes_tot_h"] = max(stats.get("chutes_tot_h", 0), stats["chutes_gol_h"])
+            stats["chutes_tot_a"] = max(stats.get("chutes_tot_a", 0), stats["chutes_gol_a"])
         for side in ["h", "a"]:
-            for k in ["chutes_tot", "chutes_gol", "red_cards", "ataques", "ataques_perigosos"]:
+            for k in ["chutes_tot", "chutes_gol", "red_cards", "ataques", "ataques_perigosos", "posse"]:
                 stats.setdefault(f"{k}_{side}", 0)
             stats.setdefault(f"escanteios_{side}", -1)
         print(f"[apifootball Stats] action=get_statistics fid {fid} OK")
@@ -951,16 +959,23 @@ def get_stats_apifootball_v3(match_id):
             elif "off target" in tipo:
                 stats["chutes_tot_h"] = stats.get("chutes_tot_h", 0) + int(h_val)
                 stats["chutes_tot_a"] = stats.get("chutes_tot_a", 0) + int(a_val)
+            elif "shots total" in tipo:
+                stats["chutes_tot_h"] = max(stats.get("chutes_tot_h", 0), int(h_val))
+                stats["chutes_tot_a"] = max(stats.get("chutes_tot_a", 0), int(a_val))
             elif "red cards" in tipo:
                 stats["red_cards_h"], stats["red_cards_a"] = int(h_val), int(a_val)
             elif tipo == "attacks":
                 stats["ataques_h"], stats["ataques_a"] = int(h_val), int(a_val)
             elif tipo == "dangerous attacks":
                 stats["ataques_perigosos_h"], stats["ataques_perigosos_a"] = int(h_val), int(a_val)
-        # Soma on target + off target = total de chutes
-        if "chutes_gol_h" in stats:
-            stats["chutes_tot_h"] = stats.get("chutes_tot_h", 0) + stats["chutes_gol_h"]
-            stats["chutes_tot_a"] = stats.get("chutes_tot_a", 0) + stats["chutes_gol_a"]
+            elif "possession" in tipo or "ball possession" in tipo:
+                stats["posse_h"], stats["posse_a"] = int(h_val), int(a_val)
+        if "chutes_gol_h" in stats and "chutes_tot_h" not in stats:
+            stats["chutes_tot_h"] = stats["chutes_gol_h"]
+            stats["chutes_tot_a"] = stats["chutes_gol_a"]
+        elif "chutes_gol_h" in stats:
+            stats["chutes_tot_h"] = max(stats.get("chutes_tot_h", 0), stats["chutes_gol_h"])
+            stats["chutes_tot_a"] = max(stats.get("chutes_tot_a", 0), stats["chutes_gol_a"])
         return stats
     except: return {}
 
@@ -1056,16 +1071,23 @@ def get_stats_apifootball_v3(match_id):
             elif "off target" in tipo:
                 stats["chutes_tot_h"] = stats.get("chutes_tot_h", 0) + int(h_val)
                 stats["chutes_tot_a"] = stats.get("chutes_tot_a", 0) + int(a_val)
+            elif "shots total" in tipo:
+                stats["chutes_tot_h"] = max(stats.get("chutes_tot_h", 0), int(h_val))
+                stats["chutes_tot_a"] = max(stats.get("chutes_tot_a", 0), int(a_val))
             elif "red cards" in tipo:
                 stats["red_cards_h"], stats["red_cards_a"] = int(h_val), int(a_val)
             elif tipo == "attacks":
                 stats["ataques_h"], stats["ataques_a"] = int(h_val), int(a_val)
             elif tipo == "dangerous attacks":
                 stats["ataques_perigosos_h"], stats["ataques_perigosos_a"] = int(h_val), int(a_val)
-        # Soma on target + off target = total de chutes
-        if "chutes_gol_h" in stats:
-            stats["chutes_tot_h"] = stats.get("chutes_tot_h", 0) + stats["chutes_gol_h"]
-            stats["chutes_tot_a"] = stats.get("chutes_tot_a", 0) + stats["chutes_gol_a"]
+            elif "possession" in tipo or "ball possession" in tipo:
+                stats["posse_h"], stats["posse_a"] = int(h_val), int(a_val)
+        if "chutes_gol_h" in stats and "chutes_tot_h" not in stats:
+            stats["chutes_tot_h"] = stats["chutes_gol_h"]
+            stats["chutes_tot_a"] = stats["chutes_gol_a"]
+        elif "chutes_gol_h" in stats:
+            stats["chutes_tot_h"] = max(stats.get("chutes_tot_h", 0), stats["chutes_gol_h"])
+            stats["chutes_tot_a"] = max(stats.get("chutes_tot_a", 0), stats["chutes_gol_a"])
         return stats
     except: return {}
 
@@ -1197,16 +1219,23 @@ def get_stats_apifootball_v3(match_id):
             elif "off target" in tipo:
                 stats["chutes_tot_h"] = stats.get("chutes_tot_h", 0) + int(h_val)
                 stats["chutes_tot_a"] = stats.get("chutes_tot_a", 0) + int(a_val)
+            elif "shots total" in tipo:
+                stats["chutes_tot_h"] = max(stats.get("chutes_tot_h", 0), int(h_val))
+                stats["chutes_tot_a"] = max(stats.get("chutes_tot_a", 0), int(a_val))
             elif "red cards" in tipo:
                 stats["red_cards_h"], stats["red_cards_a"] = int(h_val), int(a_val)
             elif tipo == "attacks":
                 stats["ataques_h"], stats["ataques_a"] = int(h_val), int(a_val)
             elif tipo == "dangerous attacks":
                 stats["ataques_perigosos_h"], stats["ataques_perigosos_a"] = int(h_val), int(a_val)
-        # Soma on target + off target = total de chutes
-        if "chutes_gol_h" in stats:
-            stats["chutes_tot_h"] = stats.get("chutes_tot_h", 0) + stats["chutes_gol_h"]
-            stats["chutes_tot_a"] = stats.get("chutes_tot_a", 0) + stats["chutes_gol_a"]
+            elif "possession" in tipo or "ball possession" in tipo:
+                stats["posse_h"], stats["posse_a"] = int(h_val), int(a_val)
+        if "chutes_gol_h" in stats and "chutes_tot_h" not in stats:
+            stats["chutes_tot_h"] = stats["chutes_gol_h"]
+            stats["chutes_tot_a"] = stats["chutes_gol_a"]
+        elif "chutes_gol_h" in stats:
+            stats["chutes_tot_h"] = max(stats.get("chutes_tot_h", 0), stats["chutes_gol_h"])
+            stats["chutes_tot_a"] = max(stats.get("chutes_tot_a", 0), stats["chutes_gol_a"])
         return stats
     except: return {}
 
