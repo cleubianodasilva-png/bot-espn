@@ -1579,20 +1579,18 @@ def gerar_motivo(mercado, stats, sh, sa, fav_final, minuto, cantos_atual=0):
     # ════════════════════════════════════════════════════════════════
 
     if "CORNER" in mercado or "ESCANTEIO" in mercado:
-        linha = cantos_atual + 0.5
         if "HT" in mercado:
-            base = f"{total_cantos} escanteios na etapa inicial"
-            if total_cantos >= 5:
-                return f"Ritmo alto de cantos ({total_cantos}) — linha projetada {linha} | Entrada consistente no 1º tempo{vermelho}"
-            elif total_atq_perig >= 10:
-                return f"{total_atq_perig} ataques perigosos + {total_cantos} cantos — linha {linha} atingível no HT{vermelho}"
-            return f"{total_cantos} cantos em {minuto}' | Linha {linha} com boa projeção para escanteios{vermelho}"
+            if total_atq_perig >= 12:
+                return f"Pressão ofensiva muito alta ({total_atq_perig} ataques perigosos){vermelho}"
+            elif total_atq_perig >= 8:
+                return f"Pressão ofensiva elevada ({total_atq_perig} ataques perigosos){vermelho}"
+            return f"Pressão ofensiva em crescimento no 1º tempo ({total_atq_perig} ataques perigosos){vermelho}"
         else:
-            if total_cantos >= 8:
-                return f"Partida com {total_cantos} escanteios — linha projetada {linha} | Pressão ofensiva contínua{vermelho}"
-            elif total_atq_perig >= 20:
-                return f"Pressão ofensiva constante ({total_atq_perig} atq. perigosos) + {total_cantos} cantos | Linha {linha}{vermelho}"
-            return f"{total_cantos} cantos acumulados em {minuto}' | Projeção para linha {linha}{vermelho}"
+            if total_atq_perig >= 25:
+                return f"Pressão ofensiva constante ({total_atq_perig} atq. perigosos){vermelho}"
+            elif total_atq_perig >= 15:
+                return f"Pressão ofensiva sustentada ({total_atq_perig} atq. perigosos){vermelho}"
+            return f"Pressão ofensiva contínua ({total_atq_perig} ataques perigosos){vermelho}"
 
     if mercado == "HT":
         if chutes_gol_h >= 2 or chutes_gol_a >= 2:
