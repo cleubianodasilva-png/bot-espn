@@ -1994,24 +1994,12 @@ def run():
     janela_id = datetime.now(BRT).strftime('%Y%m%d%H')
 
     # ─────────────────────────────────────────────────────────────
-    # PASSO 1A: apifootball — fonte PRINCIPAL de jogos ao vivo
+    # PASSO 1: apifootball — ÚNICA fonte de jogos ao vivo
+    # ESPN e Bzzoiro são usadas APENAS como reservas de
+    # estatísticas individuais, NUNCA para buscar jogos novos
     # ─────────────────────────────────────────────────────────────
-    jogos_apif = get_jogos_apifootball_v3(set())
-    fids_apif  = {j["fid"] for j in jogos_apif}
-
-    # ─────────────────────────────────────────────────────────────
-    # PASSO 1B: ESPN — complementa o que apifootball não cobre
-    # ─────────────────────────────────────────────────────────────
-    jogos_espn = get_jogos_espn(fids_apif)
-
-    # ─────────────────────────────────────────────────────────────
-    # PASSO 1C: Bzzoiro — preenche o que os outros não cobrem
-    # ─────────────────────────────────────────────────────────────
-    jogos_bzz = get_jogos_bzzoiro(fids_apif | {j["fid"] for j in jogos_espn})
-
-    # Junta tudo — apifootball tem prioridade (fonte principal)
-    jogos_live = jogos_apif + jogos_espn + jogos_bzz
-    print(f"[Total] {len(jogos_live)} jogos ao vivo (apifootball={len(jogos_apif)} + ESPN={len(jogos_espn)} + bzzoiro={len(jogos_bzz)})")
+    jogos_live = get_jogos_apifootball_v3(set())
+    print(f"[Total] {len(jogos_live)} jogos ao vivo (fonte: apifootball)")
 
     # PASSO 2: Filtra janelas alvo
     jogos_na_janela = filtrar_janelas(jogos_live)
