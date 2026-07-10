@@ -1734,12 +1734,8 @@ def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_v
     # Substitui alerta antigo pela análise técnica completa com ataques perigosos
     alerta = gerar_motivo(mercado, stats, sh, sa, fav_final, minuto)
 
-    if total_chutes >= 10 or total_alvo >= 5 or total_cantos >= 8:
-        odd_rec = "1.50 - 1.70"
-    elif total_chutes >= 5 or total_alvo >= 2:
-        odd_rec = "1.70 - 2.00"
-    else:
-        odd_rec = "2.00+"
+    # ODD mínima sempre 1.70+
+    odd_rec = "1.70+"
 
     if fav_final == "h":
         fav_nome = home
