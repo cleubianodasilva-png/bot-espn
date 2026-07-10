@@ -116,7 +116,7 @@ def obter_nome_liga(game, fonte):
 import os, json, requests, time
 APIFOOTBALL_KEY = os.getenv("APIFOOTBALL_KEY", "")
 from datetime import datetime, timezone, timedelta
-import hashlib
+import hashlib, re
 
 # ─── Caminhos e Fuso ───────────────────────────────────────────────────────────
 BASE_DIR        = os.path.dirname(os.path.abspath(__file__))
