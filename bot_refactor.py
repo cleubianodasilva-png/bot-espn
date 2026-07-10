@@ -1184,8 +1184,11 @@ def get_jogos_bzzoiro(fids_existentes):
             if not isinstance(minuto, int):
                 try: minuto = int(str(minuto).split("'")[0])
                 except: minuto = 0
-            liga = ev.get("league", {}) or {}
-            liga_nome = liga.get("name", "Desconhecida") if isinstance(liga, dict) else str(liga)
+            # Bzzoiro retorna league_name diretamente (league field pode ser None)
+            liga_nome = ev.get("league_name", "") or ""
+            if not liga_nome:
+                liga = ev.get("league", {}) or {}
+                liga_nome = liga.get("name", "Desconhecida") if isinstance(liga, dict) else str(liga)
             p_raw = str(ev.get("period", "") or "")
             period = 1 if "1" in p_raw or minuto <= 45 else 2
             jogos.append({
@@ -1246,16 +1249,30 @@ def get_stats_bzzoiro(fid_raw, home, away):
         data = r.json()
         raw_stats = data.get("stats", {})
         stats = {}
+        any_nonzero = False
         for side, key in [("home", "h"), ("away", "a")]:
             side_data = raw_stats.get(side, {})
-            stats[f"chutes_tot_{key}"] = int(side_data.get("total_shots", 0) or 0)
-            stats[f"chutes_gol_{key}"] = int(side_data.get("shots_on_target", 0) or 0)
-            stats[f"escanteios_{key}"] = int(side_data.get("corner_kicks", 0) or 0)
-            stats[f"ataques_perigosos_{key}"] = int(side_data.get("dangerous_attack", 0) or 0)
-            stats[f"posse_{key}"] = int(side_data.get("ball_possession", 0) or 0)
+            val = int(side_data.get("total_shots", 0) or 0)
+            stats[f"chutes_tot_{key}"] = val
+            if val > 0: any_nonzero = True
+            val = int(side_data.get("shots_on_target", 0) or 0)
+            stats[f"chutes_gol_{key}"] = val
+            if val > 0: any_nonzero = True
+            val = int(side_data.get("corner_kicks", 0) or 0)
+            stats[f"escanteios_{key}"] = val
+            if val > 0: any_nonzero = True
+            val = int(side_data.get("dangerous_attack", 0) or 0)
+            stats[f"ataques_perigosos_{key}"] = val
+            if val > 0: any_nonzero = True
+            val = int(side_data.get("ball_possession", 0) or 0)
+            stats[f"posse_{key}"] = val
+            if val > 0: any_nonzero = True
             cards = side_data.get("cards", {})
             if isinstance(cards, dict):
                 stats[f"red_cards_{key}"] = int(cards.get("red", 0) or 0)
+        # Se TUDO é zero, o ID não existe no Bzzoiro → retorna vazio pra ativar fallback
+        if not any_nonzero:
+            return {}
         return stats
     except: return {}
 
