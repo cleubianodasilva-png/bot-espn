@@ -1941,18 +1941,8 @@ def run():
 
         print(f"[Analisando] {h} x {a} | {placar} | {m}min")
 
-        # Stats FUSION: tenta todas as 3 APIs e mescla os dados reais
-        stats_espn = {}
-        try:
-            se = get_stats_espn(fid, h, a)
-            if isinstance(se, dict): stats_espn = se
-        except: pass
+        # Stats FUSION: apifootball (principal) → ESPN → Bzzoiro (reservas)
         fid_raw = j.get("fid_raw", fid)
-        stats_bzz = {}
-        try:
-            sb = get_stats_bzzoiro(fid_raw, h, a)
-            if isinstance(sb, dict): stats_bzz = sb
-        except: pass
         stats_apif = {}
         try:
             sa_api = get_stats_apifootball_live(fid)
@@ -1963,7 +1953,7 @@ def run():
                 sa3 = get_stats_apifootball_v3(fid_raw)
                 if isinstance(sa3, dict): stats_apif = sa3
             except: pass
-        # Fallback: busca por nome dos times se o ID falhar
+        # Fallback: busca por nome dos times se o ID falhar (apifootball cobre 700+ ligas)
         if not stats_apif or not (stats_apif.get("escanteios_h", -1) >= 0 and stats_apif.get("escanteios_a", -1) >= 0):
             try:
                 sa_name = get_stats_apifootball_by_name(h, a)
@@ -1971,9 +1961,19 @@ def run():
                     stats_apif = sa_name
                     print(f"[APIF-NAME] Stats por nome OK: esc {sa_name.get('escanteios_h')}x{sa_name.get('escanteios_a')}")
             except: pass
+        stats_espn = {}
+        try:
+            se = get_stats_espn(fid, h, a)
+            if isinstance(se, dict): stats_espn = se
+        except: pass
+        stats_bzz = {}
+        try:
+            sb = get_stats_bzzoiro(fid_raw, h, a)
+            if isinstance(sb, dict): stats_bzz = sb
+        except: pass
 
         stats = {}
-        for src_nome, src in [("ESPN", stats_espn), ("Bzzoiro", stats_bzz), ("apifootball", stats_apif)]:
+        for src_nome, src in [("apifootball", stats_apif), ("ESPN", stats_espn), ("Bzzoiro", stats_bzz)]:
             for campo in ["chutes_tot_h","chutes_tot_a","chutes_gol_h","chutes_gol_a","escanteios_h","escanteios_a","red_cards_h","red_cards_a","posse_h","posse_a"]:
                 if campo not in src:
                     continue
