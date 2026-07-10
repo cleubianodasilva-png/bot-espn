@@ -67,7 +67,7 @@ def gerar_layout_relatorio(greens, reds, data_str):
     )
     return corpo
 def gerar_layout_radar(jogos_ao_vivo, jogos_na_janela):
-    sep = "━" * 25
+    sep = "━━━━━━━━━━━━━━━━━━━━"
     texto_jan = ""
     for j in jogos_na_janela:
         h = j.get("home","") or getattr(j,"home","")
@@ -76,33 +76,17 @@ def gerar_layout_radar(jogos_ao_vivo, jogos_na_janela):
         sh = j.get("sh",0) or getattr(j,"sh",0)
         sa = j.get("sa",0) or getattr(j,"sa",0)
         liga = j.get("liga","") or getattr(j,"liga","")
-        texto_jan += f"\U0001f3af <b>{h} x {a}</b> | {m}' | {sh}x{sa} | {liga}\n"
+        texto_jan += f"🎯 <b>{h} x {a}</b> | {m}' | {sh}x{sa} | {liga}\n"
     if not texto_jan:
         texto_jan = "Nenhum jogo na janela no momento."
-    fora = [j for j in jogos_ao_vivo if j not in jogos_na_janela][:10]
-    texto_fora = ""
-    for j in fora:
-        h = j.get("home","") or getattr(j,"home","")
-        a = j.get("away","") or getattr(j,"away","")
-        m = j.get("minuto","") or getattr(j,"minuto","")
-        sh = j.get("sh",0) or getattr(j,"sh",0)
-        sa = j.get("sa",0) or getattr(j,"sa",0)
-        texto_fora += f"⏳ <b>{h} x {a}</b> | {m}' | {sh}x{sa}\n"
-    if not texto_fora:
-        texto_fora = "—"
     corpo = (
         f"{sep}\n"
-        f"📡👉<b>RADAR DE JOGOS AO VIVO</b>👈📡\n"
+        f"<b>📡 RADAR — JOGOS AO VIVO</b>\n"
         f"{sep}\n"
-        f"⚠️ <b>{len(jogos_ao_vivo)} jogos ao vivo</b>\n"
-        f"🎯 <b>{len(jogos_na_janela)} na janela alvo</b>\n"
-        f"{sep}\n"
-        f"🚨<b>JOGOS NO ALVO:</b>\n"
+        f"🔴 <b>Jogos na Janela:</b>\n"
         f"{texto_jan}"
         f"{sep}\n"
-        f"<b>⏳ FORA DA JANELA:</b>\n"
-        f"{texto_fora}"
-        f"{sep}"
+        f"🟢 Ao Vivo (Total): <b>{len(jogos_ao_vivo)}</b> jogos"
     )
     return corpo
 import requests
