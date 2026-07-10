@@ -861,12 +861,17 @@ def get_stats_apifootball_live(fid):
             a_val = s.get("away", "0").replace("%", "")
             if "corner" in tipo:
                 stats["escanteios_h"], stats["escanteios_a"] = int(h_val), int(a_val)
-            elif "shots on goal" in tipo:
+            elif "on target" in tipo:
                 stats["chutes_gol_h"], stats["chutes_gol_a"] = int(h_val), int(a_val)
-            elif "total shots" in tipo:
-                stats["chutes_tot_h"], stats["chutes_tot_a"] = int(h_val), int(a_val)
+            elif "off target" in tipo:
+                stats["chutes_tot_h"] = stats.get("chutes_tot_h", 0) + int(h_val)
+                stats["chutes_tot_a"] = stats.get("chutes_tot_a", 0) + int(a_val)
             elif "red cards" in tipo:
                 stats["red_cards_h"], stats["red_cards_a"] = int(h_val), int(a_val)
+        # Soma on target + off target = total de chutes
+        if "chutes_gol_h" in stats:
+            stats["chutes_tot_h"] = stats.get("chutes_tot_h", 0) + stats["chutes_gol_h"]
+            stats["chutes_tot_a"] = stats.get("chutes_tot_a", 0) + stats["chutes_gol_a"]
         for side in ["h", "a"]:
             for k in ["chutes_tot", "chutes_gol", "red_cards"]:
                 stats.setdefault(f"{k}_{side}", 0)
@@ -950,12 +955,17 @@ def get_stats_apifootball_v3(match_id):
             a_val = s.get("away", "0").replace("%", "")
             if "corner" in tipo:
                 stats["escanteios_h"], stats["escanteios_a"] = int(h_val), int(a_val)
-            elif "shots on goal" in tipo:
+            elif "on target" in tipo:
                 stats["chutes_gol_h"], stats["chutes_gol_a"] = int(h_val), int(a_val)
-            elif "total shots" in tipo:
-                stats["chutes_tot_h"], stats["chutes_tot_a"] = int(h_val), int(a_val)
+            elif "off target" in tipo:
+                stats["chutes_tot_h"] = stats.get("chutes_tot_h", 0) + int(h_val)
+                stats["chutes_tot_a"] = stats.get("chutes_tot_a", 0) + int(a_val)
             elif "red cards" in tipo:
                 stats["red_cards_h"], stats["red_cards_a"] = int(h_val), int(a_val)
+        # Soma on target + off target = total de chutes
+        if "chutes_gol_h" in stats:
+            stats["chutes_tot_h"] = stats.get("chutes_tot_h", 0) + stats["chutes_gol_h"]
+            stats["chutes_tot_a"] = stats.get("chutes_tot_a", 0) + stats["chutes_gol_a"]
         return stats
     except: return {}
 
@@ -1046,12 +1056,17 @@ def get_stats_apifootball_v3(match_id):
             a_val = s.get("away", "0").replace("%", "")
             if "corner" in tipo:
                 stats["escanteios_h"], stats["escanteios_a"] = int(h_val), int(a_val)
-            elif "shots on goal" in tipo:
+            elif "on target" in tipo:
                 stats["chutes_gol_h"], stats["chutes_gol_a"] = int(h_val), int(a_val)
-            elif "total shots" in tipo:
-                stats["chutes_tot_h"], stats["chutes_tot_a"] = int(h_val), int(a_val)
+            elif "off target" in tipo:
+                stats["chutes_tot_h"] = stats.get("chutes_tot_h", 0) + int(h_val)
+                stats["chutes_tot_a"] = stats.get("chutes_tot_a", 0) + int(a_val)
             elif "red cards" in tipo:
                 stats["red_cards_h"], stats["red_cards_a"] = int(h_val), int(a_val)
+        # Soma on target + off target = total de chutes
+        if "chutes_gol_h" in stats:
+            stats["chutes_tot_h"] = stats.get("chutes_tot_h", 0) + stats["chutes_gol_h"]
+            stats["chutes_tot_a"] = stats.get("chutes_tot_a", 0) + stats["chutes_gol_a"]
         return stats
     except: return {}
 
@@ -1142,12 +1157,17 @@ def get_stats_apifootball_v3(match_id):
             a_val = s.get("away", "0").replace("%", "")
             if "corner" in tipo:
                 stats["escanteios_h"], stats["escanteios_a"] = int(h_val), int(a_val)
-            elif "shots on goal" in tipo:
+            elif "on target" in tipo:
                 stats["chutes_gol_h"], stats["chutes_gol_a"] = int(h_val), int(a_val)
-            elif "total shots" in tipo:
-                stats["chutes_tot_h"], stats["chutes_tot_a"] = int(h_val), int(a_val)
+            elif "off target" in tipo:
+                stats["chutes_tot_h"] = stats.get("chutes_tot_h", 0) + int(h_val)
+                stats["chutes_tot_a"] = stats.get("chutes_tot_a", 0) + int(a_val)
             elif "red cards" in tipo:
                 stats["red_cards_h"], stats["red_cards_a"] = int(h_val), int(a_val)
+        # Soma on target + off target = total de chutes
+        if "chutes_gol_h" in stats:
+            stats["chutes_tot_h"] = stats.get("chutes_tot_h", 0) + stats["chutes_gol_h"]
+            stats["chutes_tot_a"] = stats.get("chutes_tot_a", 0) + stats["chutes_gol_a"]
         return stats
     except: return {}
 
