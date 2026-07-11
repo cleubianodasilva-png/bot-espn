@@ -2315,16 +2315,16 @@ def run():
         )
 
         # APPM — Ataques Perigosos Por Minuto (filtro geral anti-jogo morno)
-        appm_h_val = stats.get("ataques_perigosos_h", 0) if stats else 0
-        appm_a_val = stats.get("ataques_perigosos_a", 0) if stats else 0
-        appm_total_val = appm_h_val + appm_a_val
-        appm_total = round(appm_total_val / m, 2) if m > 0 else 0
-        appm_h = round(appm_h_val / m, 2) if m > 0 else 0
-        appm_a = round(appm_a_val / m, 2) if m > 0 else 0
-        if appm_total > 0 and (appm_total < 1.5 or appm_h < 0.8 or appm_a < 0.8):
-            print(f"[APPM-BAIXO] {h} x {a} — total={appm_total}/min, H={appm_h}/min, A={appm_a}/min, jogo morno filtrado")
+        _aph_val = stats.get("ataques_perigosos_h", 0) if stats else 0
+        _apa_val = stats.get("ataques_perigosos_a", 0) if stats else 0
+        _apt_val = _aph_val + _apa_val
+        _appm_total = round(_apt_val / m, 2) if m > 0 else 0
+        _appm_h = round(_aph_val / m, 2) if m > 0 else 0
+        _appm_a = round(_apa_val / m, 2) if m > 0 else 0
+        if _appm_total > 0 and (_appm_total < 1.5 or _appm_h < 0.8 or _appm_a < 0.8):
+            print(f"[APPM-BAIXO] {h} x {a} — total={_appm_total}/min, H={_appm_h}/min, A={_appm_a}/min, jogo morno filtrado")
         # APPM aprovado: total ≥ 1.5 E ambos os times ≥ 0.80
-        appm_valido = appm_total >= 1.5 and appm_h >= 0.8 and appm_a >= 0.8
+        appm_valido = _appm_total >= 1.5 and _appm_h >= 0.8 and _appm_a >= 0.8
 
         # MERCADO 1: OVER 0.5 HT (10-26 min, 0x0, favorito empatando, sem vermelho do fav)
         if p == 1 and 10 <= m <= 26 and sh == 0 and sa == 0 and fav_empatando and red_fav == 0 and appm_valido:
