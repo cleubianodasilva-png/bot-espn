@@ -2416,7 +2416,6 @@ def run():
 
 
 def processar_comandos_pendentes(token, chat_id, jogos_live=None, jogos_na_janela=None):
-    """Processa comandos /relatorio e /radar com checkpoint de update_id."""
     if jogos_live is None: jogos_live = []
     if jogos_na_janela is None: jogos_na_janela = []
     max_id = 0
@@ -2429,46 +2428,43 @@ def processar_comandos_pendentes(token, chat_id, jogos_live=None, jogos_na_janel
                 msg = update.get("message", {})
                 text = (msg.get("text", "") or "").strip()
                 chat_orig = msg.get("chat", {}).get("id", 0)
-                sep = "\n" + "\u2501" * 25 + "\n"
+                
                 if "/radar" in text:
-                    linhas_jan = ""
+                    linhas = ""
                     for j in jogos_na_janela:
-                        h = j.get("home",""); a = j.get("away","")
-                        m = j.get("minuto",""); sh = j.get("sh",0); sa = j.get("sa",0)
-                        liga = j.get("liga","")
-                        linhas_jan += f"\U0001f3af <b>{h} x {a}</b> | {m}' | {sh}x{sa} | {liga}\n"
-                    if not linhas_jan:
-                        linhas_jan = "Nenhum jogo na janela no momento."
-                    fora = [j for j in jogos_live if j not in jogos_na_janela][:10]
-                    linhas_fora = ""
-                    for j in fora:
-                        h = j.get("home",""); a = j.get("away","")
-                        m = j.get("minuto",""); sh = j.get("sh",0); sa = j.get("sa",0)
-                        linhas_fora += f"\u23f3 {h} x {a} | {m}' | {sh}x{sa}\n"
-                    if not linhas_fora: linhas_fora = "\u2014"
+                        h=j.get("home",""); a=j.get("away",""); m=j.get("minuto","")
+                        sh=j.get("sh",0); sa=j.get("sa",0); liga=j.get("liga","")
+                        linhas += f"🎯 <b>{h} x {a}</b> | {m}' | {sh}x{sa} | {liga}
+"
+                    
+                    if not linhas: linhas = "Nenhum jogo na janela."
+                    
+                    s = "━━━━━━━━━━━━━━━━━━━━"
                     msg_radar = (
-                        f"{sep}\n"
-                        f"📡👉<b>RADAR DE JOGOS AO VIVO</b>👈📡\n"
-                        f"{sep}\n"
-                        f"🔴 <b>{len(jogos_live)} jogos ao vivo</b> | 🎯 <b>{len(jogos_na_janela)} na janela</b>\n"
-                        f"{sep}\n"
-                        f"🚨<b>JOGOS NO ALVO:</b>\n{linhas_jan}"
-                        f"{sep}\n"
-                        f"⏳<b>FORA DA JANELA:</b>\n{linhas_fora}"
-                        f"{sep}"
+                        f"{s}
+"
+                        f"📡👉<b>RADAR DE JOGOS AO VIVO</b>👈📡
+"
+                        f"{s}
+"
+                        f"🔴 <b>{len(jogos_live)} jogos ao vivo</b> | 🎯 <b>{len(jogos_na_janela)} na janela</b>
+"
+                        f"{s}
+"
+                        f"🚨<b>JOGOS NO ALVO:</b>
+{linhas.strip()}
+"
+                        f"{s}"
                     )
                     requests.post(f"https://api.telegram.org/bot{token}/sendMessage",
                                   json={"chat_id": chat_orig, "text": msg_radar, "parse_mode": "HTML"})
-                    print(f"[CMD] Radar respondido com {len(jogos_live)} jogos live, {len(jogos_na_janela)} na janela")
                 elif "/relatorio" in text:
                     try: enviar_relatorio_diario()
                     except: pass
-        if max_id > 0:
-            try:
-                off = max_id
-                requests.get(f"https://api.telegram.org/bot{token}/getUpdates?offset={off+1}", timeout=5)
-            except: pass
-    except Exception as e:
-        print(f"[CMD] Erro processar comandos: {e}")
+    except: pass
+    if max_id > 0:
+        try: requests.get(f"https://api.telegram.org/bot{token}/getUpdates?offset={max_id+1}", timeout=5)
+        except: pass
+
 if __name__ == "__main__":
     run()
