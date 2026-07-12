@@ -1647,7 +1647,7 @@ def filtrar_janelas(jogos):
             p = p_raw
             
         em_janela = (
-            (p == 1 and 10 <= m <= 27) or
+            (p == 1 and 15 <= m <= 27) or
             (p == 1 and 28 <= m <= 38) or
             (p == 2 and 55 <= m <= 77) or
             (p == 2 and 78 <= m <= 88)
