@@ -2428,36 +2428,39 @@ def processar_comandos_pendentes(token, chat_id, jogos_live=None, jogos_na_janel
                 msg = update.get("message", {})
                 text = (msg.get("text", "") or "").strip()
                 chat_orig = msg.get("chat", {}).get("id", 0)
-                
+sep = "\n" + "\u2501" * 25 + "\n"
                 if "/radar" in text:
-                    linhas = ""
+                    linhas_jan = ""
                     for j in jogos_na_janela:
-                        h=j.get("home",""); a=j.get("away",""); m=j.get("minuto","")
-                        sh=j.get("sh",0); sa=j.get("sa",0); liga=j.get("liga","")
-                        linhas += f"🎯 <b>{h} x {a}</b> | {m}' | {sh}x{sa} | {liga}
-"
-                    
-                    if not linhas: linhas = "Nenhum jogo na janela."
-                    
-                    s = "━━━━━━━━━━━━━━━━━━━━"
+                        h = j.get("home",""); a = j.get("away","")
+                        m = j.get("minuto",""); sh = j.get("sh",0); sa = j.get("sa",0)
+                        liga = j.get("liga","")
+                        linhas_jan += f"\\U0001f3af <b>{h} x {a}</b> | {m}' | {sh}x{sa} | {liga}\\n"
+                    if not linhas_jan:
+                        linhas_jan = "Nenhum jogo na janela no momento."
+                    fora = [j for j in jogos_live if j not in jogos_na_janela][:5]
+                    linhas_fora = ""
+                    for j in fora:
+                        h = j.get("home",""); a = j.get("away","")
+                        m = j.get("minuto",""); sh = j.get("sh",0); sa = j.get("sa",0)
+                        liga = j.get("liga","")
+                        linhas_fora += f"\\u26bd {h} x {a} | {m}' | {sh}x{sa}\\n"
+                    if not linhas_fora:
+                        linhas_fora = "\\u2014"
                     msg_radar = (
-                        f"{s}
-"
-                        f"📡👉<b>RADAR DE JOGOS AO VIVO</b>👈📡
-"
-                        f"{s}
-"
-                        f"🔴 <b>{len(jogos_live)} jogos ao vivo</b> | 🎯 <b>{len(jogos_na_janela)} na janela</b>
-"
-                        f"{s}
-"
-                        f"🚨<b>JOGOS NO ALVO:</b>
-{linhas.strip()}
-"
-                        f"{s}"
+                        f"{sep}"
+                        f"\\U0001f4e1 <b>RADAR AO VIVO</b>\\n"
+                        f"{sep}"
+                        f"\\U0001f534 <b>{len(jogos_live)} jogos</b> | \\U0001f3af <b>{len(jogos_na_janela)} na mira</b>\\n"
+                        f"{sep}"
+                        f"\\U0001f6a8 <b>NA MIRA:</b>\\n{linhas_jan}"
+                        f"{sep}"
+                        f"\\u23f3 <b>OUTROS JOGOS:</b>\\n{linhas_fora}"
+                        f"{sep}"
                     )
                     requests.post(f"https://api.telegram.org/bot{token}/sendMessage",
                                   json={"chat_id": chat_orig, "text": msg_radar, "parse_mode": "HTML"})
+                    print(f"[RADAR] Enviado — {len(jogos_live)} ao vivo, {len(jogos_na_janela)} na janela")
                 elif "/relatorio" in text:
                     try: enviar_relatorio_diario()
                     except: pass
