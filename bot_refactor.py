@@ -427,6 +427,7 @@ APIFOOTBALL_URL  = "https://apiv3.apifootball.com"
 # APIs Secundárias (Ativas)
 APIFOOTBALL_COM_KEY = os.getenv("APIFOOTBALL_KEY")
 BZZOIRO_TOKEN = os.getenv("BZZOIRO_TOKEN")
+DISABLE_ESPN = os.getenv("DISABLE_ESPN", "").lower() in ("true", "1", "yes")
 BZZOIRO_URL = "https://sports.bzzoiro.com"
 
 
@@ -2077,18 +2078,18 @@ def run():
     fids_apif  = {j["fid"] for j in jogos_apif}
 
     # ─────────────────────────────────────────────────────────────
-    # PASSO 1B: ESPN — 2ª fonte, complementa o que apifootball não cobriu
+    # PASSO 1B: ESPN — 2ª fonte, complementa o que apifootball não cobriu (DESLIGADA no Zapia)
     # ─────────────────────────────────────────────────────────────
-    jogos_espn = get_jogos_espn(fids_apif)
+    jogos_espn = get_jogos_espn(fids_apif) if not DISABLE_ESPN else []
 
     # ─────────────────────────────────────────────────────────────
     # PASSO 1C: Bzzoiro — 3ª fonte, preenche o que faltar
     # ─────────────────────────────────────────────────────────────
-    jogos_bzz = get_jogos_bzzoiro(fids_apif | {j["fid"] for j in jogos_espn})
+    jogos_bzz = get_jogos_bzzoiro(fids_apif | {j["fid"] for j in (jogos_espn if jogos_espn else [])})
 
     # Junta tudo na ordem: apifootball > ESPN > Bzzoiro
-    jogos_live = jogos_apif + jogos_espn + jogos_bzz
-    print(f"[Total] {len(jogos_live)} jogos ao vivo (apifootball={len(jogos_apif)} + ESPN={len(jogos_espn)} + bzzoiro={len(jogos_bzz)})")
+    jogos_live = jogos_apif + jogos_espn + jogos_bzz  # ESPN via se DISABLE_ESPN=false
+    print(f'[Total] {len(jogos_live)} jogos ao vivo (apifootball={len(jogos_apif)} + ESPN={len(jogos_espn)} + bzzoiro={len(jogos_bzz)})')
 
     # PASSO 2: Filtra janelas alvo
     jogos_na_janela = filtrar_janelas(jogos_live)
