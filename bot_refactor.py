@@ -55,14 +55,14 @@ def gerar_layout_relatorio(greens, reds, data_str):
     assertividade = (greens / total * 100) if total > 0 else 0.0
     
     corpo = (
-        f"{sep}"
-        f"📊 RELATÓRIO DIÁRIO — {data_str}"
-        f"{sep}"
-        f"✅ GREEN: <b>{greens}</b>"
-        f"🔴 RED: <b>{reds}</b>"
-        f"📈 TOTAL DE ENTRADAS: <b>{total}</b>"
-        f"🎯 ASSERTIVIDADE: <b>{assertividade:.1f}%</b>"
-        f"{sep}"
+        f"{sep}\n"
+        f"📊 RELATÓRIO DIÁRIO — {data_str}\n"
+        f"{sep}\n"
+        f"✅ GREEN: <b>{greens}</b>\n"
+        f"🔴 RED: <b>{reds}</b>\n"
+        f"📈 TOTAL DE ENTRADAS: <b>{total}</b>\n"
+        f"🎯 ASSERTIVIDADE: <b>{assertividade:.1f}%</b>\n"
+        f"{sep}\n"
         f"⚠️👆Resultados do dia👆⚠️"
     )
     return corpo
@@ -655,14 +655,14 @@ def enviar_relatorio_diario():
     taxa  = (greens / total * 100) if total > 0 else 0
     msg = (
         f"{sep}\n"
-        f"RELATÓRIO DIÁRIO {hoje}\n"
+        f"📊 RELATÓRIO DIÁRIO — {hoje}\n"
         f"{sep}\n"
-        f"🟢 Greens: {greens}\n"
-        f"🔴 Reds: {reds}\n"
-        f"📈 Total: {total}\n"
-        f"🚨Taxa: {taxa:.0f}% de Acertividade. \n"
+        f"✅ GREEN: <b>{greens}</b>\n"
+        f"🔴 RED: <b>{reds}</b>\n"
+        f"📈 TOTAL DE ENTRADAS: <b>{total}</b>\n"
+        f"🎯 ASSERTIVIDADE: <b>{taxa:.1f}%</b>\n"
         f"{sep}\n"
-        f"⚠️Jogue com responsabilidade⚠️"
+        f"⚠️👆Resultados do dia👆⚠️"
     )
     if send_telegram(msg, botoes=False):
         sent_ctrl.add(hoje_key)
