@@ -2280,21 +2280,31 @@ def run():
             print(f"[SKIP] {h} x {a} — sem stats em nenhuma API, pulando jogo")
             continue
 
-        # Determinar favorito pelas odds (ESPN primeiro, depois Odds API)
-        fav_final, odd_h, odd_a = get_favorito_odds(h, a, fid=fid, league=j.get("liga_slug", j.get("liga", "")))
-        fav_por_odds = fav_final in ("h", "a")
-
-        try:
-            r_odd = requests.get("https://apiv3.apifootball.com/",
-                             params={"action": "get_odds", "match_id": fid_raw, "APIkey": APIFOOTBALL_COM_KEY}, timeout=8)
-            odds_data = r_odd.json()
-            if isinstance(odds_data, list) and odds_data:
-                odd = odds_data[0]
-                odd_h, odd_a = float(odd.get("odd_1", 0)), float(odd.get("odd_2", 0))
-                if odd_h > 1 and odd_a > 1:
-                    fav_final = "h" if odd_h <= odd_a else "a"
-                    fav_por_odds = True
-        except: pass
+        # Favorito: primeiro usa odds inline da apifootball (ja veio na coleta), depois ESPN, depois tenta de novo
+        odd_h = j.get("odd_h")
+        odd_a = j.get("odd_a")
+        fav_por_odds = False
+        if odd_h and odd_a and odd_h > 1 and odd_a > 1:
+            fav_final = "h" if odd_h <= odd_a else "a"
+            fav_por_odds = True
+            print(f"[ODDS-INLINE] {h} x {a} — odd Casa:{odd_h:.2f} Fora:{odd_a:.2f} (apifootball)")
+        # Fallback: ESPN/Odds API
+        if not fav_por_odds:
+            fav_final, odd_h, odd_a = get_favorito_odds(h, a, fid=fid, league=j.get("liga_slug", j.get("liga", "")))
+            fav_por_odds = fav_final in ("h", "a")
+        # Fallback: apifootball por match_id (pra jogos que ESPN nao cobriu)
+        if not fav_por_odds:
+            try:
+                r_odd = requests.get("https://apiv3.apifootball.com/",
+                                 params={"action": "get_odds", "match_id": fid_raw, "APIkey": APIFOOTBALL_COM_KEY}, timeout=8)
+                odds_data = r_odd.json()
+                if isinstance(odds_data, list) and odds_data:
+                    odd = odds_data[0]
+                    odd_h, odd_a = float(odd.get("odd_1", 0)), float(odd.get("odd_2", 0))
+                    if odd_h > 1 and odd_a > 1:
+                        fav_final = "h" if odd_h <= odd_a else "a"
+                        fav_por_odds = True
+            except: pass
 
         # Fallback odds via Bzzoiro (com auth e campos corretos)
         if not fav_por_odds:
