@@ -2089,6 +2089,12 @@ def check_status_command(total_jogos_live=0, jogos_live=None, jogos_na_janela=No
                     f"<b>⏳ FORA DA JANELA:</b>\n{linhas_fora}"
                     f"{sep}"
                 )
+                    f"{sep}\n"
+                    f"🚨<b>JOGOS NO ALVO:</b>\n{linhas_janela}"
+                    f"{sep}\n"
+                    f"<b>⏳ FORA DA JANELA:</b>\n{linhas_fora}"
+                    f"{sep}"
+                )
                 requests.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage", json={"chat_id": chat_orig, "text": msg_radar, "parse_mode": "HTML"}, timeout=10)
                 radar_respondido = True
         if new_last_id > last_id:
@@ -2500,9 +2506,16 @@ def processar_comandos_pendentes(token, chat_id, jogos_live=None, jogos_na_janel
                     if not linhas_fora: linhas_fora = "\u2014"
                     msg_radar = (
                         f"{sep}\n"
-                        f"\U0001f4e1\U0001f449<b>RADAR DE JOGOS AO VIVO</b>\U0001f448\U0001f4e1\n"
+                        f"📡👉<b>RADAR DE JOGOS AO VIVO</b>👈📡\n"
                         f"{sep}\n"
-                        f"\u26a0\ufe0f <b>{len(jogos_live)} jogos ao vivo</b>\n"
+                        f"🔴 <b>{len(jogos_live)} jogos ao vivo</b>\n"
+                        f"🎯 <b>{len(jogos_na_janela)} na janela alvo</b>\n"
+                        f"{sep}\n"
+                        f"🚨<b>JOGOS NO ALVO:</b>\n{linhas_jan}"
+                        f"{sep}\n"
+                        f"<b>⏳ FORA DA JANELA:</b>\n{linhas_fora}"
+                        f"{sep}"
+                    )
                         f"\U0001f3af <b>{len(jogos_na_janela)} na janela alvo</b>\n"
                         f"{sep}\n"
                         f"\U0001f6a8<b>JOGOS NO ALVO:</b>\n{linhas_jan}"
