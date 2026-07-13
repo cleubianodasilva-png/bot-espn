@@ -2078,7 +2078,7 @@ def checar_resultado(sinal):
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# COMANDOS TELEGRAM (/relatorio e /radar)
+# COMANDOS TELEGRAM (/relatoriodiario e /radar)
 # ═══════════════════════════════════════════════════════════════════════════════
 def check_status_command(total_jogos_live=0, jogos_live=None, jogos_na_janela=None):
     import base64 as _b64
@@ -2119,7 +2119,7 @@ def check_status_command(total_jogos_live=0, jogos_live=None, jogos_na_janela=No
                 requests.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage",
                               json={"chat_id": chat_orig, "text": msg, "parse_mode": "HTML"})
                 relatorio_respondido = True
-            if text == "/relatorio" and not relatorio_respondido:
+            if text == "/relatoriodiario" and not relatorio_respondido:
                 enviar_relatorio_diario()
                 relatorio_respondido = True
             elif text == "/radar" and not radar_respondido:
@@ -2567,7 +2567,7 @@ def run():
 
 
 def processar_comandos_pendentes(token, chat_id, jogos_live=None, jogos_na_janela=None):
-    """Processa comandos /relatorio e /radar com checkpoint de update_id."""
+    """Processa comandos /relatoriodiario e /radar com checkpoint de update_id."""
     if jogos_live is None: jogos_live = []
     if jogos_na_janela is None: jogos_na_janela = []
     max_id = 0
@@ -2619,7 +2619,7 @@ def processar_comandos_pendentes(token, chat_id, jogos_live=None, jogos_na_janel
                                       json={"chat_id": chat_orig, "text": msg, "parse_mode": "HTML"})
                     except Exception as e:
                         print(f"[REL-MENSAL] Erro: {e}")
-                elif "/relatorio" in text:
+                elif "/relatoriodiario" in text:
                     try: enviar_relatorio_diario()
                     except: pass
         if max_id > 0:
