@@ -1067,7 +1067,9 @@ def get_jogos_apifootball_v3(fids_existentes):
                 "minuto": int(ev.get("match_status", 0) or 0),
                 "liga": ev.get("league_name", "") or ev.get("league", "") or ev.get("competition_name", "") or "Liga",
                 "period": 2 if (int(ev.get("match_status", 0) or 0) >= 45) else 1,
-                "source": "apifootball"
+                "source": "apifootball",
+                "home_id": ev.get("match_hometeam_id", ""),
+                "away_id": ev.get("match_awayteam_id", "")
             })
         print(f"[APIF-v3] {len(jogos)} novos jogos (de {len(data)} totais)")
         return jogos
@@ -1914,12 +1916,13 @@ def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_v
         entrada = f"Mais de {linha}🚩"
 
     # Adiciona ⚽ na entrada para mercados de gol
-    if mercado in ("HT", "LIMITEHT", "BTTS", "OFT", "OVERGOAL"):
+    if mercado in ("HT", "LIMITEHT", "VEMGOL1T", "BTTS", "OFT", "OVERGOAL"):
         entrada = str(entrada).rstrip() + "⚽"
     
     titles = {
         "HT": "⚽️🔥OVER GOL INTERVALO🔥⚽️",
         "LIMITEHT": "⚽️🔥OVER GOL LIMITE HT🔥⚽️",
+        "VEMGOL1T": "⚽️🔥VEM GOL NO 1°TEMPO🔥⚽️",
         "BTTS": "⚽️🔥AMBAS MARCAM🔥⚽️",
         "OFT": "⚽️🔥OVER 1.5 GOLS PARTIDA🔥⚽️",
         "OVERGOAL": "⚽️🔥OVER GOL PARTIDA🔥⚽️",
@@ -2029,7 +2032,7 @@ def checar_resultado(sinal):
         is_final = (state == "post")
         is_2h    = (state == "in" and int(status.get("period", 0)) >= 2)
         
-        if not (is_final or (mercado in ["HT", "LIMITEHT", "CORNER_HT"] and is_2h)):
+        if not (is_final or (mercado in ["HT", "LIMITEHT", "VEMGOL1T", "CORNER_HT"] and is_2h)):
             return None
 
         # Placar Final (ou atual se is_2h)
@@ -2051,7 +2054,7 @@ def checar_resultado(sinal):
         total_ht = gh_ht + ga_ht
 
         # Lógica por Mercado
-        if mercado in ["HT", "LIMITEHT"]:
+        if mercado in ["HT", "LIMITEHT", "VEMGOL1T"]:
             return "green" if total_ht >= 1 else ("red" if (is_2h or is_final) else None)
         
         elif mercado == "BTTS":
@@ -2181,6 +2184,63 @@ def check_status_command(total_jogos_live=0, jogos_live=None, jogos_na_janela=No
             print(f"[CMD] last_id salvo: {new_last_id} | status: {r_put.status_code} | token_ok: {bool(GITHUB_TOKEN)}")
     except Exception as e:
         print(f"[CMD] Erro ao processar comandos: {e}")
+
+
+# Cache de histórico de times (evita consultas repetidas no mesmo ciclo)
+HISTORICO_CACHE = {}
+
+def get_team_ht_stats(team_id, team_name):
+    """Retorna stats de HT dos últimos 10 jogos do time via apifootball."""
+    if team_id in HISTORICO_CACHE:
+        return HISTORICO_CACHE[team_id]
+    try:
+        params = {
+            "action": "get_events",
+            "from": (datetime.now(BRT) - timedelta(days=45)).strftime("%Y-%m-%d"),
+            "to": datetime.now(BRT).strftime("%Y-%m-%d"),
+            "team_id": team_id,
+            "APIkey": APIFOOTBALL_COM_KEY
+        }
+        r = requests.get(APIFOOTBALL_URL, params=params, timeout=10)
+        data = r.json()
+        if not isinstance(data, list):
+            HISTORICO_CACHE[team_id] = None
+            return None
+        jogos = [j for j in data if j.get('match_status') == 'Finished' and (str(j.get('match_hometeam_id','')) == str(team_id) or str(j.get('match_awayteam_id','')) == str(team_id))]
+        jogos = jogos[-10:]
+        if not jogos:
+            HISTORICO_CACHE[team_id] = None
+            return None
+        total_partidas = len(jogos)
+        gols_ht = 0
+        total_gols = 0
+        ambas_marcam = 0
+        for j in jogos:
+            try:
+                ht_h = int(j.get('match_hometeam_halftime_score', 0) or 0)
+                ht_a = int(j.get('match_awayteam_halftime_score', 0) or 0)
+                ft_h = int(j.get('match_hometeam_score', 0) or 0)
+                ft_a = int(j.get('match_awayteam_score', 0) or 0)
+                if ht_h + ht_a > 0:
+                    gols_ht += 1
+                total_gols += ft_h + ft_a
+                if ft_h > 0 and ft_a > 0:
+                    ambas_marcam += 1
+            except:
+                continue
+        result = {
+            "pct_ht": round(gols_ht / total_partidas * 100, 1),
+            "gols_ht": gols_ht,
+            "total_parts": total_partidas,
+            "media_gols": round(total_gols / total_partidas, 1) if total_partidas > 0 else 0,
+            "pct_bt": round(ambas_marcam / total_partidas * 100, 1) if total_partidas > 0 else 0
+        }
+        HISTORICO_CACHE[team_id] = result
+        return result
+    except Exception as e:
+        print(f"[HT-HIST] Erro ao buscar histórico do time {team_name} (id={team_id}): {e}")
+        HISTORICO_CACHE[team_id] = None
+        return None
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # LOOP PRINCIPAL
@@ -2470,6 +2530,47 @@ def run():
                         sent.add(key); total_env += 1
                         registrar_sinal(fid, "LIMITEHT", h, a, mid)
 
+
+        # MERCADO 1C: VEM GOL NO 1°TEMPO (15-27 min, 0x0, odd fav ≤ 1.40, APPM total ≥ 1.4, casa/fora ≥ 0.7, histórico ≥ 70% HT, média ≥ 2.5, BT ≥ 50%)
+        if p == 1 and 15 <= m <= 27 and sh == 0 and sa == 0 and fav_empatando and red_fav == 0:
+            odd_fav_num = get_odd_favorito_num(h, a, fid=fid, league=j.get('liga_slug', j.get('liga', '')))
+
+            # APPM: total ≥ 1.4, casa ≥ 0.7 OU fora ≥ 0.7
+            appm_vemgol_ok = _appm_total >= 1.4 and (_appm_h >= 0.7 or _appm_a >= 0.7)
+
+            # Histórico dos times (últimos 10 jogos cada) - via apifootball team_id
+            ht_home = get_team_ht_stats(j.get("home_id"), h) if j.get("home_id") else None
+            ht_away = get_team_ht_stats(j.get("away_id"), a) if j.get("away_id") else None
+
+            # Pega o melhor histórico entre casa e fora
+            stats_home_pct = ht_home.get('pct_ht', 0) if ht_home else 0
+            stats_away_pct = ht_away.get('pct_ht', 0) if ht_away else 0
+            melhor_ht_pct = max(stats_home_pct, stats_away_pct)
+
+            stats_home_media = ht_home.get('media_gols', 0) if ht_home else 0
+            stats_away_media = ht_away.get('media_gols', 0) if ht_away else 0
+            media_gols_geral = (stats_home_media + stats_away_media) / 2 if (ht_home and ht_away) else max(stats_home_media, stats_away_media)
+
+            stats_home_bt = ht_home.get('pct_bt', 0) if ht_home else 0
+            stats_away_bt = ht_away.get('pct_bt', 0) if ht_away else 0
+            melhor_bt_pct = max(stats_home_bt, stats_away_bt)
+
+            # Times que FAZEM e SOFREM gols: ambos times com média de gols > 0 (participação dos dois lados)
+            ambos_fazem = (stats_home_media > 0 and stats_away_media > 0) if (ht_home and ht_away) else False
+
+            print(f'[VEMGOL] {h} x {a} | odd={odd_fav_num} | appm={_appm_total}/{_appm_h}/{_appm_a} | ht%={melhor_ht_pct}% | mg={media_gols_geral} | bt%={melhor_bt_pct}% | ambos_fazem={ambos_fazem}')
+            if (odd_fav_num <= 1.40 and appm_vemgol_ok
+                and melhor_ht_pct >= 70 and media_gols_geral >= 2.5
+                and melhor_bt_pct >= 50 and ambos_fazem
+                and appm_valido):
+                hoje = datetime.now(BRT).strftime('%Y%m%d')
+                key = f"{dedup_id}_vemgol1t_{hoje}"
+                if key not in sent:
+                    mid = send_telegram(msg_universal(h, a, m, liga, 3, 'VEMGOL1T', 'Over 0.5', placar, stats=stats, sh=sh, sa=sa, fav_final=fav_final, odd_h=odd_h, odd_a=odd_a), marca=key, home=h, away=a)
+                    if mid:
+                        sent.add(key); total_env += 1
+                        registrar_sinal(fid, 'VEMGOL1T', h, a, mid)
+        
         # MERCADO 2: AMBAS MARCAM BTTS (55-75 min, fav perdendo por 1, sem vermelho do fav)
         if p == 2 and 55 <= m <= 75 and ((sh == 1 and sa == 0) or (sh == 0 and sa == 1)) and fav_perdendo_1 and red_fav == 0 and appm_valido:
             hoje = datetime.now(BRT).strftime('%Y%m%d')
