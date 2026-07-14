@@ -2366,7 +2366,7 @@ def run():
 
         stats = {}
         for src_nome, src in [("apifootball", stats_apif), ("ESPN", stats_espn), ("Bzzoiro", stats_bzz)]:
-            for campo in ["chutes_tot_h","chutes_tot_a","chutes_gol_h","chutes_gol_a","escanteios_h","escanteios_a","red_cards_h","red_cards_a","posse_h","posse_a","ataques_h","ataques_a","ataques_perigosos_h","ataques_perigosos_a"]:
+            for campo in ["chutes_tot_h","chutes_tot_a","chutes_gol_h","chutes_gol_a","red_cards_h","red_cards_a","posse_h","posse_a","ataques_h","ataques_a","ataques_perigosos_h","ataques_perigosos_a"]:
                 if campo not in src:
                     continue
                 val = src[campo]
@@ -2379,24 +2379,45 @@ def run():
                 elif current == 0 and val > 0:
                     stats[campo] = val
                     stats["_fonte_"+campo] = src_nome
+
+        # === ESCANTEIOS: cross-validation entre fontes ===
+        # Coleta o que cada API diz sobre escanteios
+        esc_srcs = {
+            "apifootball": (stats_apif.get("escanteios_h", -1), stats_apif.get("escanteios_a", -1)),
+            "ESPN": (stats_espn.get("escanteios_h", -1), stats_espn.get("escanteios_a", -1)),
+            "Bzzoiro": (stats_bzz.get("escanteios_h", -1), stats_bzz.get("escanteios_a", -1)),
+        }
+        # Filtra só fontes com dados reais (ambos >= 0)
+        esc_disponiveis = {nome: (h, a) for nome, (h, a) in esc_srcs.items() if h >= 0 and a >= 0}
+        
+        if esc_disponiveis:
+            # Prioridade absoluta: apifootball > ESPN > Bzzoiro
+            for prio in ["apifootball", "ESPN", "Bzzoiro"]:
+                if prio in esc_disponiveis:
+                    eh, ea = esc_disponiveis[prio]
+                    total_esc = eh + ea
+                    # Validação de sanidade: ~1 escanteio a cada 5 min no MAXIMO
+                    max_esc_sanity = max(1, int(m / 5))
+                    
+                    if total_esc <= max_esc_sanity:
+                        stats["escanteios_h"] = eh
+                        stats["escanteios_a"] = ea
+                        stats["_fonte_escanteios"] = prio
+                        print(f"[ESC-FUSION] Usando {prio}: {eh}x{ea} (total {total_esc}) no min {m}")
+                        break
+                    else:
+                        # Se a fonte primária passou do sanity, tenta próxima
+                        print(f"[ESC-FUSION] {prio} rejeitado: {eh}x{ea} (total {total_esc}) > max {max_esc_sanity} no min {m}. Tentando proxima fonte...")
+                        continue
+
+        # Fallback: se nenhuma fonte passou, zera
+        stats.setdefault("escanteios_h", -1)
+        stats.setdefault("escanteios_a", -1)
+
         for k in ["chutes_tot_h","chutes_tot_a","chutes_gol_h","chutes_gol_a"]:
             stats.setdefault(k, 0)
-        for k in ["escanteios_h","escanteios_a"]:
-            stats.setdefault(k, -1)
         for k in ["red_cards_h","red_cards_a"]:
             stats.setdefault(k, 0)
-
-        # Sanidade: valida escanteios contra o minuto da partida
-        if stats.get("escanteios_h", -1) >= 0 and stats.get("escanteios_a", -1) >= 0:
-            total_esc = stats["escanteios_h"] + stats["escanteios_a"]
-            max_esc_esperado = max(1, int(m * 0.22) + 1)  # ~1 corner a cada 4.5 min + folga
-            if total_esc > max_esc_esperado:
-                fonte_esc_h = stats.get("_fonte_escanteios_h", "?")
-                fonte_esc_a = stats.get("_fonte_escanteios_a", "?")
-                print(f"[SANITY] Escanteios suspeitos: {stats['escanteios_h']}x{stats['escanteios_a']} (total {total_esc}) no min {m} — fontes: {fonte_esc_h}/{fonte_esc_a}. Total max esperado: {max_esc_esperado}. Ignorando escanteios dessa fonte.")
-                stats["escanteios_h"] = -1
-                stats["escanteios_a"] = -1
-
         print(f"[STATS-FUSION] {h} x {a} | chutes: {stats.get('chutes_tot_h',0)}/{stats.get('chutes_tot_a',0)} | cantos: {stats.get('escanteios_h',-1)}/{stats.get('escanteios_a',-1)}")
 
         # Verifica se tem dados reais — sem stats E sem odds, pula o jogo
