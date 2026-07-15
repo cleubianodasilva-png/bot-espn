@@ -21,6 +21,17 @@ def analisar_e_disparar(game, stats, p, m, sh, sa, odd_h, odd_a, sent_vistos):
         if sh == 0 and sa == 0 and red_fav == 0:
             return "HT", "Over 0.5 Gols HT"
 
+    # 1B. OVER GOL PRESSÃO HT
+    if p == 1 and 15 <= m <= 27:
+        if sh == 0 and sa == 0 and red_fav == 0:
+            alvo = stats.get("chutes_gol_h", 0) + stats.get("chutes_gol_a", 0)
+            esc = stats.get("escanteios_h", 0) + stats.get("escanteios_a", 0)
+            atq_perig = stats.get("ataques_perigosos_h", 0) + stats.get("ataques_perigosos_a", 0)
+            chutes = stats.get("chutes_tot_h", 0) + stats.get("chutes_tot_a", 0)
+            esc_ok = esc >= 2 or esc == -2  # -2 = soma de -1 + -1 (liga sem escanteio)
+            if alvo >= 2 and esc_ok and atq_perig >= 17 and chutes >= 8:
+                return "PRESS", "Over 0.5 Gols Pressão HT"
+
     # 2. OVER GOL PARTIDA (FT)
     if p == 2 and 55 <= m <= 75:
         if (fav_gols <= adv_gols) and (adv_gols - fav_gols <= 1) and red_fav == 0:
@@ -1797,6 +1808,16 @@ def gerar_motivo(mercado, stats, sh, sa, fav_final, minuto, cantos_atual=0):
                 return f"Pressão ofensiva sustentada ({total_atq_perig} atq. perigosos){vermelho}"
             return f"Pressão ofensiva contínua ({total_atq_perig} ataques perigosos){vermelho}"
 
+    if mercado == "PRESS":
+        alvo = stats.get("chutes_gol_h", 0) + stats.get("chutes_gol_a", 0) if stats else 0
+        esc = stats.get("escanteios_h", 0) + stats.get("escanteios_a", 0) if stats else 0
+        atq = atq_perig_h + atq_perig_a
+        chutes = total_chutes
+        esc_ok = esc >= 2 or esc == -2
+        if alvo >= 2 and esc_ok and atq >= 17 and chutes >= 8:
+            return f"Pressão total! {chutes} chutes, {alvo} no alvo, {atq} atq. perigosos — jogo pede gol{vermelho}"
+        return f"Pressão: {chutes} chutes, {alvo} no alvo, {atq} atq. perigosos{vermelho}"
+
     if mercado == "HT":
         if chutes_gol_h >= 2 or chutes_gol_a >= 2:
             return f"Ambas finalizando no alvo ({chutes_gol_h}x{chutes_gol_a}) — gol no 1º tempo iminente{vermelho}"
@@ -1926,7 +1947,7 @@ def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_v
         entrada = f"Mais de {linha}🚩"
 
     # Adiciona ⚽ na entrada para mercados de gol
-    if mercado in ("HT", "LIMITEHT", "VEMGOL1T", "BTTS", "OFT", "OVERGOAL"):
+    if mercado in ("HT", "LIMITEHT", "VEMGOL1T", "BTTS", "OFT", "OVERGOAL", "PRESS"):
         entrada = str(entrada).rstrip() + "⚽"
     
     titles = {
@@ -1936,6 +1957,7 @@ def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_v
         "BTTS": "⚽️🔥AMBAS MARCAM🔥⚽️",
         "OFT": "⚽️🔥OVER 1.5 GOLS PARTIDA🔥⚽️",
         "OVERGOAL": "⚽️🔥OVER GOL PARTIDA🔥⚽️",
+        "PRESS": "⚽️🔥OVER GOL PRESSÃO HT🔥⚽️",
         "CORNER_HT": "🚩🔥ESCANTEIO LIMITE HT🔥🚩",
         "CORNER_FT": "🚩🔥ESCANTEIO LIMITE FT🔥🚩",
     }
@@ -2042,7 +2064,7 @@ def checar_resultado(sinal):
         is_final = (state == "post")
         is_2h    = (state == "in" and int(status.get("period", 0)) >= 2)
         
-        if not (is_final or (mercado in ["HT", "LIMITEHT", "VEMGOL1T", "CORNER_HT"] and is_2h)):
+        if not (is_final or (mercado in ["HT", "LIMITEHT", "VEMGOL1T", "PRESS", "CORNER_HT"] and is_2h)):
             return None
 
         # Placar Final (ou atual se is_2h)
@@ -2718,7 +2740,24 @@ def run():
                     sent.add(key); total_env += 1
                     registrar_sinal(fid, "HT", h, a, mid)
 
-        # MERCADO 1B: OVER GOL LIMITE HT (15-27 min, 0x0, odd fav ≤ 1.50, prob 1.5 FT ≥ 75%, prob 0.5 HT ≥ 65%, APPM casa/fora ≥ 1)
+        # MERCADO 1B: OVER GOL PRESSÃO HT (15-27 min, 0x0, sem vermelho, critérios de pressão)
+        if p == 1 and 15 <= m <= 27 and sh == 0 and sa == 0 and red_fav == 0 and hist_ok_ht:
+            if stats:
+                alvo = stats.get("chutes_gol_h", 0) + stats.get("chutes_gol_a", 0)
+                esc = stats.get("escanteios_h", 0) + stats.get("escanteios_a", 0)
+                atq_perig = stats.get("ataques_perigosos_h", 0) + stats.get("ataques_perigosos_a", 0)
+                chutes = stats.get("chutes_tot_h", 0) + stats.get("chutes_tot_a", 0)
+                esc_ok = esc >= 2 or esc == -2
+                if alvo >= 2 and esc_ok and atq_perig >= 17 and chutes >= 8:
+                    hoje = datetime.now(BRT).strftime('%Y%m%d')
+                    key = f"{dedup_id}_press_{hoje}"
+                    if key not in sent:
+                        mid = send_telegram(msg_universal(h, a, m, liga, 3, "PRESS", "Over 0.5", placar, stats=stats, sh=sh, sa=sa, fav_final=fav_final, odd_h=odd_h, odd_a=odd_a), marca=key, home=h, away=a)
+                        if mid:
+                            sent.add(key); total_env += 1
+                            registrar_sinal(fid, "PRESS", h, a, mid)
+
+        # MERCADO 1C: OVER GOL LIMITE HT (15-27 min, 0x0, odd fav ≤ 1.50, prob 1.5 FT ≥ 75%, prob 0.5 HT ≥ 65%, APPM casa/fora ≥ 1)
         if p == 1 and 15 <= m <= 27 and sh == 0 and sa == 0 and red_fav == 0:
             odd_fav_num = get_odd_favorito_num(h, a, fid=fid, league=j.get("liga_slug", j.get("liga", "")))
             
