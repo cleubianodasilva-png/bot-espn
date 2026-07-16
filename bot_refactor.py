@@ -2612,13 +2612,8 @@ def run():
             cantos_h = stats.get("escanteios_h", -1) if stats else -1
             cantos_a = stats.get("escanteios_a", -1) if stats else -1
             cantos = (max(0, cantos_h) + max(0, cantos_a)) if (cantos_h >= 0 and cantos_a >= 0) else -1
-            # Stats reais? Se chutes, ataques E escanteios estão zerados, API não cobre o jogo
-            stats_vazios = (_apt_val == 0 and
-                           stats.get("chutes_tot_h", 0) == 0 and
-                           stats.get("chutes_tot_a", 0) == 0) if stats else True
-            if cantos < 0 or (cantos == 0 and stats_vazios):
-                motivo = "cantos negativos" if cantos < 0 else "tudo zerado (API sem cobertura)"
-                print(f"[SKIP-CORNER-HT] {h} x {a} — {motivo}")
+            if cantos < 0:
+                print(f"[SKIP-CORNER-HT] {h} x {a} — cantos={cantos} sem dados")
             elif key not in sent:
                 ob365_e = j.get("odds_b365", {}).get("o+0.5") if j.get("odds_b365") else None
                 obano_e = j.get("odds_bano", {}).get("o+0.5") if j.get("odds_bano") else None
@@ -2637,12 +2632,8 @@ def run():
                 cantos = max(0, cantos_h) + max(0, cantos_a)
             else:
                 cantos = -1
-            stats_vazios = (_apt_val == 0 and
-                           stats.get("chutes_tot_h", 0) == 0 and
-                           stats.get("chutes_tot_a", 0) == 0) if stats else True
-            if cantos < 0 or (cantos == 0 and stats_vazios):
-                motivo = "cantos negativos" if cantos < 0 else "tudo zerado (API sem cobertura)"
-                print(f"[SKIP-CORNER-FT] {h} x {a} — {motivo}")
+            if cantos < 0:
+                print(f"[SKIP-CORNER-FT] {h} x {a} — cantos={cantos} sem dados")
             elif key not in sent:
                 ob365_e = j.get("odds_b365", {}).get("o+0.5") if j.get("odds_b365") else None
                 obano_e = j.get("odds_bano", {}).get("o+0.5") if j.get("odds_bano") else None
