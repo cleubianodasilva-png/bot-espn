@@ -1146,13 +1146,24 @@ def get_jogos_apifootball_v3(fids_existentes):
             odds_bano = {}
             if fid_raw in odds_idx:
                 bks = odds_idx[fid_raw]
-                for bk, od in bks.items():
-                    oh = od.get("odd_1")
-                    oa = od.get("odd_2")
-                    if oh and oa:
-                        odd_h = float(oh)
-                        odd_a = float(oa)
-                        break
+                # Moneyline odd_h/odd_a: prioridade Bet365 > Betano > qualquer outra
+                odd_h = odd_a = None
+                for bk_alvo in ("bet365", "betano"):
+                    if bk_alvo in bks:
+                        oh = bks[bk_alvo].get("odd_1")
+                        oa = bks[bk_alvo].get("odd_2")
+                        if oh and oa:
+                            odd_h = float(oh)
+                            odd_a = float(oa)
+                            break
+                if not (odd_h and odd_a):
+                    for bk, od in bks.items():
+                        oh = od.get("odd_1")
+                        oa = od.get("odd_2")
+                        if oh and oa:
+                            odd_h = float(oh)
+                            odd_a = float(oa)
+                            break
                 for bk_alvo, dest in [("bet365", odds_b365), ("betano", odds_bano)]:
                     if bk_alvo in bks:
                         entry = bks[bk_alvo]
