@@ -2143,15 +2143,8 @@ def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_v
     # ODD real do mercado (melhor entre as casas)
     if campo_odd:
         od_b365 = odds_b365.get(campo_odd) if odds_b365 else None
-        od_bano = odds_bano.get(campo_odd) if odds_bano else None
-        if od_b365 and od_bano:
-            melhor = max(od_b365, od_bano)
-            casa   = "Bet365" if melhor == od_b365 else "Betano"
-            odd_rec = f"{melhor:.2f} ({casa})"
-        elif od_b365:
-            odd_rec = f"{od_b365:.2f} (Bet365)"
-        elif od_bano:
-            odd_rec = f"{od_bano:.2f} (Betano)"
+        if od_b365:
+            odd_rec = f"{od_b365:.2f}"
         else:
             odd_rec = "—"
     else:
@@ -2199,7 +2192,7 @@ def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_v
         + "<b>🎯 Favorito:</b> <b>" + str(fav_nome) + "</b>\n"
         + "<b>🔥 Pressão:</b> <b>" + pressao + "</b>\n"
         + "<b>⚠️ Alerta:</b> <b>" + alerta + "</b>\n"
-        + "<b>💰 ODD Recomendada:</b> <b>" + odd_rec + "</b>\n"
+        + "<b>💰 ODD do Momento:</b> <b>" + odd_rec + "</b>\n"
         + sep + "\n"
         + "📌 Entrada: <b>" + str(entrada) + "</b>\n"
         + sep + "\n"
