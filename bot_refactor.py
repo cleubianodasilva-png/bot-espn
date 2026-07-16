@@ -1154,7 +1154,12 @@ def get_jogos_apifootball_v3(fids_existentes):
             if fid in fids_existentes: continue
             status_digits = __import__('re').findall(r'\d+', status_raw)
             minuto = int(status_digits[0]) if status_digits else 0
-            liga_nome = ev.get("league_name", "") or ev.get("league", "") or ev.get("competition_name", "") or "Liga"
+            liga_nome = (ev.get("league_name", "") or "").strip()
+            country = (ev.get("country_name", "") or "").strip()
+            if country and liga_nome and " " + country not in (" " + liga_nome):
+                liga_nome = f"{liga_nome} {country}"
+            if not liga_nome:
+                liga_nome = ev.get("league", "") or ev.get("competition_name", "") or "Liga"
 
             fid_raw = str(ev.get("match_id", ""))
             odd_h = odd_a = None
