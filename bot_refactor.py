@@ -1976,7 +1976,7 @@ def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_v
     elif (chutes_por_min >= 0.4 and alvo_h + alvo_a >= 3) or (cantos_por_min >= 0.25) or (atq_perig_por_min >= 0.7):
         pressao = "Alta 🔥"
     elif chutes_por_min >= 0.3 or atq_perig_por_min >= 0.5 or total_alvo >= 2:
-        pressao = "Moderada 💪"
+        pressao = "Moderada 🔶"
     elif chutes_por_min >= 0.15 or atq_perig_por_min >= 0.3 or total_alvo >= 1:
         pressao = "Média ✅"
     else:
