@@ -1918,8 +1918,8 @@ def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_v
         "BTTS": "⚽️🔥AMBAS MARCAM🔥⚽️",
         "OFT": "⚽️🔥OVER 1.5 GOLS PARTIDA🔥⚽️",
         "OVERGOAL": "⚽️🔥OVER GOL PARTIDA🔥⚽️",
-        "CORNER_HT": "🚩🔥ESCANTEIO LIMITE HT🔥🚩",
-        "CORNER_FT": "🚩🔥ESCANTEIO LIMITE FT🔥🚩",
+        "CORNER_HT": "🚩🔥ESCANTEIO ÁSIAT/LMT HT🔥🚩",
+        "CORNER_FT": "🚩🔥ESCANTEIO ÁSIAT/LMT FT🔥🚩",
     }
     title = titles.get(mercado, f"🚩🔥{mercado}🔥🚩")
     
