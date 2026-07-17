@@ -1714,47 +1714,195 @@ def gerar_motivo(mercado, stats, sh, sa, fav_final, minuto, cantos_atual=0):
     chutes_gol_a      = stats.get("chutes_gol_a", 0) if stats else 0
     cantos_h          = max(0, stats.get("escanteios_h", 0)) if stats else 0
     cantos_a          = max(0, stats.get("escanteios_a", 0)) if stats else 0
+    red_h             = stats.get("red_cards_h", 0) if stats else 0
+    red_a             = stats.get("red_cards_a", 0) if stats else 0
+    posse_h_raw       = stats.get("posse_h", 0.0) if stats else 0.0
+    posse_a_raw       = stats.get("posse_a", 0.0) if stats else 0.0
     atq_perig_h       = stats.get("ataques_perigosos_h", 0) if stats else 0
     atq_perig_a       = stats.get("ataques_perigosos_a", 0) if stats else 0
+    posse_h = int(round(float(posse_h_raw) * 100)) if float(posse_h_raw) <= 1 else int(round(float(posse_h_raw)))
+    posse_a = int(round(float(posse_a_raw) * 100)) if float(posse_a_raw) <= 1 else int(round(float(posse_a_raw)))
     total_chutes      = chutes_h + chutes_a
-    total_alvo        = chutes_gol_h + chutes_gol_a
     total_cantos      = cantos_h + cantos_a
     total_atq_perig   = atq_perig_h + atq_perig_a
+    tem_dados         = total_chutes > 0 or total_cantos > 0 or total_atq_perig > 0
 
-    # ESCANTEIOS: linha real + snapshot
-    if mercado in ("CORNER_HT", "CORNER_FT"):
-        linha = cantos_atual + 0.5
-        return f"{cantos_h}x{cantos_a} escanteios | Total {total_cantos} em {minuto}' | Linha {linha}\u26f3\ufe0f"
+    if not tem_dados:
+        return "Estatísticas não disponíveis para esta liga"
 
-    # Favorito pelos odds
-    if sh > sa:
-        fav_label = "Fora"
-        fav_gol, adv_gol = chutes_gol_a, chutes_gol_h
-        fav_chutes, adv_chutes = chutes_a, chutes_h
+    # Labels
+    if fav_final == "h":
+        fav_label   = "Favorito"
+        zebra_label = "Zebra"
+        fav_chutes  = chutes_h; fav_gol = chutes_gol_h
+        adv_chutes  = chutes_a; adv_gol = chutes_gol_a
+        fav_atq     = atq_perig_h
+        adv_atq     = atq_perig_a
+    elif fav_final == "a":
+        fav_label   = "Favorito"
+        zebra_label = "Zebra"
+        fav_chutes  = chutes_a; fav_gol = chutes_gol_a
+        adv_chutes  = chutes_h; adv_gol = chutes_gol_h
+        fav_atq     = atq_perig_a
+        adv_atq     = atq_perig_h
     else:
-        fav_label = "Casa"
-        fav_gol, adv_gol = chutes_gol_h, chutes_gol_a
-        fav_chutes, adv_chutes = chutes_h, chutes_a
+        fav_label   = "Casa"
+        zebra_label = "Fora"
+        fav_chutes  = chutes_h; fav_gol = chutes_gol_h
+        adv_chutes  = chutes_a; adv_gol = chutes_gol_a
+        fav_atq     = atq_perig_h
+        adv_atq     = atq_perig_a
 
-    # OVER GOL INTERVALO
+    jogo_aberto    = sh == 0 and sa == 0
+    fav_perdendo   = (fav_final == "h" and sh < sa) or (fav_final == "a" and sa < sh)
+    fav_ganhando   = (fav_final == "h" and sh > sa) or (fav_final == "a" and sa > sh)
+    zebra_dominando = adv_chutes > fav_chutes
+    minuto_seguro  = max(minuto, 1)
+    fav_atq_por_min = round(fav_atq / minuto_seguro, 2)
+    adv_atq_por_min = round(adv_atq / minuto_seguro, 2)
+    fav_amassando   = fav_atq_por_min >= 0.70 and adv_atq_por_min < 0.70
+    adv_amassando   = adv_atq_por_min >= 0.70 and fav_atq_por_min < 0.70
+    ambos_pressionando = fav_atq_por_min >= 0.70 and adv_atq_por_min >= 0.70
+
+    vermelho = ""
+    if red_h > 0 or red_a > 0:
+        vermelho = " 🟥 Vermelho: " + ("Casa" if red_h > 0 else "Fora")
+
+    posse_txt = ""
+    if posse_h >= 55:
+        posse_txt = f", Casa com {posse_h}% de posse"
+    elif posse_a >= 55:
+        posse_txt = f", Fora com {posse_a}% de posse"
+
+    # ════════════════════════════════════════════════════════════════
+    # ALERTAS POR MERCADO — motivo da entrada
+    # ════════════════════════════════════════════════════════════════
+
+    if "CORNER" in mercado or "ESCANTEIO" in mercado:
+        if "HT" in mercado:
+            if total_atq_perig >= 12:
+                return f"Pressão ofensiva muito alta ({total_atq_perig} ataques perigosos){vermelho}"
+            elif total_atq_perig >= 8:
+                return f"Pressão ofensiva elevada ({total_atq_perig} ataques perigosos){vermelho}"
+            return f"Pressão ofensiva em crescimento no 1º tempo ({total_atq_perig} ataques perigosos){vermelho}"
+        else:
+            if total_atq_perig >= 25:
+                return f"Pressão ofensiva constante ({total_atq_perig} atq. perigosos){vermelho}"
+            elif total_atq_perig >= 15:
+                return f"Pressão ofensiva sustentada ({total_atq_perig} atq. perigosos){vermelho}"
+            return f"Pressão ofensiva contínua ({total_atq_perig} ataques perigosos){vermelho}"
+
     if mercado == "HT":
-        return f"{chutes_h}x{chutes_a} chutes | {chutes_gol_h}x{chutes_gol_a} no alvo | {atq_perig_h}x{atq_perig_a} atq perig | {fav_label} favorito - Gol 1T esperado \u26bd"
+        if chutes_gol_h >= 2 or chutes_gol_a >= 2:
+            return f"Ambas finalizando no alvo ({chutes_gol_h}x{chutes_gol_a}) — gol no 1º tempo iminente{vermelho}"
+        if total_chutes >= 8:
+            return f"Alta intensidade no 1º tempo — {total_chutes} chutes totais em {minuto}' | Over HT consistente{vermelho}"
+        if fav_amassando:
+            return f"{fav_label} dominando o 1º tempo — {fav_atq} ataques perigosos | Gol do HT esperado{vermelho}"
+        if ambos_pressionando:
+            return f"Ambas pressionando forte no 1º tempo — {total_atq_perig} atq. perigosos | Over HT{vermelho}"
+        return f"Jogo movimentado no 1º tempo — {total_chutes} chutes, {total_atq_perig} ataques | Over HT{vermelho}"
 
-    # AMBAS MARCAM
     if mercado == "BTTS":
-        return f"Casa {chutes_h}ch ({chutes_gol_h}al) | Fora {chutes_a}ch ({chutes_gol_a}al) | Ambas finalizando - Ambos Marcam \u26bd\u26bd"
+        if chutes_gol_h >= 2 and chutes_gol_a >= 1:
+            return f"Ambas com finalizações no alvo ({chutes_gol_h}x{chutes_gol_a}) — grande chance de ambos marcarem{vermelho}"
+        if fav_chutes >= 6 and adv_chutes >= 4:
+            return f"{fav_label} ({fav_chutes} chutes) x {zebra_label} ({adv_chutes} chutes) — ambos atacando{vermelho}"
+        if ambos_pressionando:
+            return f"Pressão dos dois lados — {total_atq_perig} ataques perigosos | BTTS com boa margem{vermelho}"
+        if fav_amassando and adv_chutes >= 4:
+            return f"{fav_label} dominando mas {zebra_label} também ataca — {adv_chutes} chutes do visitante | BTTS{vermelho}"
+        return f"Ambas equipes com volume de ataque — {total_chutes} finalizações | BTTS{vermelho}"
 
-    # OVER 1.5 GOLS
     if mercado == "OFT":
-        return f"{total_chutes} chutes | {total_alvo} no alvo | {fav_label} domina ({fav_chutes}ch, {fav_gol}al) - Mais gols esperados \u26bd\u26bd"
+        if sh + sa == 1:
+            return f"Placar em {sh}x{sa} com movimentação — {total_chutes} chutes | Mais um gol esperado para Over 1.5{vermelho}"
+        if total_chutes >= 12:
+            return f"Jogo com {total_chutes} finalizações — forte tendência de mais gols no 2º tempo{vermelho}"
+        if ambos_pressionando:
+            return f"Pressão total — {total_atq_perig} ataques perigosos | Over 1.5 FT com boa projeção{vermelho}"
+        if total_atq_perig >= 10:
+            return f"{total_atq_perig} ataques perigosos — placar deve se mover para Over 1.5{vermelho}"
+        return f"Partida com bons números ofensivos — {total_chutes} chutes em {minuto}' | Over 1.5{vermelho}"
 
-    # OVER GOL PARTIDA
     if mercado == "OVERGOAL":
-        return f"{total_chutes} chutes | {total_alvo} no alvo | {fav_label} {fav_chutes}ch {fav_gol}al | Pressao - Gol saindo \u26bd"
+        if jogo_aberto:
+            return f"Jogo 0x0 mas aberto — {total_chutes} chutes, {total_atq_perig} ataques perigosos | Gol esperado{vermelho}"
+        if fav_amassando or adv_amassando:
+            return f"Time amassando e placar ainda baixo — {total_atq_perig} atq. perigosos | Over Gol Partida{vermelho}"
+        if total_atq_perig >= 12:
+            return f"Pressão ofensiva muito alta — {total_atq_perig} ataques perigosos | Gol no FT{vermelho}"
+        return f"Expectativa de gol com base no volume — {total_chutes} chutes, {total_atq_perig} ataques{vermelho}"
 
-    # Fallback
-    return f"{chutes_h}x{chutes_a} chutes | {cantos_h}x{cantos_a} escanteios | Fav {fav_label}"
+    # ── Fallback: análise geral (pra segurança) ──
+    if jogo_aberto:
+        if chutes_gol_h >= 3 and chutes_gol_a >= 3:
+            return f"Jogo aberto com grandes chances de gol dos dois lados — {chutes_gol_h} finalizações de Casa, {chutes_gol_a} de Fora{posse_txt}{vermelho}"
+        if fav_chutes >= 8 and fav_gol >= 3:
+            return f"Jogo aberto, {fav_label} criando grandes chances — {fav_chutes} chutes, {fav_gol} no alvo{posse_txt}{vermelho}"
+        if zebra_dominando and adv_chutes >= 6 and adv_gol >= 2:
+            return f"Jogo aberto, {zebra_label} surpreendendo — {adv_chutes} chutes, {adv_gol} no alvo{posse_txt}{vermelho}"
+        if total_chutes >= 12:
+            return f"Jogo aberto e bastante movimentado — {chutes_h} chutes de Casa, {chutes_a} de Fora, sem gols ainda{posse_txt}{vermelho}"
+        if fav_chutes > adv_chutes and fav_gol > 0:
+            return f"Jogo aberto, {fav_label} dominando com {fav_chutes} chutes ({fav_gol} no alvo){posse_txt}{vermelho}"
+        if fav_amassando:
+            return f"Jogo aberto, {fav_label} amassando — {fav_atq} ataques perigosos x {adv_atq}{posse_txt}{vermelho}"
+        if adv_amassando:
+            return f"Jogo aberto, {zebra_label} pressionando muito — {adv_atq} ataques perigosos x {fav_atq}{posse_txt}{vermelho}"
+        if ambos_pressionando:
+            return f"Jogo aberto, ambas equipes pressionando forte — {total_atq_perig} ataques perigosos no total{posse_txt}{vermelho}"
+        return f"Jogo aberto, ambas buscando o primeiro gol — {chutes_h} chutes x {chutes_a}{posse_txt}{vermelho}"
 
+    if fav_perdendo:
+        if fav_chutes >= 8 and fav_gol >= 3:
+            return f"Grandes chances do {fav_label} empatar — chegando constantemente com {fav_chutes} chutes, {fav_gol} no alvo{posse_txt}{vermelho}"
+        if fav_chutes >= 6 and fav_gol >= 2:
+            return f"{fav_label} em busca do empate, criando boas chances — {fav_chutes} chutes, {fav_gol} no alvo{posse_txt}{vermelho}"
+        if fav_amassando:
+            return f"{fav_label} perdendo mas amassando! — {fav_atq} ataques perigosos x {adv_atq}{posse_txt}{vermelho}"
+        if zebra_dominando and adv_chutes >= 8:
+            return f"{zebra_label} dominando e ameaçando ampliar — {adv_chutes} chutes, {adv_gol} no alvo{posse_txt}{vermelho}"
+        if adv_amassando:
+            return f"{zebra_label} com mais volume de ataque — {adv_atq} ataques perigosos x {fav_atq}{posse_txt}{vermelho}"
+        if ambos_pressionando:
+            return f"Ambas pressionando — {total_atq_perig} ataques perigosos, jogo aberto{posse_txt}{vermelho}"
+        if fav_chutes > adv_chutes:
+            return f"{fav_label} em busca do empate, pressionando com {fav_chutes} chutes x {adv_chutes}{posse_txt}{vermelho}"
+        return f"{fav_label} perdendo e tentando reagir — {fav_chutes} chutes x {adv_chutes} da {zebra_label}{posse_txt}{vermelho}"
+
+    if fav_ganhando:
+        if adv_chutes >= 8 and adv_gol >= 3:
+            return f"{zebra_label} pressionando forte em busca do empate — {adv_chutes} chutes, {adv_gol} no alvo{posse_txt}{vermelho}"
+        if adv_amassando:
+            return f"{zebra_label} amassando mesmo perdendo — {adv_atq} ataques perigosos x {fav_atq}{posse_txt}{vermelho}"
+        if fav_chutes >= 8:
+            return f"{fav_label} controlando e ampliando a pressão — {fav_chutes} chutes, {fav_gol} no alvo{posse_txt}{vermelho}"
+        if fav_amassando:
+            return f"{fav_label} na frente e amassando — {fav_atq} ataques perigosos x {adv_atq}{posse_txt}{vermelho}"
+        if ambos_pressionando:
+            return f"Ambas pressionando, placar aberto — {total_atq_perig} ataques perigosos{posse_txt}{vermelho}"
+        return f"{fav_label} vencendo, jogo controlado — {chutes_h} chutes de Casa x {chutes_a} de Fora{posse_txt}{vermelho}"
+
+    if chutes_gol_h >= 3 and chutes_gol_a >= 3:
+        return f"Jogo bastante movimentado, ambas chutando no alvo — {chutes_gol_h} finalizações de Casa, {chutes_gol_a} de Fora{posse_txt}{vermelho}"
+    if chutes_h >= 8 and chutes_a >= 8:
+        return f"Jogo intenso dos dois lados — {chutes_h} chutes de Casa, {chutes_a} de Fora{posse_txt}{vermelho}"
+    if fav_chutes >= 8 and fav_gol >= 3:
+        return f"{fav_label} chegando constantemente na área — {fav_chutes} chutes, {fav_gol} no alvo{posse_txt}{vermelho}"
+    if zebra_dominando and adv_chutes >= 6:
+        return f"{zebra_label} surpreendendo com mais volume — {adv_chutes} chutes ({adv_gol} no alvo) x {fav_chutes} do {fav_label}{posse_txt}{vermelho}"
+    if fav_chutes > adv_chutes and fav_gol > 0:
+        return f"{fav_label} criando mais chances — {fav_chutes} chutes ({fav_gol} no alvo) x {adv_chutes}{posse_txt}{vermelho}"
+    if fav_amassando:
+        return f"{fav_label} amassando em busca da virada — {fav_atq} ataques perigosos x {adv_atq}{posse_txt}{vermelho}"
+    if adv_amassando:
+        return f"{zebra_label} pressionando para virar — {adv_atq} ataques perigosos x {fav_atq}{posse_txt}{vermelho}"
+    if ambos_pressionando:
+        return f"Jogo eletrizante, ambas pressionando — {total_atq_perig} ataques perigosos{posse_txt}{vermelho}"
+    if total_cantos >= 6:
+        return f"Jogo bastante movimentado pelas laterais — {total_cantos} escanteios, {total_chutes} chutes{posse_txt}{vermelho}"
+    return f"Jogo equilibrado, ambas criando chances — {chutes_h} chutes de Casa x {chutes_a} de Fora{posse_txt}{vermelho}"
 
 def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_val=None, cantos_atual=0, stats=None, sh=0, sa=0, fav_final="h", odd_h=None, odd_a=None, odd_b365=None, odd_bano=None):
     if "CORNER" in mercado or "ESCANTEIO" in mercado:
