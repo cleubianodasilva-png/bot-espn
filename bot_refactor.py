@@ -1782,53 +1782,53 @@ def gerar_motivo(mercado, stats, sh, sa, fav_final, minuto, cantos_atual=0):
     if "CORNER" in mercado or "ESCANTEIO" in mercado:
         if "HT" in mercado:
             if total_atq_perig >= 12:
-                return f"Pressão ofensiva muito alta ({total_atq_perig} ataques perigosos){vermelho}"
+                return f"Pressão ofensiva muito alta no 1º tempo{vermelho}"
             elif total_atq_perig >= 8:
-                return f"Pressão ofensiva elevada ({total_atq_perig} ataques perigosos){vermelho}"
-            return f"Pressão ofensiva em crescimento no 1º tempo ({total_atq_perig} ataques perigosos){vermelho}"
+                return f"Pressão ofensiva elevada no 1º tempo{vermelho}"
+            return f"Pressão ofensiva em crescimento no 1º tempo{vermelho}"
         else:
             if total_atq_perig >= 25:
-                return f"Pressão ofensiva constante ({total_atq_perig} atq. perigosos){vermelho}"
+                return f"Pressão ofensiva constante durante a partida{vermelho}"
             elif total_atq_perig >= 15:
-                return f"Pressão ofensiva sustentada ({total_atq_perig} atq. perigosos){vermelho}"
-            return f"Pressão ofensiva contínua ({total_atq_perig} ataques perigosos){vermelho}"
+                return f"Pressão ofensiva sustentada na partida{vermelho}"
+            return f"Pressão ofensiva contínua na partida{vermelho}"
 
     if mercado == "HT":
         if chutes_gol_h >= 1 and chutes_gol_a >= 1:
-            return f"Ambas finalizando no alvo ({chutes_gol_h}x{chutes_gol_a}) — gol no 1º tempo iminente{vermelho}"
+            return f"Ambas equipes finalizando no alvo{vermelho}"
         if chutes_gol_h >= 1:
-            return f"{fav_label if fav_final=='h' else 'Casa'} finalizando no alvo ({chutes_gol_h}) — gol do HT iminente{vermelho}"
+            return f"{fav_label if fav_final=='h' else 'Casa'} finalizando no alvo{vermelho}"
         if chutes_gol_a >= 1:
-            return f"{fav_label if fav_final=='a' else 'Fora'} finalizando no alvo ({chutes_gol_a}) — gol do HT iminente{vermelho}"
+            return f"{fav_label if fav_final=='a' else 'Fora'} finalizando no alvo{vermelho}"
         if total_chutes >= 8:
-            return f"Alta intensidade no 1º tempo — {total_chutes} chutes totais em {minuto}' | Over HT consistente{vermelho}"
+            return f"Alta intensidade de chutes no 1º tempo{vermelho}"
         if fav_amassando:
-            return f"{fav_label} dominando o 1º tempo — {fav_atq} ataques perigosos | Gol do HT esperado{vermelho}"
+            return f"{fav_label} dominando as ações ofensivas no 1º tempo{vermelho}"
         if ambos_pressionando:
-            return f"Ambas pressionando forte no 1º tempo — {total_atq_perig} atq. perigosos | Over HT{vermelho}"
-        return f"Jogo movimentado no 1º tempo — {total_chutes} chutes, {total_atq_perig} ataques | Over HT{vermelho}"
+            return f"Ambas equipes pressionando no campo de ataque{vermelho}"
+        return f"Jogo movimentado com chances nos dois lados{vermelho}"
 
     if mercado == "LIMITEHT":
         if jogo_aberto and total_chutes >= 8:
-            return f"Jogo aberto com {total_chutes} chutes e sem gols — gol pode sair no fim do 1º tempo{vermelho}"
+            return f"Jogo aberto com muitas finalizações e sem gols{vermelho}"
         if fav_perdendo and fav_chutes >= 6:
-            return f"{fav_label} perdendo e pressionando — {fav_chutes} chutes ({fav_gol} no alvo) | Limite HT{vermelho}"
+            return f"{fav_label} perdendo e pressionando no campo ofensivo{vermelho}"
         if fav_amassando:
-            return f"{fav_label} amassando em busca do gol — {fav_atq} ataques perigosos | Limite HT{vermelho}"
+            return f"{fav_label} amassando em busca do empate{vermelho}"
         if total_atq_perig >= 8:
-            return f"Alta pressão ofensiva — {total_atq_perig} ataques perigosos | Últimos minutos do HT{vermelho}"
-        return f"Pressão para gol antes do intervalo — {total_chutes} chutes em {minuto}'{vermelho}"
+            return f"Alta pressão ofensiva nos minutos finais do 1º tempo{vermelho}"
+        return f"Pressão ofensiva para gol antes do intervalo{vermelho}"
 
     if mercado == "BTTS":
         if chutes_gol_h >= 2 and chutes_gol_a >= 1:
-            return f"Ambas com finalizações no alvo ({chutes_gol_h}x{chutes_gol_a}) — grande chance de ambos marcarem{vermelho}"
+            return f"Ambas equipes com finalizações no alvo{vermelho}"
         if fav_chutes >= 6 and adv_chutes >= 4:
-            return f"{fav_label} ({fav_chutes} chutes) x {zebra_label} ({adv_chutes} chutes) — ambos atacando{vermelho}"
+            return f"Ambas equipes atacando com frequência{vermelho}"
         if ambos_pressionando:
-            return f"Pressão dos dois lados — {total_atq_perig} ataques perigosos | BTTS com boa margem{vermelho}"
+            return f"Pressão ofensiva dos dois lados{vermelho}"
         if fav_amassando and adv_chutes >= 4:
-            return f"{fav_label} dominando mas {zebra_label} também ataca — {adv_chutes} chutes do visitante | BTTS{vermelho}"
-        return f"Ambas equipes com volume de ataque — {total_chutes} finalizações | BTTS{vermelho}"
+            return f"{fav_label} dominando mas {zebra_label} também responde no ataque{vermelho}"
+        return f"Ambas equipes com volume de ataque{vermelho}"
 
     if mercado == "OFT":
         if sh + sa == 1:
