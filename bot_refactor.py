@@ -1309,15 +1309,13 @@ def get_stats_bzzoiro(fid_raw, home, away):
             if val > 0: any_nonzero = True
             val = int(side_data.get("corner_kicks", 0) or 0)
             stats[f"escanteios_{key}"] = val
-            # NOTA: canto nao conta como scout real — evita falsos positivos de amistosos sem cobertura
+            if val > 0: any_nonzero = True
             val = int(side_data.get("dangerous_attack", 0) or 0)
             stats[f"ataques_perigosos_{key}"] = val
             if val > 0: any_nonzero = True
             val = int(side_data.get("ball_possession", 0) or 0)
             stats[f"posse_{key}"] = val
-            # posse 50% padrao nao conta como scout
-            if val > 0 and val != 50:
-                any_nonzero = True
+            if val > 0: any_nonzero = True
             cards = side_data.get("cards", {})
             if isinstance(cards, dict):
                 stats[f"red_cards_{key}"] = int(cards.get("red", 0) or 0)
@@ -1358,8 +1356,7 @@ def get_stats_bzzoiro_by_name(home, away):
                     cards = side_data.get("cards", {})
                     if isinstance(cards, dict):
                         stats[f"red_cards_{side_key}"] = int(cards.get("red", 0) or 0)
-                # Só aceita se tiver scout real — rejeita dados que são só cantos sem chutes/ataques
-                if stats.get("chutes_tot_h", 0) > 0 or stats.get("chutes_tot_a", 0) > 0 or stats.get("ataques_perigosos_h", 0) > 0 or stats.get("ataques_perigosos_a", 0) > 0 or stats.get("chutes_gol_h", 0) > 0 or stats.get("chutes_gol_a", 0) > 0:
+                if stats.get("chutes_tot_h", 0) > 0 or stats.get("escanteios_h", -1) >= 0:
                     print(f"[BZZ-NAME] Stats por nome OK: {ev.get('home_team')}x{ev.get('away_team')} | esc {stats.get('escanteios_h')}x{stats.get('escanteios_a')}")
                     return stats
         return {}
@@ -2377,10 +2374,10 @@ def run():
             if isinstance(sb, dict): stats_bzz = sb
         except: pass
         # Fallback Bzzoiro por nome (quando o ID da apifootball nao funciona no Bzzoiro)
-        if not stats_bzz or not (stats_bzz.get("chutes_tot_h", 0) > 0 or stats_bzz.get("chutes_tot_a", 0) > 0 or stats_bzz.get("ataques_perigosos_h", 0) > 0 or stats_bzz.get("ataques_perigosos_a", 0) > 0 or stats_bzz.get("chutes_gol_h", 0) > 0 or stats_bzz.get("chutes_gol_a", 0) > 0):
+        if not stats_bzz or not (stats_bzz.get("chutes_tot_h", 0) > 0 or stats_bzz.get("escanteios_h", -1) >= 0):
             try:
                 sb_name = get_stats_bzzoiro_by_name(h, a)
-                if isinstance(sb_name, dict) and (sb_name.get("chutes_tot_h", 0) > 0 or sb_name.get("chutes_tot_a", 0) > 0 or sb_name.get("ataques_perigosos_h", 0) > 0 or sb_name.get("ataques_perigosos_a", 0) > 0 or sb_name.get("chutes_gol_h", 0) > 0 or sb_name.get("chutes_gol_a", 0) > 0):
+                if isinstance(sb_name, dict) and (sb_name.get("chutes_tot_h", 0) > 0 or sb_name.get("escanteios_h", -1) >= 0):
                     stats_bzz = sb_name
                     print(f"[BZZ-NAME] Stats via nome OK: esc {sb_name.get('escanteios_h')}x{sb_name.get('escanteios_a')} | chutes {sb_name.get('chutes_tot_h')}x{sb_name.get('chutes_tot_a')}")
             except: pass
