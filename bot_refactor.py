@@ -2239,31 +2239,25 @@ def get_media_gols_historica(home_id, away_id):
 # LOOP PRINCIPAL
 # ═══════════════════════════════════════════════════════════════════════════════
 def run():
-    print("[Iniciando monitoramento — ESPN + apifootball + Odds API]")
+    print("[Iniciando monitoramento — APENAS apifootball (config Zapia)]")
     sent      = load_sent()
     total_env = 0
     # janela_id por hora — evita duplicata mesmo se Actions rodar 2x no mesmo minuto
     janela_id = datetime.now(BRT).strftime('%Y%m%d%H')
 
     # ─────────────────────────────────────────────────────────────
-    # PASSO 1A: apifootball — 1ª fonte de jogos (mais completa)
+    # PASSO 1A: apifootball — ÚNICA fonte de jogos (Zapia: ESPN e Bzzoiro desativados)
     # ─────────────────────────────────────────────────────────────
     jogos_apif = get_jogos_apifootball_v3(set())
     fids_apif  = {j["fid"] for j in jogos_apif}
 
-    # ─────────────────────────────────────────────────────────────
-    # PASSO 1B: ESPN — 2ª fonte, complementa o que apifootball não cobriu
-    # ─────────────────────────────────────────────────────────────
-    jogos_espn = get_jogos_espn(fids_apif)
+    # ESPN e Bzzoiro desativados neste repositório (apenas apifootball)
+    jogos_espn = []
+    jogos_bzz  = []
 
-    # ─────────────────────────────────────────────────────────────
-    # PASSO 1C: Bzzoiro — 3ª fonte, preenche o que faltar
-    # ─────────────────────────────────────────────────────────────
-    jogos_bzz = get_jogos_bzzoiro(fids_apif | {j["fid"] for j in jogos_espn})
-
-    # Junta tudo na ordem: apifootball > ESPN > Bzzoiro
-    jogos_live = jogos_apif + jogos_espn + jogos_bzz
-    print(f"[Total] {len(jogos_live)} jogos ao vivo (apifootball={len(jogos_apif)} + ESPN={len(jogos_espn)} + bzzoiro={len(jogos_bzz)})")
+    # Junta tudo na ordem: só apifootball
+    jogos_live = jogos_apif
+    print(f"[Total] {len(jogos_live)} jogos ao vivo (apenas apifootball)")
 
     # PASSO 2: Filtra janelas alvo
     jogos_na_janela = filtrar_janelas(jogos_live)
