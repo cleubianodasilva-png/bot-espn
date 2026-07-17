@@ -2374,7 +2374,13 @@ def run():
             if isinstance(sb, dict): stats_bzz = sb
         except: pass
         # Fallback Bzzoiro por nome (quando o ID da apifootball nao funciona no Bzzoiro)
-        precisa_fallback = not stats_bzz or not (stats_bzz.get("chutes_tot_h", 0) > 0 or stats_bzz.get("escanteios_h", -1) >= 0)
+        # Para ligas normais: se Bzzoiro tem só cantos (sem chutes/ataques), precisa de fallback
+        if "Club Friendlies - Group Stage World" in liga:
+            precisa_fallback = not stats_bzz or not (stats_bzz.get("chutes_tot_h", 0) > 0 or stats_bzz.get("escanteios_h", -1) >= 0)
+        else:
+            precisa_fallback = not stats_bzz or not (stats_bzz.get("chutes_tot_h", 0) > 0 or stats_bzz.get("chutes_tot_a", 0) > 0 or
+                                                      stats_bzz.get("ataques_perigosos_h", 0) > 0 or stats_bzz.get("ataques_perigosos_a", 0) > 0 or
+                                                      stats_bzz.get("chutes_gol_h", 0) > 0 or stats_bzz.get("chutes_gol_a", 0) > 0)
         if precisa_fallback:
             try:
                 sb_name = get_stats_bzzoiro_by_name(h, a)
