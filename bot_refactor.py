@@ -1794,11 +1794,11 @@ def gerar_motivo(mercado, stats, sh, sa, fav_final, minuto, cantos_atual=0):
             return f"Pressão ofensiva contínua ({total_atq_perig} ataques perigosos){vermelho}"
 
     if mercado == "HT":
-        if chutes_gol_h >= 2 and chutes_gol_a >= 2:
+        if chutes_gol_h >= 1 and chutes_gol_a >= 1:
             return f"Ambas finalizando no alvo ({chutes_gol_h}x{chutes_gol_a}) — gol no 1º tempo iminente{vermelho}"
-        if chutes_gol_h >= 2:
+        if chutes_gol_h >= 1:
             return f"{fav_label if fav_final=='h' else 'Casa'} finalizando no alvo ({chutes_gol_h}) — gol do HT iminente{vermelho}"
-        if chutes_gol_a >= 2:
+        if chutes_gol_a >= 1:
             return f"{fav_label if fav_final=='a' else 'Fora'} finalizando no alvo ({chutes_gol_a}) — gol do HT iminente{vermelho}"
         if total_chutes >= 8:
             return f"Alta intensidade no 1º tempo — {total_chutes} chutes totais em {minuto}' | Over HT consistente{vermelho}"
