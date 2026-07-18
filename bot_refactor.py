@@ -2090,7 +2090,7 @@ def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_v
         f"{sep}\n"
         f"<b>💡 Análise Técnica da Partida:</b>\n"
         f"<b>🎯 Favorito: {fav_nome}</b>\n"
-        f"<b>🔥 Pressão APPM: ⚠️{appm}⚠️</b>\n"
+        f"<b>🔥 Pressão APPM:⚠️{appm}⚠️</b>\n"
         f"<b>🚨 Alerta: {alerta}</b>\n"
         f"{sep}\n"
         f"<b>📌 Entrada: {entrada}</b>\n"
