@@ -1979,15 +1979,15 @@ def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_v
         quem_pressiona = "de ambas equipes"
 
     if appm_dominante >= 2.0:
-        alerta = "Partida pegando fogo! 🔥🔥"
+        alerta = "Partida pegando fogo."
     elif appm_dominante >= 1.2:
-        alerta = "Partida com ritmo intenso 🔥"
+        alerta = "Partida com ritmo intenso."
     elif appm_dominante >= 0.7:
-        alerta = f"Partida com bastante pressão {quem_pressiona} 💪"
+        alerta = f"Partida com bastante pressão {quem_pressiona}."
     elif appm_dominante >= 0.4:
-        alerta = "Partida com ritmo moderado ✅"
+        alerta = "Partida com ritmo moderado."
     else:
-        alerta = "Partida com ritmo baixo 👎"
+        alerta = "Partida com ritmo baixo."
         alerta = "Partida com ritmo ofensivo muito baixo 👇"
 
     if fav_final == "h":
