@@ -1978,16 +1978,22 @@ def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_v
     # Pressão baseada exclusivamente no APPM da partida (total)
     if atq_perig_por_min >= 1.8:
         pressao = "Altíssima 🔥🔥"
+        alerta_appm = f"Partida com pressão ofensiva altíssima — {atq_perig_por_min} APPM"
     elif atq_perig_por_min >= 1.0:
         pressao = "Alta 🔥"
+        alerta_appm = f"Partida com pressão ofensiva alta — {atq_perig_por_min} APPM"
     elif atq_perig_por_min >= 0.7:
         pressao = "Moderada 💪"
+        alerta_appm = f"Partida com bom ritmo ofensivo — {atq_perig_por_min} APPM"
     elif atq_perig_por_min >= 0.5:
         pressao = "Média ✅"
+        alerta_appm = f"Partida com ritmo moderado — {atq_perig_por_min} APPM"
     elif atq_perig_por_min >= 0.3:
         pressao = "Baixa 👎"
+        alerta_appm = f"Partida com baixo volume ofensivo — {atq_perig_por_min} APPM"
     else:
         pressao = "Muito Baixa 👇"
+        alerta_appm = f"Partida muito parada — {atq_perig_por_min} APPM"
 
     # Alerta baseado no APPM da partida — ritmo ofensivo em tempo real
     alerta = alerta_appm
