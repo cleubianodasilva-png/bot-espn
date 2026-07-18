@@ -443,8 +443,6 @@ ESPN_LIGAS = [
 RAPIDAPI_URL     = "https://free-api-live-football-data.p.rapidapi.com"
 RAPIDAPI_HEADERS = {
     "x-rapidapi-key":  os.getenv("APIFOOTBALL_KEY", ""),
-    "x-rapidapi-host": "free-api-live-football-data.p.rapidapi.com"
-}
 
 
 
@@ -1970,12 +1968,7 @@ def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_v
         chutes_por_min = round(total_chutes / minuto, 2)
         cantos_por_min = round(total_cantos / minuto, 2)
         atq_perig_por_min = round(total_atq_perig / minuto, 2)
-    else:
-        chutes_por_min = 0
-        cantos_por_min = 0
-        atq_perig_por_min = 0
 
-    # Pressão baseada exclusivamente no APPM da partida (total)
     if atq_perig_por_min >= 1.0:
         pressao = "Muito Alta 🔥"
         alerta_appm = f"Partida com pressão ofensiva muito alta — {atq_perig_por_min} APPM"
@@ -1992,7 +1985,6 @@ def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_v
         pressao = "Muito Baixa 👇"
         alerta_appm = f"Partida muito parada — {atq_perig_por_min} APPM"
 
-    # Alerta baseado no APPM da partida — ritmo ofensivo em tempo real
     alerta = alerta_appm
 
     if fav_final == "h":
