@@ -443,6 +443,8 @@ ESPN_LIGAS = [
 RAPIDAPI_URL     = "https://free-api-live-football-data.p.rapidapi.com"
 RAPIDAPI_HEADERS = {
     "x-rapidapi-key":  os.getenv("APIFOOTBALL_KEY", ""),
+    "x-rapidapi-host": "free-api-live-football-data.p.rapidapi.com"
+}
 
 
 
@@ -1968,23 +1970,26 @@ def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_v
         chutes_por_min = round(total_chutes / minuto, 2)
         cantos_por_min = round(total_cantos / minuto, 2)
         atq_perig_por_min = round(total_atq_perig / minuto, 2)
+    else:
+        chutes_por_min = 0
+        cantos_por_min = 0
+        atq_perig_por_min = 0
 
-    if atq_perig_por_min >= 1.0:
-        pressao = "Muito Alta 🔥"
-        alerta_appm = f"Partida com pressão ofensiva muito alta — {atq_perig_por_min} APPM"
-    elif atq_perig_por_min >= 0.8:
-        pressao = "Alta ✅"
-        alerta_appm = f"Partida com bom ritmo ofensivo — {atq_perig_por_min} APPM"
-    elif atq_perig_por_min >= 0.6:
+    # Pressão baseada exclusivamente no APPM da partida (total)
+    if atq_perig_por_min >= 1.8:
+        pressao = "Altíssima 🔥🔥"
+    elif atq_perig_por_min >= 1.0:
+        pressao = "Alta 🔥"
+    elif atq_perig_por_min >= 0.7:
+        pressao = "Moderada 💪"
+    elif atq_perig_por_min >= 0.5:
         pressao = "Média ✅"
-        alerta_appm = f"Partida com ritmo moderado — {atq_perig_por_min} APPM"
-    elif atq_perig_por_min >= 0.4:
+    elif atq_perig_por_min >= 0.3:
         pressao = "Baixa 👎"
-        alerta_appm = f"Partida com baixo volume ofensivo — {atq_perig_por_min} APPM"
     else:
         pressao = "Muito Baixa 👇"
-        alerta_appm = f"Partida muito parada — {atq_perig_por_min} APPM"
 
+    # Alerta baseado no APPM da partida — ritmo ofensivo em tempo real
     alerta = alerta_appm
 
     if fav_final == "h":
