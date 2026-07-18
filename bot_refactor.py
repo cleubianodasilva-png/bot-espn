@@ -2049,23 +2049,25 @@ def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_v
     # ════════════════════════════════════════════════════════════════
     if "CORNER" in mercado or "ESCANTEIO" in mercado:
         if "HT" in mercado:
-            if appm_val >= 1.0:
-                alerta = f"Pressão muito alta! Forte domínio {quem} no 1º tempo."
-            elif appm_val >= 0.6:
-                alerta = f"Pressão ofensiva elevada no 1º tempo — {total_atq} ataques perigosos."
-            elif appm_val >= 0.5:
-                alerta = f"Partida com bastante pressão {quem} no 1º tempo."
+            # ESCANTEIO HT — foco em cantos no 1º tempo
+            if total_cant >= 7:
+                alerta = f"Total de {total_cant} escanteios no 1º tempo — volume alto para HT."
+            elif total_cant >= 5:
+                alerta = f"Total de {total_cant} escanteios no 1º tempo — boa movimentação de cantos."
+            elif appm_val >= 0.8:
+                alerta = f"Pressão ofensiva elevada no 1º tempo — {total_cant} escanteios com potencial de aumento."
             else:
-                alerta = f"Pressão ofensiva em crescimento no 1º tempo — {total_cant} escanteios."
+                alerta = f"Total de {total_cant} escanteios no 1º tempo — expectativa para mais cantos."
         else:
-            if appm_val >= 1.0:
-                alerta = f"Pressão muito alta! Domínio absoluto {quem} no 2º tempo."
-            elif appm_val >= 0.6:
-                alerta = f"Pressão ofensiva sustentada na partida — {total_atq} ataques perigosos."
-            elif appm_val >= 0.5:
-                alerta = f"Partida com bastante pressão {quem}."
+            # ESCANTEIO FT — foco em cantos acumulados na partida
+            if total_cant >= 12:
+                alerta = f"Total de {total_cant} escanteios na partida — volume muito alto para FT."
+            elif total_cant >= 9:
+                alerta = f"Total de {total_cant} escanteios na partida — bom volume para mais cantos no FT."
+            elif appm_val >= 0.8:
+                alerta = f"Pressão ofensiva no 2º tempo — {cant_h+cant_a} escanteios no total, tendência de aumento."
             else:
-                alerta = f"Pressão ofensiva contínua — {total_cant} escanteios na partida."
+                alerta = f"Total de {total_cant} escanteios na partida — {cant_h}x{cant_a} com potencial para ultrapassar a linha."
     
     elif mercado == "HT":
         if jogo_aberto and appm_val >= 0.6:
