@@ -1985,7 +1985,7 @@ def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_v
         entrada = str(entrada).rstrip() + "⚽️"
     
     titles = {
-        "HT": "⚽️🔥OVER GOL INTERVALO🔥⚽️",
+        "HT": "🚩🔥ESCANTEIO ÁSIAT/LMT HT🔥🚩",
         "LIMITEHT": "⚽️🔥OVER GOL LIMITE HT🔥⚽️",
         "BTTS": "⚽️🔥AMBAS MARCAM🔥⚽️",
         "OFT": "⚽️🔥OVER 1.5 GOLS PARTIDA🔥⚽️",
@@ -1993,73 +1993,53 @@ def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_v
         "CORNER_HT": "🚩🔥ESCANTEIO ÁSIAT/LMT HT🔥🚩",
         "CORNER_FT": "🚩🔥ESCANTEIO ÁSIAT/LMT FT🔥🚩",
     }
-    title = titles.get(mercado, f"🚩🔥{mercado}🔥🚩")
-    
-    if stats:
-        chutes_h = stats.get("chutes_tot_h", 0)
-        chutes_a = stats.get("chutes_tot_a", 0)
-        alvo_h = stats.get("chutes_gol_h", 0)
-        alvo_a = stats.get("chutes_gol_a", 0)
-        cant_h = stats.get("escanteios_h", 0)
-        cant_a = stats.get("escanteios_a", 0)
-        atq_perig_h = stats.get("ataques_perigosos_h", 0)
-        atq_perig_a = stats.get("ataques_perigosos_a", 0)
-    else:
-        chutes_h, chutes_a, alvo_h, alvo_a, cant_h, cant_a, atq_perig_h, atq_perig_a = 0, 0, 0, 0, 0, 0, 0, 0
+    # Mapeamento exato de títulos baseado na imagem
+    if mercado == "HT": title = "🚩🔥OVER GOL INTERVALO🔥🚩"
+    elif mercado == "LIMITEHT": title = "🚩🔥OVER GOL LIMITE HT🔥🚩"
+    elif mercado == "OVERGOAL": title = "🚩🔥OVER GOL PARTIDA🔥🚩"
+    elif mercado == "OFT": title = "🚩🔥OVER 1.5 GOLS PARTIDA🔥🚩"
+    elif mercado == "BTTS": title = "🚩🔥AMBAS MARCAM🔥🚩"
+    elif mercado == "CORNER_HT": title = "🚩🔥ESCANTEIO ÁSIAT/LMT HT🔥🚩"
+    elif mercado == "CORNER_FT": title = "🚩🔥ESCANTEIO ÁSIAT/LMT FT🔥🚩"
+    else: title = titles.get(mercado, f"🚩🔥{mercado}🔥🚩")
 
+    # Ajuste para usar setas conforme a imagem
+    title = title.replace("🚩🔥", "🚩🔥").replace("🔥🚩", "🔥🚩")
+    # Na imagem o título de escanteio usa: 🚩🔥...🔥🚩 e no topo tem: 🚩🔥ESCANTEIO ÁSIAT/LMT FT🔥🚩
+    # Vamos usar o formato exato da imagem: 🚩🔥 NOME 🔥🚩
+    # Mas o usuário enviou uma imagem onde o título é: 🚩🔥ESCANTEIO ÁSIAT/LMT FT🔥🚩
+    # E os ícones laterais são setas vermelhas 🚩 na verdade parecem ser o emoji 🚩 mas o modelo visual mostra setas.
+    # Olhando bem a imagem: 🚩🔥 ESCANTEIO ÁSIAT/LMT FT 🔥🚩 (usando o emoji de bandeira 🚩 que ele já usa)
+    
+    # REFINAMENTO DO LAYOUT BASEADO NA IMAGEM (media/1784355213117.jpg)
     sep = "____________________________________"
     
-    # ─── ANÁLISE DINÂMICA (APPM) ───
-    atq_dominante = max(atq_perig_h, atq_perig_a)
-    appm_dominante = round(atq_dominante / minuto, 2) if minuto > 0 else 0
-
-    if atq_perig_h > atq_perig_a: quem_pressiona = "do Mandante"
-    elif atq_perig_a > atq_perig_h: quem_pressiona = "do Visitante"
-    else: quem_pressiona = "de ambas equipes"
-
-    if appm_dominante >= 2.0: alerta = "Partida Com Pressão Constante."
-    elif appm_dominante >= 1.5: alerta = "Partida Pegando Fogo."
-    elif appm_dominante >= 1.05: alerta = "Pressão muito alta! Forte domínio " + quem_pressiona + "."
-    elif appm_dominante >= 1.0: alerta = "Partida Com Ritmo Intenso."
-    elif appm_dominante >= 0.8: alerta = "Partida com pressão " + quem_pressiona + "."
-    elif appm_dominante >= 0.7: alerta = "Partida Com Ritmo Moderado."
-    elif appm_dominante >= 0.6: alerta = "Pressão crescente " + quem_pressiona + " no 2º tempo." if minuto >= 45 else "Domínio consistente " + quem_pressiona + "."
-    elif appm_dominante >= 0.5: alerta = "Partida Com Ritmo Médio."
-    elif appm_dominante >= 0.3: alerta = "Jogo aberto! Ambas as equipes atacando com intensidade."
-    else: alerta = "Partida Com Ritmo Muito Fraco 👇"
-
-    if fav_final == "h": fav_nome = home
-    elif fav_final == "a": fav_nome = away
-    else: fav_nome = "—"
-
-    odd_rec = f"{odd_b365:.2f}" if odd_b365 else (f"{odd_bano:.2f}" if odd_bano else "")
-
     msg = (
-        "<b>OPORTUNIDADE IDENTIFICADA</b> ⭐\n"
+        "OPORTUNIDADE IDENTIFICADA\n"
         + sep + "\n\n"
-        + "<b>" + title + "</b>\n"
+        + "🚩🔥" + title.replace("🚩🔥", "").replace("🔥🚩", "") + "🔥🚩\n"
         + sep + "\n\n"
-        + "⚽ <b>Placar:</b> <b>" + str(placar) + "</b>\n"
-        + "🌍 <b>Liga:</b> <b>" + str(liga) + "</b>\n"
-        + "📡 <b>" + str(home) + "</b> x <b>" + str(away) + "</b>\n"
-        + "👀 <b>ODDs: Casa " + (f"{odd_h:.2f}" if odd_h else "—") + " / Fora " + (f"{odd_a:.2f}" if odd_a else "—") + "</b>\n"
-        + "⏱️ <b>Minuto: " + str(minuto) + "'</b>\n"
+        + "⚽ Placar: " + str(placar) + "\n"
+        + "🌍 Liga: " + str(liga) + "\n"
+        + "📡 " + str(home) + " x " + str(away) + "\n"
+        + "👀 ODDs: Casa " + (f"{odd_h:.2f}" if odd_h else "—") + " / Fora " + (f"{odd_a:.2f}" if odd_a else "—") + "\n"
+        + "⏱️ Minuto: " + str(minuto) + "'\n"
         + sep + "\n\n"
-        + "📊 <b>Estatísticas ao Vivo da Partida:</b>\n"
-        + "🚀 <b>Chutes Totais: " + str(chutes_h) + " | " + str(chutes_a) + "</b>\n"
-        + "🎯 <b>Chutes No Alvo: " + str(alvo_h) + " | " + str(alvo_a) + "</b>\n"
-        + "⚔️ <b>Ataques Perigosos: " + str(atq_perig_h) + " | " + str(atq_perig_a) + "</b>\n"
-        + "🚩 <b>Escanteios: " + str(cant_h) + " | " + str(cant_a) + "</b>\n"
+        + "📊 Estatísticas ao Vivo da Partida:\n"
+        + "🚀 Chutes Totais: " + str(chutes_h) + " | " + str(chutes_a) + "\n"
+        + "🎯 Chutes No Alvo: " + str(alvo_h) + " | " + str(alvo_a) + "\n"
+        + "⚔️ Ataques Perigosos: " + str(atq_perig_h) + " | " + str(atq_perig_a) + "\n"
+        + "🚩 Escanteios: " + str(cant_h) + " | " + str(cant_a) + "\n"
         + sep + "\n\n"
-        + "💡 <b>Análise Técnica da Partida:</b>\n"
-        + "🎯 <b>Favorito: " + str(fav_nome) + "</b>\n"
-        + "🔥 <b>Pressão APPM: ⚠️ " + str(appm_dominante) + " ⚠️</b>\n"
-        + "🚨 <b>Alerta: " + alerta + "</b>\n"
+        + "💡 Análise Técnica da Partida:\n"
+        + "🎯 Favorito: " + str(fav_nome) + "\n"
+        + "🔥 Pressão APPM: ⚠️ " + str(appm_dominante) + " ⚠️\n"
+        + "🚨 Alerta: " + alerta + "\n"
         + sep + "\n\n"
-        + "📌 Entrada: <b>" + str(entrada) + "</b>\n"
-        + ("💰 ODD Recomendada: <b>" + odd_rec + "+</b>\n" if odd_rec else "")
+        + "📌 Entrada: " + str(entrada) + "🚩\n"
+        + ("💰 ODD Recomendada: " + odd_rec + "+\n" if odd_rec else "")
         + sep + "\n\n"
-        + "🔔 <b>Jogue com responsabilidade</b> 🔔"
+        + "🔔Jogue com responsabilidade🔔"
     )
     keyboard = {
         "inline_keyboard": [
