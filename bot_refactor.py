@@ -1999,7 +1999,7 @@ def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_v
 
     # Mapeia mercado → campo da API
 
-    return (
+    msg = (
         sep + "\n"
         + "<b>" + title + "</b>\n"
         + sep + "\n"
@@ -2021,7 +2021,7 @@ def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_v
         + "<b>🚨 Alerta:</b> <b>" + alerta + "</b>\n"
         + sep + "\n"
         + "📌 Entrada: <b>" + str(entrada) + "</b>\n"
-    # Inline Keyboard (os botões reais abaixo da mensagem)
+    )
     keyboard = {
         "inline_keyboard": [
             [
