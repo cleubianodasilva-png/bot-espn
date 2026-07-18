@@ -2342,31 +2342,33 @@ def get_media_gols_historica(home_id, away_id):
 # LOOP PRINCIPAL
 # ═══════════════════════════════════════════════════════════════════════════════
 def run():
-    print("[Iniciando monitoramento — ESPN + apifootball + Odds API]")
+    # ─── ISOLAMENTO POR REPOSITÓRIO: cada bot usa SÓ sua fonte ───
+    _repo_atual = os.environ.get("GITHUB_REPOSITORY", "").lower()
+    if "bzzoiro" in _repo_atual:
+        BOT_SOURCE = "bzzoiro"
+    elif "maquina-de-greens" in _repo_atual:
+        BOT_SOURCE = "espn"
+    else:
+        BOT_SOURCE = "apifootball"
+
+    print(f"[Iniciando monitoramento — Fonte: {BOT_SOURCE.upper()} | Repo: {_repo_atual}]")
     sent      = load_sent()
     total_env = 0
-    # janela_id por hora — evita duplicata mesmo se Actions rodar 2x no mesmo minuto
     janela_id = datetime.now(BRT).strftime('%Y%m%d%H')
 
     # ─────────────────────────────────────────────────────────────
-    # PASSO 1A: apifootball — 1ª fonte de jogos (mais completa)
+    # PASSO 1: Coleta APENAS da fonte designada do bot
     # ─────────────────────────────────────────────────────────────
-    jogos_apif = get_jogos_apifootball_v3(set())
-    fids_apif  = {j["fid"] for j in jogos_apif}
-
-    # ─────────────────────────────────────────────────────────────
-    # PASSO 1B: ESPN — 2ª fonte, complementa o que apifootball não cobriu
-    # ─────────────────────────────────────────────────────────────
-    jogos_espn = get_jogos_espn(fids_apif)
-
-    # ─────────────────────────────────────────────────────────────
-    # PASSO 1C: Bzzoiro — 3ª fonte, preenche o que faltar
-    # ─────────────────────────────────────────────────────────────
-    jogos_bzz = get_jogos_bzzoiro(fids_apif | {j["fid"] for j in jogos_espn})
-
-    # Junta tudo na ordem: apifootball > ESPN > Bzzoiro
-    jogos_live = jogos_apif + jogos_espn + jogos_bzz
-    print(f"[Total] {len(jogos_live)} jogos ao vivo (apifootball={len(jogos_apif)} + ESPN={len(jogos_espn)} + bzzoiro={len(jogos_bzz)})")
+    jogos_live = []
+    if BOT_SOURCE == "apifootball":
+        jogos_live = get_jogos_apifootball_v3(set())
+        print(f"[apifootball] {len(jogos_live)} jogos ao vivo")
+    elif BOT_SOURCE == "espn":
+        jogos_live = get_jogos_espn(set())
+        print(f"[ESPN] {len(jogos_live)} jogos ao vivo")
+    elif BOT_SOURCE == "bzzoiro":
+        jogos_live = get_jogos_bzzoiro(set())
+        print(f"[Bzzoiro] {len(jogos_live)} jogos ao vivo")
 
     # PASSO 2: Filtra janelas alvo
     jogos_na_janela = filtrar_janelas(jogos_live)
@@ -2380,52 +2382,16 @@ def run():
         print("Finalizado. Enviados: 0")
         return
 
-    # PASSO 3: Dedup por nome dos times (mesmo jogo de APIs diferentes)
+    # PASSO 3: Dedup simples (dentro da própria fonte — remove duplicatas do mesmo jogo)
     jogos_dedup = []
-    vistos_jogos = {}
+    vistos_chaves = set()
     for j in jogos_na_janela:
-        # Normaliza pra mesma chave entre APIs
         hn_j = norm_nome_time(j["home"])
         an_j = norm_nome_time(j["away"])
-        # Remove sufixos genéricos de nome de time (Riverhounds, United, City, etc.)
-        hn_j = re.sub(r'\b(riverhounds|united|city|juniors|athletic|atlético|nacional|wanderers|rover|rovers|dynamo|galaxy|sporting|real|inter|internacional|deportivo|racing|club|instituto)\b', '', hn_j).strip()
-        an_j = re.sub(r'\b(riverhounds|united|city|juniors|athletic|atlético|nacional|wanderers|rover|rovers|dynamo|galaxy|sporting|real|inter|internacional|deportivo|racing|club|instituto)\b', '', an_j).strip()
-        chave = (hn_j, an_j)
-        # Também tenta substring match: se um time contém o nome do outro
-        chave_encontrada = None
-        for v_chave in vistos_jogos:
-            v_h, v_a = v_chave
-            h_match = hn_j in v_h or v_h in hn_j
-            a_match = an_j in v_a or v_a in an_j
-            if h_match and a_match:
-                chave_encontrada = v_chave
-                break
-        if chave_encontrada:
-            existente = vistos_jogos[chave_encontrada]
-            # Se a duplicata NÃO é apifootball e a existente É apifootball, mantém apifootball (com odds)
-            if existente.get("source") == "apifootball":
-                print(f"[DEDUP] mantendo apifootball com odds: {existente['home']} x {existente['away']} (ignorando {j.get('source','?')} - {j['home']} x {j['away']})")
-            elif j.get("source") == "apifootball":
-                vistos_jogos[chave_encontrada] = j
-                idx = jogos_dedup.index(existente)
-                jogos_dedup[idx] = j
-                print(f"[DEDUP] substituido {existente['home']} x {existente['away']} ({existente.get('source','?')}) -> apifootball (com odds)")
-            else:
-                print(f"[DEDUP] ignorando duplicata de {j['home']} x {j['away']} ({j.get('source','?')})")
-        elif chave not in vistos_jogos:
-            vistos_jogos[chave] = j
+        chave = hashlib.md5(f"{hn_j}-{an_j}".encode()).hexdigest()[:16]
+        if chave not in vistos_chaves:
+            vistos_chaves.add(chave)
             jogos_dedup.append(j)
-        else:
-            existente = vistos_jogos[chave]
-            if existente.get("source") == "apifootball":
-                print(f"[DEDUP] mantendo apifootball com odds: {existente['home']} x {existente['away']} (ignorando {j.get('source','?')})")
-            elif j.get("source") == "apifootball":
-                vistos_jogos[chave] = j
-                idx = jogos_dedup.index(existente)
-                jogos_dedup[idx] = j
-                print(f"[DEDUP] substituido {existente['home']} x {existente['away']} ({existente.get('source','?')}) -> apifootball (com odds)")
-            else:
-                print(f"[DEDUP] ignorando duplicata de {j['home']} x {j['away']} ({j.get('source','?')})")
     print(f"[Dedup] {len(jogos_na_janela)} -> {len(jogos_dedup)} jogos unicos")
     
     for j in jogos_dedup:
@@ -2443,86 +2409,68 @@ def run():
 
         print(f"[Analisando] {h} x {a} | {placar} | {m}min")
 
-        # Stats FUSION: apifootball (principal) → ESPN → Bzzoiro (reservas)
+        # ─── Stats da fonte designada apenas (sem fusão entre APIs) ───
         fid_raw = j.get("fid_raw", fid)
-        stats_apif = {}
-        try:
-            sa_api = get_stats_apifootball_live(fid_raw)
-            if isinstance(sa_api, dict): stats_apif = sa_api
-        except: pass
-        if not stats_apif:
-            try:
-                sa3 = get_stats_apifootball_v3(fid_raw)
-                if isinstance(sa3, dict): stats_apif = sa3
-            except: pass
-        # Fallback: busca por nome dos times se o ID falhar (apifootball cobre 700+ ligas)
-        if not stats_apif or not (stats_apif.get("escanteios_h", -1) >= 0 and stats_apif.get("escanteios_a", -1) >= 0):
-            try:
-                sa_name = get_stats_apifootball_by_name(h, a)
-                if isinstance(sa_name, dict) and sa_name.get("escanteios_h", -1) >= 0:
-                    stats_apif = sa_name
-                    print(f"[APIF-NAME] Stats por nome OK: esc {sa_name.get('escanteios_h')}x{sa_name.get('escanteios_a')}")
-            except: pass
-        stats_espn = {}
-        try:
-            # ESPN stats: só funciona com ID ESPN limpo (sem prefixo)
-            if j.get("source") == "espn" and fid_raw:
-                eid_clean = fid_raw  # ESPN raw ID já é o event ID
-                se = get_stats_espn(eid_clean, h, a)
-                if isinstance(se, dict): stats_espn = se
-        except: pass
-        stats_bzz = {}
-        try:
-            sb = get_stats_bzzoiro(fid_raw, h, a)
-            if isinstance(sb, dict): stats_bzz = sb
-        except: pass
-        # Fallback Bzzoiro por nome (quando o ID da apifootball nao funciona no Bzzoiro)
-        # Para ligas normais: se Bzzoiro tem só cantos (sem chutes/ataques), precisa de fallback
-        if "Club Friendlies" in liga:
-            precisa_fallback = not stats_bzz or not (stats_bzz.get("chutes_tot_h", 0) > 0 or stats_bzz.get("escanteios_h", -1) >= 0)
-        else:
-            precisa_fallback = not stats_bzz or not (stats_bzz.get("chutes_tot_h", 0) > 0 or stats_bzz.get("chutes_tot_a", 0) > 0 or
-                                                      stats_bzz.get("ataques_perigosos_h", 0) > 0 or stats_bzz.get("ataques_perigosos_a", 0) > 0 or
-                                                      stats_bzz.get("chutes_gol_h", 0) > 0 or stats_bzz.get("chutes_gol_a", 0) > 0)
-        if precisa_fallback:
-            try:
-                sb_name = get_stats_bzzoiro_by_name(h, a)
-                if isinstance(sb_name, dict):
-                    # Club Friendlies: sempre confiável, aceita dados normalmente
-                    if "Club Friendlies" in liga:
-                        stats_bzz = sb_name
-                        print(f"[BZZ-NAME] Friendlies aceito: esc {sb_name.get('escanteios_h')}x{sb_name.get('escanteios_a')}")
-                    else:
-                        # Demais ligas: só aceita fallback se tiver scout real (chutes, ataques ou chutes no gol)
-                        if (sb_name.get("chutes_tot_h", 0) > 0 or sb_name.get("chutes_tot_a", 0) > 0 or
-                            sb_name.get("ataques_perigosos_h", 0) > 0 or sb_name.get("ataques_perigosos_a", 0) > 0 or
-                            sb_name.get("chutes_gol_h", 0) > 0 or sb_name.get("chutes_gol_a", 0) > 0):
-                            stats_bzz = sb_name
-                            print(f"[BZZ-NAME] Stats via nome OK: esc {sb_name.get('escanteios_h')}x{sb_name.get('escanteios_a')} | chutes {sb_name.get('chutes_tot_h')}x{sb_name.get('chutes_tot_a')}")
-            except: pass
-
         stats = {}
-        for src_nome, src in [("apifootball", stats_apif), ("ESPN", stats_espn), ("Bzzoiro", stats_bzz)]:
-            for campo in ["chutes_tot_h","chutes_tot_a","chutes_gol_h","chutes_gol_a","escanteios_h","escanteios_a","red_cards_h","red_cards_a","posse_h","posse_a","ataques_h","ataques_a","ataques_perigosos_h","ataques_perigosos_a"]:
-                if campo not in src:
-                    continue
-                val = src[campo]
-                if not isinstance(val, (int,float)) or val < 0:
-                    continue
-                current = stats.get(campo, -1)
-                if current == -1:
-                    stats[campo] = val
-                    stats["_fonte_"+campo] = src_nome
-                elif current == 0 and val > 0:
-                    stats[campo] = val
-                    stats["_fonte_"+campo] = src_nome
+        if BOT_SOURCE == "apifootball":
+            try:
+                sa_api = get_stats_apifootball_live(fid_raw)
+                if isinstance(sa_api, dict) and sa_api: stats = sa_api
+            except: pass
+            if not stats or not (stats.get("escanteios_h", -1) >= 0 and stats.get("escanteios_a", -1) >= 0):
+                try:
+                    sa3 = get_stats_apifootball_v3(fid_raw)
+                    if isinstance(sa3, dict) and sa3: stats = sa3
+                except: pass
+            if not stats or not (stats.get("escanteios_h", -1) >= 0 and stats.get("escanteios_a", -1) >= 0):
+                try:
+                    sa_name = get_stats_apifootball_by_name(h, a)
+                    if isinstance(sa_name, dict) and sa_name.get("escanteios_h", -1) >= 0:
+                        stats = sa_name
+                        print(f"[APIF-NAME] Stats por nome OK: esc {sa_name.get('escanteios_h')}x{sa_name.get('escanteios_a')}")
+                except: pass
+        elif BOT_SOURCE == "espn":
+            try:
+                if fid_raw:
+                    se = get_stats_espn(fid_raw, h, a)
+                    if isinstance(se, dict) and se: stats = se
+            except: pass
+            if not stats:
+                try:
+                    se_name = get_stats_espn_by_name(h, a)
+                    if isinstance(se_name, dict) and se_name: stats = se_name
+                except: pass
+        elif BOT_SOURCE == "bzzoiro":
+            try:
+                sb = get_stats_bzzoiro(fid_raw, h, a)
+                if isinstance(sb, dict) and sb: stats = sb
+            except: pass
+            if not stats or not (stats.get("chutes_tot_h", 0) > 0 or stats.get("chutes_tot_a", 0) > 0 or
+                                  stats.get("escanteios_h", -1) >= 0 or stats.get("escanteios_a", -1) >= 0 or
+                                  stats.get("ataques_perigosos_h", 0) > 0 or stats.get("ataques_perigosos_a", 0) > 0):
+                try:
+                    sb_name = get_stats_bzzoiro_by_name(h, a)
+                    if isinstance(sb_name, dict):
+                        if "Club Friendlies" in liga:
+                            stats = sb_name
+                            print(f"[BZZ-NAME] Friendlies aceito: esc {sb_name.get('escanteios_h')}x{sb_name.get('escanteios_a')}")
+                        elif (sb_name.get("chutes_tot_h", 0) > 0 or sb_name.get("chutes_tot_a", 0) > 0 or
+                              sb_name.get("ataques_perigosos_h", 0) > 0 or sb_name.get("ataques_perigosos_a", 0) > 0 or
+                              sb_name.get("chutes_gol_h", 0) > 0 or sb_name.get("chutes_gol_a", 0) > 0):
+                            stats = sb_name
+                            print(f"[BZZ-NAME] Stats via nome OK: esc {sb_name.get('escanteios_h')}x{sb_name.get('escanteios_a')} | chutes {sb_name.get('chutes_tot_h')}x{sb_name.get('chutes_tot_a')}")
+                except: pass
+
+        # Preenche defaults para campos que faltam
         for k in ["chutes_tot_h","chutes_tot_a","chutes_gol_h","chutes_gol_a"]:
             stats.setdefault(k, 0)
         for k in ["escanteios_h","escanteios_a"]:
             stats.setdefault(k, -1)
         for k in ["red_cards_h","red_cards_a"]:
             stats.setdefault(k, 0)
-        print(f"[STATS-FUSION] {h} x {a} | chutes: {stats.get('chutes_tot_h',0)}/{stats.get('chutes_tot_a',0)} | cantos: {stats.get('escanteios_h',-1)}/{stats.get('escanteios_a',-1)}")
+
+        if stats:
+            print(f"[STATS-{BOT_SOURCE.upper()}] {h} x {a} | chutes: {stats.get('chutes_tot_h',0)}/{stats.get('chutes_tot_a',0)} | cantos: {stats.get('escanteios_h',-1)}/{stats.get('escanteios_a',-1)} | atq_perig: {stats.get('ataques_perigosos_h',0)}/{stats.get('ataques_perigosos_a',0)}")
 
         # Verifica se tem dados reais — sem stats E sem odds, pula o jogo
         tem_stats = stats and (
@@ -2537,44 +2485,42 @@ def run():
             print(f"[SKIP] {h} x {a} — sem stats reais (chutes, cantos ou ataques perigosos) em nenhuma API, pulando jogo")
             continue
 
-        # Favorito: primeiro usa odds inline da apifootball (ja veio na coleta), depois ESPN, depois tenta de novo
+        # Favorito: odds da própria fonte (cada bot só usa sua API)
         odd_h = j.get("odd_h")
         odd_a = j.get("odd_a")
         fav_por_odds = False
-        if odd_h and odd_a and odd_h > 1 and odd_a > 1:
-            fav_final = "h" if odd_h <= odd_a else "a"
-            fav_por_odds = True
-            print(f"[ODDS-INLINE] {h} x {a} — odd Casa:{odd_h:.2f} Fora:{odd_a:.2f} (apifootball)")
-        # Fallback: ESPN/Odds API
-        if not fav_por_odds:
-            fav_final, odd_h, odd_a = get_favorito_odds(h, a, fid=fid, league=j.get("liga_slug", j.get("liga", "")))
-            fav_por_odds = fav_final in ("h", "a")
-        # Fallback: apifootball por match_id (pra jogos que ESPN nao cobriu)
-        if not fav_por_odds:
+
+        if BOT_SOURCE == "apifootball":
+            if odd_h and odd_a and odd_h > 1 and odd_a > 1:
+                fav_final = "h" if odd_h <= odd_a else "a"
+                fav_por_odds = True
+                print(f"[ODDS] {h} x {a} — odd Casa:{odd_h:.2f} Fora:{odd_a:.2f} (apifootball)")
+            if not fav_por_odds:
+                try:
+                    r_odd = requests.get("https://apiv3.apifootball.com/",
+                                     params={"action": "get_odds", "match_id": fid_raw, "APIkey": APIFOOTBALL_COM_KEY}, timeout=8)
+                    odds_data = r_odd.json()
+                    if isinstance(odds_data, list) and odds_data:
+                        odd_ml = None
+                        for bk_alvo in ("bet365", "betano"):
+                            for od in odds_data:
+                                if str(od.get("odd_bookmakers", "")).lower() == bk_alvo:
+                                    odd_ml = od; break
+                            if odd_ml: break
+                        if not odd_ml: odd_ml = odds_data[0]
+                        odd_h, odd_a = float(odd_ml.get("odd_1", 0)), float(odd_ml.get("odd_2", 0))
+                        if odd_h > 1 and odd_a > 1:
+                            fav_final = "h" if odd_h <= odd_a else "a"
+                            fav_por_odds = True
+                except: pass
+
+        elif BOT_SOURCE == "espn":
             try:
-                r_odd = requests.get("https://apiv3.apifootball.com/",
-                                 params={"action": "get_odds", "match_id": fid_raw, "APIkey": APIFOOTBALL_COM_KEY}, timeout=8)
-                odds_data = r_odd.json()
-                if isinstance(odds_data, list) and odds_data:
-                    # Prioridade: Bet365 > Betano > qualquer outra
-                    odd_ml = None
-                    for bk_alvo in ("bet365", "betano"):
-                        for od in odds_data:
-                            if str(od.get("odd_bookmakers", "")).lower() == bk_alvo:
-                                odd_ml = od
-                                break
-                        if odd_ml:
-                            break
-                    if not odd_ml:
-                        odd_ml = odds_data[0]
-                    odd_h, odd_a = float(odd_ml.get("odd_1", 0)), float(odd_ml.get("odd_2", 0))
-                    if odd_h > 1 and odd_a > 1:
-                        fav_final = "h" if odd_h <= odd_a else "a"
-                        fav_por_odds = True
+                fav_final, odd_h, odd_a = get_favorito_odds(h, a, fid=fid, league=j.get("liga_slug", j.get("liga", "")))
+                fav_por_odds = fav_final in ("h", "a")
             except: pass
 
-        # Fallback odds via Bzzoiro (com auth e campos corretos)
-        if not fav_por_odds:
+        elif BOT_SOURCE == "bzzoiro":
             try:
                 headers = {"Authorization": "Token " + BZZOIRO_TOKEN}
                 r = requests.get(f"https://sports.bzzoiro.com/api/v2/events/{fid_raw}/odds/", headers=headers, timeout=8)
@@ -2584,8 +2530,8 @@ def run():
                 if odd_h > 1 and odd_a > 1:
                     fav_final = "h" if odd_h <= odd_a else "a"
                     fav_por_odds = True
-            except:
-                pass
+                    print(f"[ODDS-BZZ] {h} x {a} — odd Casa:{odd_h:.2f} Fora:{odd_a:.2f}")
+            except: pass
 
         # Sem odds = usa stats (chutes) como fallback para definir favorito
         if not fav_por_odds:
@@ -2641,8 +2587,7 @@ def run():
         #   - OVER GOLS: casa ≥ 0.8 OU fora ≥ 0.8 OU total ≥ 1.5
         #   - ESCANTEIOS: casa ≥ 0.7 OU fora ≥ 0.7 OU total ≥ 1.4
         # boot-ia-inteligente-bot (Grupo ZAPIA): livre
-        _repo_atual = os.environ.get("GITHUB_REPOSITORY", "")
-        if "maquina-de-greens" in _repo_atual:
+        if BOT_SOURCE == "espn" or "maquina-de-greens" in BOT_SOURCE:
             appm_valido   = _appm_h >= 0.7 or _appm_a >= 0.7 or _appm_total >= 1.4  # escanteios
             appm_gols_ok  = _appm_h >= 0.8 or _appm_a >= 0.8 or _appm_total >= 1.5  # over gols
             if not appm_valido:
