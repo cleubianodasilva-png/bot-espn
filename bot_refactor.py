@@ -558,9 +558,6 @@ def enviar_relatorio_performance():
 # API 1 — apifootball: lista de jogos ao vivo
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def get_jogos_espn(fids_existentes=None):
-    return []
-
 def get_jogos_apifootball_v3(fids_existentes):
     try:
         hoje = datetime.now().strftime("%Y-%m-%d")
@@ -716,13 +713,6 @@ def get_stats_apifootball_v3(match_id):
 
             
 
-def get_stats_espn_by_name(home, away):
-    return {}
-
-def get_stats_espn(eid, home, away):
-    """ESPN removido — usa apenas apifootball."""
-    return {}
-
 # ═══════════════════════════════════════════════════════════════════════════════
 # apifootball: estatísticas (única fonte)
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -782,7 +772,6 @@ def _moneyline_to_decimal(ml):
 
 def get_favorito_odds(home, away, fid=None, league=None):
     """Retorna ('h'|'a', odd_h, odd_a) baseado na menor odd. Usa apifootball, depois Odds API."""
-    # ESPN removido — usa apenas apifootball
     # Fallback 3: APIfootball.com odds (quando fid for do apifootball)
     if fid and str(fid).replace("apif_","").isdigit():
         try:
@@ -1502,8 +1491,6 @@ def run():
     if BOT_SOURCE == "apifootball":
         jogos_live = get_jogos_apifootball_v3(set())
         print(f"[apifootball] {len(jogos_live)} jogos ao vivo")
-    # ESPN removido — não é mais usado
-
     # PASSO 2: Filtra janelas alvo
     jogos_na_janela = filtrar_janelas(jogos_live)
     print(f"[Janela] {len(jogos_na_janela)} jogos nas janelas alvo")
@@ -1563,7 +1550,6 @@ def run():
                         stats = sa_name
                         print(f"[APIF-NAME] Stats por nome OK: esc {sa_name.get('escanteios_h')}x{sa_name.get('escanteios_a')}")
                 except: pass
-        # ESPN removido
 
         # Preenche defaults para campos que faltam
         for k in ["chutes_tot_h","chutes_tot_a","chutes_gol_h","chutes_gol_a"]:
@@ -1618,7 +1604,6 @@ def run():
                             fav_por_odds = True
                 except: pass
 
-        # ESPN removido
 
 
         # Sem odds = usa stats (chutes) como fallback para definir favorito
@@ -1675,7 +1660,6 @@ def run():
         #   - OVER GOLS: casa ≥ 0.8 OU fora ≥ 0.8 OU total ≥ 1.5
         #   - ESCANTEIOS: casa ≥ 0.7 OU fora ≥ 0.7 OU total ≥ 1.4
         # boot-ia-inteligente-bot (Grupo ZAPIA): livre
-        if False:  # ESPN removido
             appm_valido   = _appm_h >= 0.7 or _appm_a >= 0.7 or _appm_total >= 1.4  # escanteios
             appm_gols_ok  = _appm_h >= 0.8 or _appm_a >= 0.8 or _appm_total >= 1.5  # over gols
             if not appm_valido:
