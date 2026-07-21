@@ -370,10 +370,14 @@ def _save_resultados_github(registros):
         except Exception as e:
             print(f"[RESULTADO] Erro save GitHub: {e}")
 
-def salvar_resultado(resultado):
+def salvar_resultado(resultado, mercado=None):
     hoje = datetime.now(BRT).strftime("%Y-%m-%d")
     registros = _load_resultados_github()
-    registros.append({"data": hoje, "resultado": resultado, "timestamp": datetime.now(BRT).isoformat()})
+    registros.append({
+        "data": hoje, "resultado": resultado,
+        "mercado": mercado,
+        "timestamp": datetime.now(BRT).isoformat()
+    })
     _save_resultados_github(registros)
 
 
@@ -546,6 +550,82 @@ def enviar_relatorio_performance():
     msg = gerar_layout_performance()
     if send_telegram(msg):
         print("[PERFORMANCE] Relatório enviado")
+
+def get_performance_24h():
+    """Retorna performance por mercado nas últimas 24h a partir dos resultados salvos."""
+    registros = _load_resultados_github()
+    agora = datetime.now(BRT)
+    corte = agora - timedelta(hours=24)
+    
+    perf = {}
+    for cod, nome in MAPA_MERCADO.items():
+        perf[cod] = {"nome": nome, "green": 0, "red": 0, "total": 0}
+    
+    for r in registros:
+        ts_str = r.get("timestamp", "")
+        mercado = r.get("mercado", "")
+        resultado = r.get("resultado", "")
+        if not ts_str or not mercado or not resultado:
+            continue
+        if mercado not in perf:
+            continue
+        try:
+            ts = datetime.fromisoformat(ts_str)
+            if ts.tzinfo is None:
+                ts = ts.replace(tzinfo=timezone(timedelta(hours=-3)))
+            if ts < corte:
+                continue
+        except:
+            continue
+        perf[mercado]["total"] += 1
+        if resultado == "green":
+            perf[mercado]["green"] += 1
+        else:
+            perf[mercado]["red"] += 1
+    
+    for cod, info in perf.items():
+        t = info["total"]
+        g = info["green"]
+        info["pct"] = (g / t * 100) if t > 0 else 0
+    
+    return perf
+
+def gerar_layout_mercados24h():
+    """Gera layout do relatório de performance por mercado nas últimas 24h."""
+    dados = get_performance_24h()
+    sep = "━" * 20
+    blocos = []
+    for cod, info in dados.items():
+        nome = info["nome"]
+        g = info["green"]
+        r = info["red"]
+        t = info["total"]
+        pct = info["pct"]
+        blocos.append(
+            f"<b>{nome}</b>\n"
+            f"   Total: {t} | 🟢 {g} | 🔴 {r}\n"
+            f"   🎯 Acerto: {pct:.1f}%"
+        )
+    total_g = sum(d["green"] for d in dados.values())
+    total_r = sum(d["red"] for d in dados.values())
+    total_t = total_g + total_r
+    total_pct = (total_g / total_t * 100) if total_t > 0 else 0
+
+    msg = (
+        f"{sep}\n"
+        f"📊<b>MERCADOS — ÚLTIMAS 24H</b>📊\n"
+        f"{sep}\n"
+        f"{f'{chr(10)}{sep}{chr(10)}'.join(blocos)}{chr(10)}"
+        f"{sep}\n"
+        f"📌 <b>TOTAL GERAL: {total_t} Sinais</b>\n"
+        f"      | 🟢 {total_g} | 🔴 {total_r} | {total_pct:.1f}%|\n"
+        f"{sep}"
+    )
+    return msg
+
+def enviar_relatorio_mercados24h():
+    """Gera o relatório de mercados 24h. Retorna o texto da mensagem (sem enviar)."""
+    return gerar_layout_mercados24h()
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # API 1 — apifootball: lista de jogos ao vivo
@@ -1359,7 +1439,12 @@ def check_status_command(total_jogos_live=0, jogos_live=None, jogos_na_janela=No
                 relatorio_respondido = True
             elif ("/mercados" in text or text.startswith("/mercados@")) and not relatorio_respondido:
                 try:
-                    msg = enviar_relatorio_performance()
+                    if "/mercados24h" in text:
+                        msg = enviar_relatorio_mercados24h()
+                        if not msg:
+                            msg = "Ainda sem dados de mercado nas últimas 24h."
+                    else:
+                        msg = enviar_relatorio_performance()
                     if msg:
                         requests.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage",
                                       json={"chat_id": chat_orig, "text": msg, "parse_mode": "HTML"})
@@ -1872,7 +1957,7 @@ def run():
             if res:
                 emoji = "🟢GREEN CONFIRMADO🟢" if res == "green" else "🔴RED CONFIRMADO🔴"
                 send_telegram(emoji, reply_to=s.get("message_id"))
-                salvar_resultado(res)
+                salvar_resultado(res, mercado=s.get("mercado"))
                 registrar_performance(s.get("mercado"), res)
             else:
                 rest.append(s)
@@ -1891,6 +1976,19 @@ def run():
         processar_comandos_pendentes(TG_TOKEN, CHAT_ID, jogos_live, jogos_na_janela)
     except Exception as e:
         print(f"[CMD] Erro chamando comandos: {e}")
+    # ═══════════════════════════════════════════════════════════════════════════
+    # AUTO-DISPATCH: /relatoriodiario + /mercados24h às 23:55
+    # ═══════════════════════════════════════════════════════════════════════════
+    try:
+        agora_hora = datetime.now(BRT)
+        if agora_hora.hour == 23 and agora_hora.minute >= 55:
+            print(f"[AUTO] 23:55 — disparando relatório diário + mercados 24h")
+            enviar_relatorio_diario()
+            msg_mercados = enviar_relatorio_mercados24h()
+            if msg_mercados:
+                send_telegram(msg_mercados)
+    except Exception as e:
+        print(f"[AUTO] Erro auto-dispatch: {e}")
     print(f"Finalizado. Enviados: {total_env}")
 
 
@@ -1968,8 +2066,14 @@ def processar_comandos_pendentes(token, chat_id, jogos_live=None, jogos_na_janel
                     except: pass
                 elif "/mercados" in text:
                     try:
-                        msg = enviar_relatorio_performance()
-                        if not msg:
+                        if "/mercados24h" in text:
+                            msg = gerar_layout_mercados24h()
+                        else:
+                            msg = enviar_relatorio_performance()
+                        if msg:
+                            requests.post(f"https://api.telegram.org/bot{token}/sendMessage",
+                                          json={"chat_id": chat_orig, "text": msg, "parse_mode": "HTML"})
+                        else:
                             requests.post(f"https://api.telegram.org/bot{token}/sendMessage",
                                           json={"chat_id": chat_orig, "text": "Ainda sem dados de performance registrados.", "parse_mode": "HTML"})
                     except Exception as e:
