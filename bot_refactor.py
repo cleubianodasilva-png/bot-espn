@@ -422,13 +422,13 @@ def enviar_relatorio_diario():
 
 # ─── Performance por Mercado ────────────────────────────────────────────────────
 MAPA_MERCADO = {
-    "HT": "🔥 Over 0.5 Gols HT",
-    "LIMITEHT": "🔥 Over Gol Limite HT",
-    "BTTS": "⚽ BTTS",
-    "OFT": "⚽ Over 1.5 FT",
-    "OVERGOAL": "⚽ Over Gol FT",
-    "CORNER_HT": "⛳️ Escanteio Limite HT",
-    "CORNER_FT": "⛳️ Escanteio Limite FT"
+    "HT": "⚽️🔥OVER GOL INTERVALO🔥⚽️",
+    "LIMITEHT": "⚽️🔥OVER GOL LIMITE HT🔥⚽️",
+    "BTTS": "⚽🔥AMBAS MARCAM🔥⚽️",
+    "OFT": "⚽🔥OVER 1.5 GOLS FT🔥⚽️",
+    "OVERGOAL": "⚽🔥OVER GOL PARTIDA🔥⚽️",
+    "CORNER_HT": "🚩🔥ESCANTEIO LIMITE HT🔥🚩",
+    "CORNER_FT": "🚩🔥ESCANTEIO LIMITE FT🔥🚩"
 }
 
 def _load_performance_github():
@@ -516,17 +516,10 @@ def gerar_layout_performance():
         r = info["red"]
         t = info["total"]
         pct = info["pct"]
-        valido = info["valido"]
-        barra = ""
-        if t > 0:
-            g_pct = int(g / t * 10)
-            barra = "🟢" * g_pct + "🔴" * (10 - g_pct)
-        status = "✅" if valido else "⏳"
         linhas.append(
             f"{nome}\n"
-            f"   {status} Total: {t} | 🟢 {g} | 🔴 {r}\n"
-            f"   🎯 Acerto: <b>{pct:.1f}%</b>\n"
-            f"   {barra}"
+            f"   ⏳ Total: {t} | 🟢 {g} | 🔴 {r}\n"
+            f"   🎯 Acerto: <b>{pct:.1f}%</b>"
         )
     total_g = sum(d["green"] for d in dados.values())
     total_r = sum(d["red"] for d in dados.values())
@@ -536,7 +529,7 @@ def gerar_layout_performance():
     msg = (
         f"{sep}\n"
         f"📊<b>RELATÓRIO DE PERFORMANCE</b>📊\n"
-        f"{sep}\n"
+        f"{sep}\n\n"
         f"{chr(10).join(linhas)}\n"
         f"{sep}\n"
         f"📌 <b>GERAL: {total_t} sinais | 🟢 {total_g} | 🔴 {total_r} | {total_pct:.1f}%</b>\n"
