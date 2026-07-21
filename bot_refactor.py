@@ -546,10 +546,8 @@ def gerar_layout_performance():
     return msg
 
 def enviar_relatorio_performance():
-    """Envia relatório de performance para o Telegram."""
-    msg = gerar_layout_performance()
-    if send_telegram(msg):
-        print("[PERFORMANCE] Relatório enviado")
+    """Gera o relatório de performance. Retorna o texto da mensagem (sem enviar)."""
+    return gerar_layout_performance()
 
 def get_performance_24h():
     """Retorna performance por mercado nas últimas 24h a partir dos resultados salvos."""
