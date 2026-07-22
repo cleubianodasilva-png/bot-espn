@@ -2011,31 +2011,48 @@ def run():
             print(f"[SKIP] {h} x {a} — sem stats reais (chutes, cantos ou ataques perigosos) em nenhuma API, pulando jogo")
             continue
 
-        # Favorito: odds da Bzzoiro v2 (se disponível) → ESPN → apifootball (fallback)
-        odd_h = j.get("odd_h")
-        odd_a = j.get("odd_a")
+        # Favorito: odds Pre-Live — Bzzoiro v2 (fonte principal) → ESPN (DraftKings) → apifootball (fallback) → stats (último recurso)
+        odd_h = None
+        odd_a = None
         fav_por_odds = False
 
-        # Bzzoiro: odds do jogo (se a fonte tiver)
-        if odd_h and odd_a and odd_h > 1 and odd_a > 1:
-            fav_final = "h" if odd_h <= odd_a else "a"
-            fav_por_odds = True
-            print(f"[ODDS] {h} x {a} — odd Casa:{odd_h:.2f} Fora:{odd_a:.2f} (Bzzoiro)")
-        # Fallback: ESPN odds (do jogo ou stats)
-        if not fav_por_odds:
-            if odd_h and odd_a and odd_h > 1 and odd_a > 1:
+        # PASSO 1: Bzzoiro odds Pre-Live (fonte principal)
+        try:
+            odd_h, odd_a = get_odds_bzzoiro(fid_raw)
+            if odd_h and odd_h > 1 and odd_a and odd_a > 1:
                 fav_final = "h" if odd_h <= odd_a else "a"
                 fav_por_odds = True
-                print(f"[ODDS] {h} x {a} — odd Casa:{odd_h:.2f} Fora:{odd_a:.2f} (ESPN)")
-            elif stats:
-                odd_h_s = stats.get("odd_h")
-                odd_a_s = stats.get("odd_a")
-                if odd_h_s and odd_a_s and odd_h_s > 1 and odd_a_s > 1:
+                print(f"[ODDS] {h} x {a} — odd Casa:{odd_h:.2f} Fora:{odd_a:.2f} (Bzzoiro Pre-Live)")
+        except Exception as e:
+            print(f"[ODDS-BZZ ERRO] {e}")
+            odd_h, odd_a = None, None
+
+        # PASSO 2: ESPN odds (DraftKings do summary) — se Bzzoiro não retornou
+        if not fav_por_odds:
+            # Verifica se as stats já têm odds (veio do get_stats_espn no fallback)
+            if stats and stats.get("odd_h") and stats.get("odd_a"):
+                odd_h_s, odd_a_s = stats["odd_h"], stats["odd_a"]
+                if odd_h_s > 1 and odd_a_s > 1:
                     odd_h, odd_a = odd_h_s, odd_a_s
                     fav_final = "h" if odd_h <= odd_a else "a"
                     fav_por_odds = True
                     print(f"[ODDS] {h} x {a} — odd Casa:{odd_h:.2f} Fora:{odd_a:.2f} (ESPN-summary)")
-        # Fallback: apifootball odds
+            else:
+                # Chama ESPN especificamente para odds (DraftKings)
+                try:
+                    league_slug = j.get("league_slug", "")
+                    if league_slug:
+                        sa_espn = get_stats_espn(fid_raw, league_slug)
+                        if isinstance(sa_espn, dict) and sa_espn.get("odd_h") and sa_espn.get("odd_a"):
+                            odd_h, odd_a = sa_espn["odd_h"], sa_espn["odd_a"]
+                            if odd_h > 1 and odd_a > 1:
+                                fav_final = "h" if odd_h <= odd_a else "a"
+                                fav_por_odds = True
+                                print(f"[ODDS] {h} x {a} — odd Casa:{odd_h:.2f} Fora:{odd_a:.2f} (ESPN-DraftKings)")
+                except Exception as e:
+                    print(f"[ODDS-ESPN ERRO] {e}")
+
+        # PASSO 3: apifootball odds (fallback)
         if not fav_por_odds:
             try:
                 r_odd = requests.get("https://apiv3.apifootball.com/",
@@ -2056,9 +2073,7 @@ def run():
                         print(f"[ODDS] {h} x {a} — odd Casa:{odd_h:.2f} Fora:{odd_a:.2f} (apifootball)")
             except: pass
 
-
-
-        # Sem odds = usa stats (chutes) como fallback para definir favorito
+        # PASSO 4: Sem odds = usa stats (chutes) como fallback para definir favorito
         if not fav_por_odds:
             if stats and stats.get("fav_side") in ("h", "a"):
                 fav_final = stats["fav_side"]
@@ -2070,9 +2085,9 @@ def run():
                 fav_final = "h"
                 print(f"[FAV-HOME] {h} x {a} — sem odds e sem stats, assumindo mandante como favorito")
 
-        # Se NENHUMA fonte retornou odds válidas, pula o jogo
-        if not (odd_h and odd_h > 1 and odd_a and odd_a > 1):
-            print(f"[SKIP-SEM-ODDS] {h} x {a} — nenhuma odd válida (Casa:{odd_h} Fora:{odd_a}), pulando sinal")
+        # Se não tem odds E não tem stats de chutes, aí sim pula (impossível definir favorito)
+        if not fav_por_odds and not (stats and (stats.get("chutes_tot_h", 0) > 0 or stats.get("chutes_tot_a", 0) > 0)):
+            print(f"[SKIP] {h} x {a} — sem odds e sem stats de chutes, impossível definir favorito, pulando")
             continue
 
         red_fav = stats.get(f"red_cards_{fav_final}", 0) if stats else 0
