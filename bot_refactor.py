@@ -1658,7 +1658,6 @@ def check_status_command(total_jogos_live=0, jogos_live=None, jogos_na_janela=No
         if not r.get("ok"): return
         new_last_id = last_id
         radar_respondido = False
-        relatorio_respondido = False
         agora_ts = datetime.now(timezone.utc).timestamp()
         for update in r.get("result", []):
             new_last_id = update["update_id"]
@@ -1670,15 +1669,13 @@ def check_status_command(total_jogos_live=0, jogos_live=None, jogos_na_janela=No
             if agora_ts - msg_ts > 600: # Ignora comandos com mais de 10 minutos
                 continue
             pass  # responde em qualquer chat
-            if ("/relatoriomensal" in text or text.startswith("/relatoriomensal@")) and not relatorio_respondido:
+            if "/relatoriomensal" in text or text.startswith("/relatoriomensal@"):
                 msg = enviar_relatorio_mensal()
                 requests.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage",
                               json={"chat_id": chat_orig, "text": msg, "parse_mode": "HTML"})
-                relatorio_respondido = True
-            if ("/relatoriodiario" in text or text.startswith("/relatoriodiario@")) and not relatorio_respondido:
+            if "/relatoriodiario" in text or text.startswith("/relatoriodiario@"):
                 enviar_relatorio_diario()
-                relatorio_respondido = True
-            elif ("/mercados" in text or text.startswith("/mercados@")) and not relatorio_respondido:
+            if "/mercados" in text or text.startswith("/mercados@"):
                 try:
                     if "/mercados24h" in text:
                         msg = enviar_relatorio_mercados24h()
@@ -1694,12 +1691,11 @@ def check_status_command(total_jogos_live=0, jogos_live=None, jogos_na_janela=No
                                       json={"chat_id": chat_orig, "text": "Ainda sem dados de performance registrados.", "parse_mode": "HTML"})
                 except Exception as e:
                     print(f"[PERFORMANCE] Erro: {e}")
-                relatorio_respondido = True
-            elif "/vip" in text:
+            if "/vip" in text:
                 requests.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage",
                               json={"chat_id": chat_orig, "text": VIP_PROMO, "parse_mode": "HTML", "disable_web_page_preview": True})
                 print(f"[VIP] Divulgação enviada para {chat_orig}")
-            elif "/assinar" in text:
+            if "/assinar" in text:
                 try:
                     user_info = msg.get("from", {})
                     user_id = str(user_info.get("id", chat_orig))
@@ -1744,7 +1740,7 @@ def check_status_command(total_jogos_live=0, jogos_live=None, jogos_na_janela=No
                     print(f"[VIP-ASSINAR] Erro: {e}")
                     requests.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage",
                                   json={"chat_id": chat_orig, "text": "❌ Erro ao processar. Tente /assinar novamente.", "parse_mode": "HTML"})
-            elif ("/radar" in text or text.startswith("/radar@")) and not radar_respondido:
+            if "/radar" in text or text.startswith("/radar@"):
                 jogos_live = jogos_live or []
                 jogos_na_janela = jogos_na_janela or []
                 # Monta lista de jogos na janela
@@ -1788,7 +1784,6 @@ def check_status_command(total_jogos_live=0, jogos_live=None, jogos_na_janela=No
                     f"{sep}"
                 )
                 requests.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage", json={"chat_id": chat_orig, "text": msg_radar, "parse_mode": "HTML"}, timeout=10)
-                radar_respondido = True
         if new_last_id > last_id:
             with open(LAST_UPDATE_FILE, 'w') as f: json.dump({"last_id": new_last_id}, f)
             # Salva no GitHub para persistir entre execuções
