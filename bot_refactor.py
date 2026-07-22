@@ -1968,12 +1968,12 @@ def run():
 
                 if not chutes_ok:
                     try:
-                        sa = get_stats_apifootball_v3(fid_raw)
-                        if isinstance(sa, dict) and sa.get("chutes_tot_h", 0) > 0:
-                            stats["chutes_tot_h"] = sa["chutes_tot_h"]
-                            stats["chutes_tot_a"] = sa["chutes_tot_a"]
-                            stats["chutes_gol_h"] = sa.get("chutes_gol_h", 0)
-                            stats["chutes_gol_a"] = sa.get("chutes_gol_a", 0)
+                        sa_api = get_stats_apifootball_v3(fid_raw)
+                        if isinstance(sa_api, dict) and sa_api.get("chutes_tot_h", 0) > 0:
+                            stats["chutes_tot_h"] = sa_api["chutes_tot_h"]
+                            stats["chutes_tot_a"] = sa_api["chutes_tot_a"]
+                            stats["chutes_gol_h"] = sa_api.get("chutes_gol_h", 0)
+                            stats["chutes_gol_a"] = sa_api.get("chutes_gol_a", 0)
                             chutes_ok = True
                             print(f"[CHUTES-APIF] Chutes complementados: {stats['chutes_tot_h']}/{stats['chutes_tot_a']}")
                     except:
