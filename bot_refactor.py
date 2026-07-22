@@ -2372,5 +2372,18 @@ def processar_comandos_pendentes(token, chat_id, jogos_live=None, jogos_na_janel
     except Exception as e:
         print(f"[CMD] Erro processar comandos: {e}")
 
+# ========== VIP MANAGER ==========
+def run_vip():
+    """Executa verificacao VIP ao final do ciclo"""
+    try:
+        import subprocess, sys
+        print("[VIP] Verificando novos pagamentos...")
+        subprocess.run([sys.executable, "vip_manager.py", "check"], capture_output=True, timeout=30)
+        print("[VIP] Removendo expirados...")
+        subprocess.run([sys.executable, "vip_manager.py", "purge"], capture_output=True, timeout=30)
+    except Exception as e:
+        print(f"[VIP] Erro: {e}")
+
 if __name__ == "__main__":
     run()
+    run_vip()
