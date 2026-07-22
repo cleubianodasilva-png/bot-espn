@@ -149,14 +149,12 @@ def get_stats_bzzoiro(fid_raw):
         if not home or not away:
             return stats
         
-        # Mapear campos — Bzzoiro não tem chutes diretos,
-        # mas tem dangerous_attack REAL
-        stats["chutes_tot_h"] = int(home.get("attack", 0) or 0)
-        stats["chutes_tot_a"] = int(away.get("attack", 0) or 0)
-        
-        # Bzzoiro não tem "shots on goal" explícito,
-        # então usamos dangerous_attack_pct como proxy
-        # ou deixamos 0 e priorizamos dangerous_attack
+        # Bzzoiro NÃO TEM dados de chutes (shots/shots on goal).
+        # O campo "attack" são ataques totais, não chutes.
+        # chutes_tot e chutes_gol ficam 0 — serão preenchidos
+        # pela ESPN ou apifootball no loop principal.
+        stats["chutes_tot_h"] = 0
+        stats["chutes_tot_a"] = 0
         stats["chutes_gol_h"] = 0
         stats["chutes_gol_a"] = 0
         
