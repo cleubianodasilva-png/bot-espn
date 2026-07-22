@@ -225,9 +225,12 @@ def get_stats_promiedos(game_id):
             stats["chutes_tot_h"] = stats["chutes_gol_h"]
             stats["chutes_tot_a"] = stats["chutes_gol_a"]
 
-        # Ataques Perigosos = Chutes Totais + Escanteios (fórmula Betano/Bet365)
-        # Promiedos não tem esse campo separado, então calculamos.
-        if "chutes_tot_h" in stats and "escanteios_h" in stats:
+        # Ataques Perigosos = 40% dos Ataques Totais (fórmula Bet365)
+        # Bet365 calcula como ~40% dos ataques totais da partida
+        if "ataques_totais_h" in stats and stats["ataques_totais_h"] > 0:
+            stats["ataques_perigosos_h"] = int(stats["ataques_totais_h"] * 0.4)
+            stats["ataques_perigosos_a"] = int(stats["ataques_totais_a"] * 0.4)
+        elif "chutes_tot_h" in stats and "escanteios_h" in stats:
             stats["ataques_perigosos_h"] = stats["chutes_tot_h"] + stats["escanteios_h"]
             stats["ataques_perigosos_a"] = stats["chutes_tot_a"] + stats["escanteios_a"]
         elif "chutes_tot_h" in stats:
