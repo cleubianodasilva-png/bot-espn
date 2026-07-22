@@ -1,7 +1,7 @@
 name: ZAPIA OFICIAL 24H
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    - cron:  # schedule every 5min '*/5 * * * *'
   workflow_dispatch:
 permissions:
   contents: write
