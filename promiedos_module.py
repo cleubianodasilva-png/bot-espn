@@ -186,7 +186,7 @@ def get_stats_promiedos(game_id):
             "total remates": "chutes_tot",
             "remates al arco": "chutes_gol",
             "saques de esquina": "escanteios",
-            "ataques": "ataques",
+            "ataques": "ataques_totais",
             "posesión": "posse",
             "tarjetas amarillas": "yellow_cards",
             "tarjetas rojas": "red_cards",
@@ -225,11 +225,20 @@ def get_stats_promiedos(game_id):
             stats["chutes_tot_h"] = stats["chutes_gol_h"]
             stats["chutes_tot_a"] = stats["chutes_gol_a"]
 
-        # Ataques perigosos — Promiedos não separa "dangerous attacks", 
-        # mas podemos derivar de "Ataques" se não tiver separação
-        if "ataques_h" in stats and "ataques_perigosos_h" not in stats:
-            stats["ataques_perigosos_h"] = stats["ataques_h"]
-            stats["ataques_perigosos_a"] = stats["ataques_a"]
+        # Ataques Perigosos — Promiedos NÃO tem esse campo separado.
+        # O campo "Ataques" da Promiedos são ataques TOTAIS (não perigosos).
+        # Usamos ataques_totais como proxy de pressão pro APPM (é o melhor que a Promiedos oferece).
+        # NOTA: "ataques_totais" = total de ataques (Promiedos) — é o melhor proxy disponível
+        if "ataques_totais_h" in stats:
+            stats["ataques_perigosos_h"] = stats["ataques_totais_h"]
+            stats["ataques_perigosos_a"] = stats["ataques_totais_a"]
+        elif "chutes_tot_h" in stats and "chutes_gol_h" in stats:
+            # Fallback: chutes + chutes no alvo
+            stats["ataques_perigosos_h"] = stats["chutes_tot_h"] + stats["chutes_gol_h"]
+            stats["ataques_perigosos_a"] = stats["chutes_tot_a"] + stats["chutes_gol_a"]
+        else:
+            stats["ataques_perigosos_h"] = 0
+            stats["ataques_perigosos_a"] = 0
 
         # Odds do gamecenter (live_odds)
         live_odds = game.get("live_odds", {})
