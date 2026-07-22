@@ -19,7 +19,12 @@ def analisar_e_disparar(game, stats, p, m, sh, sa, odd_h, odd_a, sent_vistos):
     # 1. OVER GOL INTERVALO (HT)
     if p == 1 and 15 <= m <= 27:
         if sh == 0 and sa == 0 and red_fav == 0:
-            return "HT", "Over 0.5 Gols HT"
+            # Critérios: chutes≥6, alvo≥1, atq_perig≥15
+            ch_tot = (stats.get("chutes_tot_h", 0) if stats else 0) + (stats.get("chutes_tot_a", 0) if stats else 0)
+            ch_gol = (stats.get("chutes_gol_h", 0) if stats else 0) + (stats.get("chutes_gol_a", 0) if stats else 0)
+            atq = (stats.get("ataques_perigosos_h", 0) if stats else 0) + (stats.get("ataques_perigosos_a", 0) if stats else 0)
+            if ch_tot >= 6 and ch_gol >= 1 and atq >= 15:
+                return "HT", "Over 0.5 Gols HT"
 
     # 2. OVER GOL PARTIDA (FT)
     if p == 2 and 55 <= m <= 75:
@@ -1988,17 +1993,27 @@ def run():
                         stats = sa_name
                         print(f"[APIF-NAME] Stats por nome OK: esc {sa_name.get('escanteios_h')}x{sa_name.get('escanteios_a')}")
                 except: pass
-            # Se a Flashscore veio mas sem ataques_perigosos, tenta buscar da ESPN só pra preencher
+            # Se a Flashscore veio mas sem ataques_perigosos, calcula sinteticamente
+            # ESPN usa a fórmula: ataques_perigosos = shots + on_goal (chutes_tot + chutes_gol)
             if stats and stats.get("escanteios_h", -1) >= 0 and stats.get("ataques_perigosos_h", -1) < 0:
+                ch_tot_h = stats.get("chutes_tot_h", 0)
+                ch_tot_a = stats.get("chutes_tot_a", 0)
+                ch_gol_h = stats.get("chutes_gol_h", 0)
+                ch_gol_a = stats.get("chutes_gol_a", 0)
+                # Calcula sintético: chutes totais + chutes no alvo (mesma fórmula da ESPN)
+                stats["ataques_perigosos_h"] = ch_tot_h + ch_gol_h
+                stats["ataques_perigosos_a"] = ch_tot_a + ch_gol_a
+                if stats["ataques_perigosos_h"] > 0 or stats["ataques_perigosos_a"] > 0:
+                    print(f"[ATQ-SINTETICO] Ataques perigosos calculados: {stats['ataques_perigosos_h']}x{stats['ataques_perigosos_a']} (chutes_tot + chutes_gol)")
+                # Tenta ESPN como fallback (se tiver league_slug) — pode ter dados mais refinados
                 try:
                     league_slug = j.get("league_slug", "")
                     if league_slug:
                         sa_espn_extra = get_stats_espn(fid_raw, league_slug)
-                        if isinstance(sa_espn_extra, dict):
-                            if sa_espn_extra.get("ataques_perigosos_h", -1) >= 0:
-                                stats["ataques_perigosos_h"] = sa_espn_extra["ataques_perigosos_h"]
-                                stats["ataques_perigosos_a"] = sa_espn_extra.get("ataques_perigosos_a", 0)
-                                print(f"[ESPN-EXTRA] Ataques perigosos complementados: {stats['ataques_perigosos_h']}x{stats['ataques_perigosos_a']}")
+                        if isinstance(sa_espn_extra, dict) and sa_espn_extra.get("ataques_perigosos_h", -1) >= 0:
+                            stats["ataques_perigosos_h"] = sa_espn_extra["ataques_perigosos_h"]
+                            stats["ataques_perigosos_a"] = sa_espn_extra.get("ataques_perigosos_a", 0)
+                            print(f"[ESPN-EXTRA] Ataques perigosos complementados via ESPN: {stats['ataques_perigosos_h']}x{stats['ataques_perigosos_a']}")
                 except: pass
 
         # Preenche defaults para campos que faltam
