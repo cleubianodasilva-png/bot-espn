@@ -2365,7 +2365,8 @@ def processar_comandos_pendentes(token, chat_id, jogos_live=None, jogos_na_janel
                     except Exception as e:
                         print(f"[PERFORMANCE] Erro: {e}")
                 elif "/vip" in text:
-                    enviar(chat_orig, VIP_PROMO)
+                    requests.post(f"https://api.telegram.org/bot{token}/sendMessage",
+                                  json={"chat_id": chat_orig, "text": VIP_PROMO, "parse_mode": "HTML", "disable_web_page_preview": True})
                     print(f"[VIP] Divulgação enviada para {chat_orig}")
                 elif "/assinar" in text:
                     try:
@@ -2405,15 +2406,17 @@ def processar_comandos_pendentes(token, chat_id, jogos_live=None, jogos_na_janel
                                 f"Basta abrir o app do seu banco, escanear e pagar!\n\n"
                                 f"✅ Após a confirmação, você receberá o link do grupo VIP automaticamente!"
                             )
-                            enviar(chat_orig, msg_vip)
+                            requests.post(f"https://api.telegram.org/bot{token}/sendMessage",
+                                          json={"chat_id": chat_orig, "text": msg_vip, "parse_mode": "HTML", "disable_web_page_preview": True})
                             print(f"[VIP] Pix gerado para {nome} ({user_id})")
                         else:
-                            enviar(chat_orig, 
-                                f"❌ Erro ao gerar Pix. Tente novamente mais tarde ou contate o suporte.")
+                            requests.post(f"https://api.telegram.org/bot{token}/sendMessage",
+                                          json={"chat_id": chat_orig, "text": "❌ Erro ao gerar Pix. Tente novamente mais tarde ou contate o suporte.", "parse_mode": "HTML"})
                             print(f"[VIP] Erro gerando Pix para {nome}: {output[:200]}")
                     except Exception as e:
                         print(f"[VIP-ASSINAR] Erro: {e}")
-                        enviar(chat_orig, "❌ Erro ao processar. Tente /assinar novamente.")
+                        requests.post(f"https://api.telegram.org/bot{token}/sendMessage",
+                                      json={"chat_id": chat_orig, "text": "❌ Erro ao processar. Tente /assinar novamente.", "parse_mode": "HTML"})
         if max_id > 0:
             try:
                 off = max_id
