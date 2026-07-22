@@ -199,6 +199,7 @@ def get_stats_bzzoiro(fid_raw):
 def get_odds_bzzoiro(fid_raw):
     """
     Busca odds de um jogo via Bzzoiro v2.
+    Mercado: 1x2 (HOME/DRAW/AWAY) — é o que a API retorna.
     Retorna (odd_h, odd_a) ou (None, None).
     """
     try:
@@ -213,10 +214,10 @@ def get_odds_bzzoiro(fid_raw):
             outcome = o.get("outcome", "")
             decimal = o.get("decimal_odds")
             
-            if market == "match_winner":
-                if outcome == "1":
+            if market == "1x2":
+                if outcome == "HOME":
                     odds_h.append(decimal)
-                elif outcome == "2":
+                elif outcome == "AWAY":
                     odds_a.append(decimal)
         
         # Pega a menor odd (melhor valor) para cada lado
