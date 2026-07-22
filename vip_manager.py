@@ -37,7 +37,17 @@ TELEGRAM_API = "https://api.telegram.org/bot"
 
 def get_asaas_token():
     """Retorna o token do Asaas. O token começa com $ — é literal, não é variável do bash."""
-    return os.environ.get("ASAAS_TOKEN") or os.environ.get("ASAAS_KEY") or ""
+    token = os.environ.get("ASAAS_TOKEN") or os.environ.get("ASAAS_KEY") or ""
+    if token:
+        return token
+    # Fallback: tenta ler de config.json (criado pelo setup)
+    try:
+        with open("config.json") as f:
+            cfg = json.load(f)
+            return cfg.get("asaas_token", "")
+    except:
+        pass
+    return ""
 
 def get_tg_token():
     return os.environ.get("TG_TOKEN") or ""
