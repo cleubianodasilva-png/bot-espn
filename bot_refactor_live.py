@@ -1,0 +1,2079 @@
+
+
+def analisar_e_disparar(game, stats, p, m, sh, sa, odd_h, odd_a, sent_vistos):
+    # IDENTIFICAÇÃO DO FAVORITO PRÉ-LIVE (OBRIGATÓRIO)
+    try:
+        oh = float(odd_h) if odd_h else 3.0
+        oa = float(odd_a) if odd_a else 3.0
+        fav_side = "h" if oh < oa else "a"
+    except:
+        fav_side = "h"
+
+    # DADOS DO FAVORITO
+    fav_gols = sh if fav_side == "h" else sa
+    adv_gols = sa if fav_side == "h" else sh
+    red_fav = stats.get(f"red_cards_{fav_side}", 0)
+    
+    # MERCADOS
+    
+    # 1. OVER GOL INTERVALO (HT)
+    if p == 1 and 15 <= m <= 27:
+        if sh == 0 and sa == 0 and red_fav == 0:
+            return "HT", "Over 0.5 Gols HT"
+
+    # 2. OVER GOL PARTIDA (FT)
+    if p == 2 and 55 <= m <= 75:
+        if (fav_gols <= adv_gols) and (adv_gols - fav_gols <= 1) and red_fav == 0:
+            total_gols = sh + sa
+            return "OVERGOAL", f"Mais de {total_gols + 0.5} Gols"
+
+    # 3. AMBAS MARCAM (BTTS)
+    if p == 2 and 55 <= m <= 75:
+        if (sh + sa == 1) and (fav_gols == 0 and adv_gols == 1) and red_fav == 0:
+            return "BTTS", "Ambas Marcam"
+
+    # 4. OVER 1.5 GOLS PARTIDA
+    if p == 2 and 55 <= m <= 75:
+        if (sh + sa == 1) and (fav_gols == 0 and adv_gols == 1) and red_fav == 0:
+            return "OFT", "Mais de 1.5 Gols Partida"
+
+    # 5. ESCANTEIO LIMITE HT
+    if p == 1 and 28 <= m <= 38:
+        if (fav_gols <= adv_gols) and (adv_gols - fav_gols <= 1) and red_fav == 0:
+            return "CORNER_HT", "Escanteio Limite HT"
+
+    # 6. ESCANTEIO LIMITE FT
+    if p == 2 and 78 <= m <= 88:
+        if (fav_gols <= adv_gols) and (adv_gols - fav_gols <= 1) and red_fav == 0:
+            return "CORNER_FT", "Escanteio Limite FT"
+
+    return (None, None, None), None
+
+def gerar_layout_relatorio(greens, reds, data_str):
+    sep = "━━━━━━━━━━━━━━━━━━━━"
+    total = greens + reds
+    taxa = (greens / total * 100) if total > 0 else 0.0
+    return (
+        f"{sep}\n"
+        f"<b>📊 RELATÓRIO DIÁRIO — {data_str}</b>\n"
+        f"{sep}\n"
+        f"✅ GREEN: <b>{greens}</b>\n"
+        f"🔴 RED: <b>{reds}</b>\n"
+        f"📈 TOTAL DE ENTRADAS: <b>{total}</b>\n"
+        f"🎯 ASSERTIVIDADE: <b>{taxa:.1f}%</b>\n"
+        f"{sep}\n"
+        f"⚠️👆Resultados do dia👆⚠️"
+    )
+
+def gerar_layout_relatorio_mensal(greens, reds, mes_nome, dias_ativos):
+    sep = "\u2501" * 20
+    total = greens + reds
+    taxa = (greens / total * 100) if total > 0 else 0.0
+    msg = f"{sep}\n"
+    msg += f"<b>\U0001f4ca RELAT\u00d3RIO MENSAL \u2014 {mes_nome}</b>\n"
+    msg += f"{sep}\n"
+    msg += f"\u2705 GREEN: <b>{greens}</b>\n"
+    msg += f"\U0001f534 RED: <b>{reds}</b>\n"
+    msg += f"\U0001f4c8 TOTAL DE ENTRADAS: <b>{total}</b>\n"
+    msg += f"\U0001f3af ASSERTIVIDADE: <b>{taxa:.1f}%</b>\n"
+    msg += f"{sep}\n"
+    msg += f"\U0001f4c5 Dias com entradas: <b>{dias_ativos}</b>\n"
+    msg += "\u26a0\ufe0f\U0001f446Resultados do m\u00eas\U0001f446\u26a0\ufe0f"
+    return msg
+
+def gerar_layout_radar(jogos_ao_vivo, jogos_na_janela):
+    sep = "━━━━━━━━━━━━━━━━━━━━"
+    texto_jan = ""
+    for j in jogos_na_janela:
+        h = j.get("home","") or getattr(j,"home","")
+        a = j.get("away","") or getattr(j,"away","")
+        m = j.get("minuto","") or getattr(j,"minuto","")
+        sh = j.get("sh",0) or getattr(j,"sh",0)
+        sa = j.get("sa",0) or getattr(j,"sa",0)
+        liga = j.get("liga","") or getattr(j,"liga","")
+        texto_jan += f"🎯 <b>{h} x {a}</b> | {m}' | {sh}x{sa} | {liga}\n"
+    if not texto_jan:
+        texto_jan = "Nenhum jogo na janela no momento."
+    corpo = (
+        f"{sep}\n"
+        f"📡 RADAR — JOGOS AO VIVO\n"
+        f"{sep}\n"
+        f"🔴 Jogos na Janela:\n"
+        f"{texto_jan}"
+        f"{sep}\n"
+        f"🟢 Ao Vivo: <b>{len(jogos_ao_vivo)}</b>"
+    )
+    return corpo
+import requests
+
+def obter_nome_liga(game, fonte):
+    liga = game.get('league_name') or game.get('league', {}).get('name', '') or game.get('competition_name', '') or game.get('league', '')
+    return liga if liga else "Liga Não Identificada"
+# ═══════════════════════════════════════════════════════════════════════════════
+# BOT MÁQUINA DE GREENS / ZAPIA - VERSÃO ELITE 100% AUTOMÁTICA
+# ═══════════════════════════════════════════════════════════════════════════════
+import os, json, requests, time
+from datetime import datetime, timezone, timedelta
+import hashlib, re, unicodedata
+
+# ─── Promiedos: fonte principal (odds pré-live + ao vivo + estatísticas) ───
+from promiedos_module import get_jogos_promiedos, get_stats_promiedos, get_odds_promiedos, checar_resultado_promiedos, norm_nome_time
+
+# ─── norm_nome_time importada do promiedos_module ───
+
+# ─── Caminhos e Fuso ───────────────────────────────────────────────────────────
+BASE_DIR        = os.path.dirname(os.path.abspath(__file__))
+SENT_FILE       = os.path.join(BASE_DIR, "sent_live_signals.json")
+SINAIS_FILE     = os.path.join(BASE_DIR, "sinais_pendentes.json")
+RESULTADO_FILE  = os.path.join(BASE_DIR, "resultados.json")
+PERFORMANCE_FILE= os.path.join(BASE_DIR, "performance.json")
+LAST_UPDATE_FILE= os.path.join(BASE_DIR, "last_update.json")
+BRT             = timezone(timedelta(hours=-3))
+
+# ─── Credenciais ───────────────────────────────────────────────────────────────
+TELEGRAM_TOKEN  = os.getenv("TG_TOKEN", "")
+TG_TOKEN = TELEGRAM_TOKEN
+CHAT_IDS = [os.environ.get("TG_GROUP_ID", "")]
+CHAT_ID = CHAT_IDS[0] if CHAT_IDS else ""
+
+# ═══════════════+++
+# TELEGRAM
+# ═══════════════════════════════════════════════════════════════════════════════
+def send_telegram(msg_data, reply_to=None, marca=None, home="", away="", odd_b365_val=None, odd_bano_val=None):
+    """Envia mensagem formatada com botões inline."""
+    if isinstance(msg_data, tuple):
+        text, keyboard = msg_data
+    else:
+        text = msg_data
+        keyboard = None
+
+    url_send = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+    last_mid = None
+    for chat_id in CHAT_IDS:
+        payload = {
+            "chat_id": chat_id, 
+            "text": text, 
+            "parse_mode": "HTML",
+            "disable_web_page_preview": False
+        }
+        if reply_to:
+            payload["reply_to_message_id"] = reply_to
+        if keyboard:
+            payload["reply_markup"] = json.dumps(keyboard)
+            
+        try:
+            r = requests.post(url_send, json=payload, timeout=10)
+            res = r.json()
+            if res.get("ok"):
+                last_mid = res.get("result", {}).get("message_id")
+        except:
+            pass
+    return last_mid
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ARQUIVOS LOCAIS
+# ═══════════════════════════════════════════════════════════════════════════════
+GITHUB_TOKEN = os.environ.get("GH_PAT", "")
+GITHUB_REPO  = os.environ.get("GITHUB_REPOSITORY", "cleubianodasilva-png/boot-ia-inteligente-bot")
+SENT_API_PATH        = "sent_live_signals.json"
+RESULTADO_API_PATH   = "resultados.json"
+PERFORMANCE_API_PATH = "performance.json"
+
+def _github_headers():
+    return {
+        "Authorization": f"Bearer {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28"
+    }
+
+def load_sent():
+    """Carrega sent do GitHub (fonte de verdade) + arquivo local como fallback."""
+    # Tenta GitHub API primeiro
+    if GITHUB_TOKEN and GITHUB_REPO:
+        try:
+            url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{SENT_API_PATH}"
+            r = requests.get(url, headers=_github_headers(), timeout=8)
+            if r.status_code == 200:
+                import base64 as _b64
+                data = json.loads(_b64.b64decode(r.json()["content"]).decode())
+                sent = set(data)
+                # Limpa chaves antigas (> 2 dias) para não crescer infinito
+                hoje = datetime.now(BRT).strftime('%Y%m%d')
+                ontem = (datetime.now(BRT) - timedelta(days=1)).strftime('%Y%m%d')
+                sent = {k for k in sent if hoje in k or ontem in k}
+                # Salva localmente também
+                with open(SENT_FILE, 'w') as f: json.dump(list(sent), f)
+                print(f"[SENT] Carregado do GitHub: {len(sent)} chaves")
+                return sent
+        except Exception as e:
+            print(f"[SENT] Erro GitHub load: {e}")
+    # Fallback: arquivo local
+    if os.path.exists(SENT_FILE):
+        try:
+            with open(SENT_FILE, 'r') as f: return set(json.load(f))
+        except: pass
+    return set()
+
+def save_sent(sent):
+    """Salva sent localmente E no GitHub (fonte de verdade)."""
+    with open(SENT_FILE, 'w') as f: json.dump(list(sent), f)
+    if GITHUB_TOKEN and GITHUB_REPO:
+        try:
+            import base64 as _b64
+            url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{SENT_API_PATH}"
+            # Pega SHA atual
+            r = requests.get(url, headers=_github_headers(), timeout=8)
+            sha = r.json().get("sha", "") if r.status_code == 200 else ""
+            content_b64 = _b64.b64encode(json.dumps(list(sent)).encode()).decode()
+            payload = {"message": "state: atualiza sent [skip ci]", "content": content_b64}
+            if sha: payload["sha"] = sha
+            r2 = requests.put(url, headers=_github_headers(), json=payload, timeout=10)
+            if r2.status_code in (200, 201):
+                print(f"[SENT] Salvo no GitHub: {len(sent)} chaves")
+            else:
+                print(f"[SENT] Erro GitHub save: {r2.status_code}")
+        except Exception as e:
+            print(f"[SENT] Erro GitHub save: {e}")
+
+def _load_sinais_github():
+    """Carrega sinais_pendentes.json do GitHub."""
+    import base64 as _b64
+    if GITHUB_TOKEN and GITHUB_REPO:
+        try:
+            url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/sinais_pendentes.json"
+            r = requests.get(url, headers=_github_headers(), timeout=8)
+            if r.status_code == 200:
+                return json.loads(_b64.b64decode(r.json()["content"]).decode())
+        except Exception as e:
+            print(f"[SINAIS] Erro load GitHub: {e}")
+    if os.path.exists(SINAIS_FILE):
+        try:
+            with open(SINAIS_FILE, 'r') as f: return json.load(f)
+        except: pass
+    return []
+
+def _save_sinais_github(sinais):
+    """Salva sinais_pendentes.json no GitHub E localmente."""
+    import base64 as _b64
+    with open(SINAIS_FILE, 'w') as f: json.dump(sinais, f)
+    if GITHUB_TOKEN and GITHUB_REPO:
+        try:
+            url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/sinais_pendentes.json"
+            r = requests.get(url, headers=_github_headers(), timeout=8)
+            sha = r.json().get("sha", "") if r.status_code == 200 else ""
+            content_b64 = _b64.b64encode(json.dumps(sinais).encode()).decode()
+            payload = {"message": "state: atualiza sinais_pendentes [skip ci]", "content": content_b64}
+            if sha: payload["sha"] = sha
+            r2 = requests.put(url, headers=_github_headers(), json=payload, timeout=10)
+            if r2.status_code in (200, 201):
+                print(f"[SINAIS] Salvo no GitHub: {len(sinais)} pendentes")
+            else:
+                print(f"[SINAIS] Erro GitHub save: {r2.status_code}")
+        except Exception as e:
+            print(f"[SINAIS] Erro save GitHub: {e}")
+
+def registrar_sinal(fid, mercado, home, away, message_id, extra_val=None):
+    sinais = _load_sinais_github()
+    sinais.append({
+        "fixture_id": fid, "mercado": mercado,
+        "home": home, "away": away,
+        "message_id": message_id, "extra_val": extra_val,
+        "timestamp": datetime.now(BRT).isoformat()
+    })
+    _save_sinais_github(sinais)
+
+def _load_resultados_github():
+    """Carrega resultados.json do GitHub. Retorna lista de registros."""
+    import base64 as _b64
+    if GITHUB_TOKEN and GITHUB_REPO:
+        try:
+            url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{RESULTADO_API_PATH}"
+            r = requests.get(url, headers=_github_headers(), timeout=8)
+            if r.status_code == 200:
+                data = json.loads(_b64.b64decode(r.json()["content"]).decode())
+                if isinstance(data, list):
+                    return data
+        except Exception as e:
+            print(f"[RESULTADO] Erro load GitHub: {e}")
+    # Fallback local
+    if os.path.exists(RESULTADO_FILE):
+        try:
+            with open(RESULTADO_FILE, 'r') as f:
+                return json.load(f)
+        except: pass
+    return []
+
+def _save_resultados_github(registros):
+    """Salva resultados.json no GitHub E localmente."""
+    import base64 as _b64
+    with open(RESULTADO_FILE, 'w') as f: json.dump(registros, f, indent=2)
+    if GITHUB_TOKEN and GITHUB_REPO:
+        try:
+            url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{RESULTADO_API_PATH}"
+            r = requests.get(url, headers=_github_headers(), timeout=8)
+            sha = r.json().get("sha", "") if r.status_code == 200 else ""
+            content_b64 = _b64.b64encode(json.dumps(registros, indent=2).encode()).decode()
+            payload = {"message": "state: atualiza resultados [skip ci]", "content": content_b64}
+            if sha: payload["sha"] = sha
+            r2 = requests.put(url, headers=_github_headers(), json=payload, timeout=10)
+            if r2.status_code in (200, 201):
+                print(f"[RESULTADO] Salvo no GitHub: {len(registros)} registros")
+            else:
+                print(f"[RESULTADO] Erro GitHub save: {r2.status_code}")
+        except Exception as e:
+            print(f"[RESULTADO] Erro save GitHub: {e}")
+
+def salvar_resultado(resultado, mercado=None):
+    hoje = datetime.now(BRT).strftime("%Y-%m-%d")
+    registros = _load_resultados_github()
+    registros.append({
+        "data": hoje, "resultado": resultado,
+        "mercado": mercado,
+        "timestamp": datetime.now(BRT).isoformat()
+    })
+    _save_resultados_github(registros)
+
+
+def get_relatorio_mensal():
+    hoje = datetime.now(BRT)
+    mes_str = hoje.strftime("%Y-%m")
+    greens, reds = 0, 0
+    registros = _load_resultados_github()
+    dias_ativos = set()
+    for r in registros:
+        data_reg = r.get("data", "")
+        if data_reg.startswith(mes_str):
+            dias_ativos.add(data_reg)
+            if r.get("resultado") == "green": greens += 1
+            else: reds += 1
+    return greens, reds, len(dias_ativos)
+
+def get_relatorio_hoje():
+    hoje = datetime.now(BRT).strftime("%Y-%m-%d")
+    greens, reds = 0, 0
+    registros = _load_resultados_github()
+    for r in registros:
+        if r.get("data") == hoje:
+            if r.get("resultado") == "green": greens += 1
+            else: reds += 1
+    return greens, reds
+
+
+def enviar_relatorio_mensal():
+    hoje = datetime.now(BRT)
+    meses_pt = ["Janeiro","Fevereiro","Mar\u00e7o","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"]
+    mes_nome = f"{meses_pt[hoje.month-1]}/{hoje.year}"
+    greens, reds, dias_ativos = get_relatorio_mensal()
+    msg = gerar_layout_relatorio_mensal(greens, reds, mes_nome, dias_ativos)
+    return msg
+
+def enviar_relatorio_diario():
+    hoje_key = f"relatorio_{datetime.now(BRT).strftime('%Y-%m-%d')}"
+    hoje = datetime.now(BRT).strftime("%d/%m/%Y")
+    greens, reds = get_relatorio_hoje()
+    msg = gerar_layout_relatorio(greens, reds, hoje)
+    if send_telegram(msg):
+        sent_ctrl.add(hoje_key)
+        save_sent(sent_ctrl)
+        print(f"[Relatório] Enviado ({hoje_key})")
+
+# ─── Performance por Mercado ────────────────────────────────────────────────────
+MAPA_MERCADO = {
+    "HT": "⚽️🔥OVER GOL INTERVALO🔥⚽️",
+    "LIMITEHT": "⚽️🔥OVER GOL LIMITE HT🔥⚽️",
+    "BTTS": "⚽🔥AMBAS MARCAM🔥⚽️",
+    "OFT": "⚽🔥OVER 1.5 GOLS FT🔥⚽️",
+    "OVERGOAL": "⚽🔥OVER GOL PARTIDA🔥⚽️",
+    "CORNER_HT": "🚩🔥ESCANTEIO LIMITE HT🔥🚩",
+    "CORNER_FT": "🚩🔥ESCANTEIO LIMITE FT🔥🚩"
+}
+
+def _load_performance_github():
+    """Carrega performance.json do GitHub. Retorna dict {mercado: {green, red, total}}."""
+    import base64 as _b64
+    if GITHUB_TOKEN and GITHUB_REPO:
+        try:
+            url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{PERFORMANCE_API_PATH}"
+            r = requests.get(url, headers=_github_headers(), timeout=8)
+            if r.status_code == 200:
+                data = json.loads(_b64.b64decode(r.json()["content"]).decode())
+                if isinstance(data, dict):
+                    return data
+        except Exception as e:
+            print(f"[PERFORMANCE] Erro load GitHub: {e}")
+    if os.path.exists(PERFORMANCE_FILE):
+        try:
+            with open(PERFORMANCE_FILE, 'r') as f:
+                return json.load(f)
+        except: pass
+    return {}
+
+def _save_performance_github(perf):
+    """Salva performance.json no GitHub E localmente."""
+    with open(PERFORMANCE_FILE, 'w') as f:
+        json.dump(perf, f, indent=2)
+    if GITHUB_TOKEN and GITHUB_REPO:
+        try:
+            import base64 as _b64
+            url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{PERFORMANCE_API_PATH}"
+            r = requests.get(url, headers=_github_headers(), timeout=8)
+            sha = r.json().get("sha", "") if r.status_code == 200 else ""
+            content_b64 = _b64.b64encode(json.dumps(perf, indent=2).encode()).decode()
+            payload = {"message": "state: atualiza performance [skip ci]", "content": content_b64}
+            if sha: payload["sha"] = sha
+            r2 = requests.put(url, headers=_github_headers(), json=payload, timeout=10)
+            if r2.status_code in (200, 201):
+                print(f"[PERFORMANCE] Salvo no GitHub: {sum(v.get('total',0) for v in perf.values())} registros")
+            else:
+                print(f"[PERFORMANCE] Erro GitHub save: {r2.status_code}")
+        except Exception as e:
+            print(f"[PERFORMANCE] Erro save GitHub: {e}")
+
+def registrar_performance(mercado, resultado):
+    """Registra resultado de um mercado específico no performance.json."""
+    perf = _load_performance_github()
+    if mercado not in perf:
+        perf[mercado] = {"green": 0, "red": 0, "total": 0}
+    perf[mercado]["total"] += 1
+    if resultado == "green":
+        perf[mercado]["green"] += 1
+    else:
+        perf[mercado]["red"] += 1
+    _save_performance_github(perf)
+    total = perf[mercado]["total"]
+    greens = perf[mercado]["green"]
+    pct = greens / total * 100 if total > 0 else 0
+    print(f"[PERFORMANCE] {MAPA_MERCADO.get(mercado, mercado)}: {resultado} ({greens}/{total} = {pct:.1f}%)")
+
+def get_performance():
+    """Retorna dict com performance e % por mercado, e validação 70%/1000."""
+    perf = _load_performance_github()
+    resultado = {}
+    for cod, nome in MAPA_MERCADO.items():
+        p = perf.get(cod, {"green": 0, "red": 0, "total": 0})
+        total = p["total"]
+        greens = p["green"]
+        reds = p["red"]
+        pct = (greens / total * 100) if total > 0 else 0
+        valido = total >= 1000 and pct >= 70
+        resultado[cod] = {
+            "nome": nome, "green": greens, "red": reds,
+            "total": total, "pct": pct, "valido": valido
+        }
+    return resultado
+
+def gerar_layout_performance():
+    """Gera layout do relatório de performance por mercado."""
+    dados = get_performance()
+    sep = "━" * 20
+    blocos = []
+    for cod, info in dados.items():
+        nome = info["nome"]
+        g = info["green"]
+        r = info["red"]
+        t = info["total"]
+        pct = info["pct"]
+        blocos.append(
+            f"<b>{nome}</b>\n"
+            f"   ⏳ Total: {t} | 🟢 {g} | 🔴 {r}\n"
+            f"   🎯 Acerto: {pct:.1f}%"
+        )
+    total_g = sum(d["green"] for d in dados.values())
+    total_r = sum(d["red"] for d in dados.values())
+    total_t = total_g + total_r
+    total_pct = (total_g / total_t * 100) if total_t > 0 else 0
+
+    msg = (
+        f"{sep}\n"
+        f"📊<b>RELATÓRIO DE PERFORMANCE</b>📊\n"
+        f"{sep}\n"
+        f"{f'{chr(10)}{sep}{chr(10)}'.join(blocos)}{chr(10)}"
+        f"{sep}\n"
+        f"📌 <b>TOTAL GERAL: {total_t} Sinais</b>\n"
+        f"      | 🟢 {total_g} | 🔴 {total_r} | {total_pct:.1f}%|\n"
+        f"{sep}\n"
+        f"Regras de Validação:\n"
+        f"✅ Mínimo 1000 entradas + ≥70%\n"
+        f"{sep}"
+    )
+    return msg
+
+def enviar_relatorio_performance():
+    """Gera o relatório de performance. Retorna o texto da mensagem (sem enviar)."""
+    return gerar_layout_performance()
+
+def get_performance_24h():
+    """Retorna performance por mercado nas últimas 24h a partir dos resultados salvos."""
+    registros = _load_resultados_github()
+    agora = datetime.now(BRT)
+    corte = agora - timedelta(hours=24)
+    
+    perf = {}
+    for cod, nome in MAPA_MERCADO.items():
+        perf[cod] = {"nome": nome, "green": 0, "red": 0, "total": 0}
+    
+    for r in registros:
+        ts_str = r.get("timestamp", "")
+        mercado = r.get("mercado", "")
+        resultado = r.get("resultado", "")
+        if not ts_str or not mercado or not resultado:
+            continue
+        if mercado not in perf:
+            continue
+        try:
+            ts = datetime.fromisoformat(ts_str)
+            if ts.tzinfo is None:
+                ts = ts.replace(tzinfo=timezone(timedelta(hours=-3)))
+            if ts < corte:
+                continue
+        except:
+            continue
+        perf[mercado]["total"] += 1
+        if resultado == "green":
+            perf[mercado]["green"] += 1
+        else:
+            perf[mercado]["red"] += 1
+    
+    for cod, info in perf.items():
+        t = info["total"]
+        g = info["green"]
+        info["pct"] = (g / t * 100) if t > 0 else 0
+    
+    return perf
+
+def gerar_layout_mercados24h():
+    """Gera layout do relatório de performance por mercado nas últimas 24h."""
+    dados = get_performance_24h()
+    sep = "━" * 20
+    blocos = []
+    for cod, info in dados.items():
+        nome = info["nome"]
+        g = info["green"]
+        r = info["red"]
+        t = info["total"]
+        pct = info["pct"]
+        blocos.append(
+            f"<b>{nome}</b>\n"
+            f"   Total: {t} | 🟢 {g} | 🔴 {r}\n"
+            f"   🎯 Acerto: {pct:.1f}%"
+        )
+    total_g = sum(d["green"] for d in dados.values())
+    total_r = sum(d["red"] for d in dados.values())
+    total_t = total_g + total_r
+    total_pct = (total_g / total_t * 100) if total_t > 0 else 0
+
+    msg = (
+        f"{sep}\n"
+        f"📊<b>MERCADOS — ÚLTIMAS 24H</b>📊\n"
+        f"{sep}\n"
+        f"{f'{chr(10)}{sep}{chr(10)}'.join(blocos)}{chr(10)}"
+        f"{sep}\n"
+        f"📌 <b>TOTAL GERAL: {total_t} Sinais</b>\n"
+        f"      | 🟢 {total_g} | 🔴 {total_r} | {total_pct:.1f}%|\n"
+        f"{sep}"
+    )
+    return msg
+
+def enviar_relatorio_mercados24h():
+    """Gera o relatório de mercados 24h. Retorna o texto da mensagem (sem enviar)."""
+    return gerar_layout_mercados24h()
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ODDS: favorito pela menor odd (Promiedos + ESPN)
+# ═══════════════════════════════════════════════════════════════════════════════
+def _moneyline_to_decimal(ml):
+    """Converte moneyline americano para decimal."""
+    try:
+        ml = float(ml)
+        if ml > 0:
+            return round(ml / 100 + 1, 3)
+        else:
+            return round(100 / abs(ml) + 1, 3)
+    except:
+        return 99.0
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# API ESPN — Jogos ao Vivo (FONTE PRINCIPAL)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+ESPN_SLUGS_PATH = os.path.join(BASE_DIR, "slugs_espn_completos.json")
+
+def american_to_decimal(american_odds):
+    """Converte odds americanas (+/-) para decimais."""
+    if american_odds is None:
+        return None
+    try:
+        ao = float(american_odds)
+        if ao > 0:
+            return round(ao / 100 + 1, 2)
+        else:
+            return round(100 / abs(ao) + 1, 2)
+    except:
+        return None
+
+def get_jogos_espn(fids_existentes):
+    """Busca jogos ao vivo de TODAS as ligas via ESPN — fonte principal."""
+    jogos = []
+    if not os.path.exists(ESPN_SLUGS_PATH):
+        print("[ESPN] slugs_espn_completos.json não encontrado!")
+        return []
+    try:
+        with open(ESPN_SLUGS_PATH) as f:
+            slugs = json.load(f)
+    except:
+        print("[ESPN] Erro ao ler slugs_espn_completos.json")
+        return []
+
+    print(f"[ESPN] Varrendo {len(slugs)} ligas...")
+    ligas_prioritarias = {"bra.1", "bra.2", "eng.1", "esp.1", "ita.1", "ger.1", "fra.1",
+                          "conmebol.libertadores", "conmebol.sudamericana", "uefa.champions",
+                          "uefa.europa", "arg.1", "por.1", "ned.1", "mex.1", "usa.1"}
+    slugs_ordenadas = sorted(slugs, key=lambda s: (0 if s in ligas_prioritarias else 1, s))
+    
+    for league_slug in slugs_ordenadas:
+        try:
+            url = f"https://site.api.espn.com/apis/site/v2/sports/soccer/{league_slug}/scoreboard"
+            r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=5)
+            if r.status_code != 200:
+                continue
+            data = r.json()
+            events = data.get("events", [])
+            if not events:
+                continue
+
+            for ev in events:
+                comp = ev.get("competitions", [{}])[0]
+                st = comp.get("status", {}).get("type", {})
+
+                # Só jogos AO VIVO
+                if st.get("state") != "in":
+                    continue
+
+                comps = comp.get("competitors", [])
+                home = away = None
+                home_score = away_score = 0
+                for c in comps:
+                    if c.get("homeAway") == "home":
+                        home = c.get("team", {}).get("displayName", "")
+                        home_score = int(c.get("score", "0") or 0)
+                    else:
+                        away = c.get("team", {}).get("displayName", "")
+                        away_score = int(c.get("score", "0") or 0)
+
+                if not home or not away:
+                    continue
+
+                dc = comp.get("status", {}).get("displayClock", "0'")
+                period = comp.get("status", {}).get("period", 1)
+                try:
+                    minuto = int(dc.replace("'", "").replace("+", ""))
+                except:
+                    minuto = 0
+
+                liga = comp.get("altGameNote", "") or ev.get("league", {}).get("name", "") or league_slug
+
+                # Odds do scoreboard — parse das odds americanas
+                odd_h = odd_a = None
+                odds_b365 = {}
+                odds_bano = {}
+
+                odds_list = comp.get("odds") or []
+                for odd_entry in odds_list:
+                    details = odd_entry.get("details", "")
+                    ou = odd_entry.get("overUnder")
+                    is_dk = "draftkings" in (odd_entry.get("provider", {}).get("name", "")).lower()
+                    
+                    if details:
+                        parts = details.split()
+                        if len(parts) >= 2:
+                            try:
+                                odd_americana = float(parts[-1].replace(",", ""))
+                                odd_val = american_to_decimal(odd_americana)
+                                team_abbr = parts[0].upper()
+                                for c in comps:
+                                    tabbr = c.get("team", {}).get("abbreviation", "").upper()
+                                    if tabbr == team_abbr:
+                                        if c.get("homeAway") == "home":
+                                            odd_h = odd_val
+                                        else:
+                                            odd_a = odd_val
+                                        break
+                                if odd_h is None and odd_a is None:
+                                    odd_h = odd_val
+                            except:
+                                pass
+                    
+                    if is_dk and ou:
+                        over_odds = american_to_decimal(odd_entry.get("overOdds"))
+                        if over_odds:
+                            for k in ["o+0.5","o+1.5","o+2.5"]:
+                                odds_b365[k] = over_odds
+                                odds_bano[k] = over_odds
+                        break
+                
+                # Fallback odd da outra mão se só veio uma (margem bookmaker ~6%)
+                if odd_h and not odd_a:
+                    ip_h = 1.0 / odd_h
+                    remaining = 0.94 - ip_h  # 6% overround
+                    odds_a = round(1.0 / max(remaining * 0.5, 0.05), 2)
+                    if odds_a < 1.5: odds_a = 2.0  # sanity
+                    odd_a = odds_a
+                if odd_a and not odd_h:
+                    ip_a = 1.0 / odd_a
+                    remaining = 0.94 - ip_a
+                    odds_h = round(1.0 / max(remaining * 0.5, 0.05), 2)
+                    if odds_h < 1.5: odds_h = 2.0
+                    odd_h = odds_h
+
+                fid_raw = comp.get("id", "")
+                fid = f"espn_{fid_raw}"
+
+                jogos.append({
+                    "fid": fid, "fid_raw": fid_raw,
+                    "home": home, "away": away,
+                    "sh": home_score, "sa": away_score,
+                    "minuto": minuto, "liga": liga, "period": period,
+                    "source": "espn", "league_slug": league_slug,
+                    "home_id": f"espn_{comp.get('uid','')}",
+                    "away_id": f"espn_{comp.get('uid','')}",
+                    "odd_h": odd_h, "odd_a": odd_a,
+                    "odds_b365": odds_b365, "odds_bano": odds_bano
+                })
+        except:
+            continue
+
+    print(f"[ESPN] {len(jogos)} jogos ao vivo encontrados")
+    return jogos
+
+def get_stats_espn(fid_raw, league_slug):
+    """Busca estatísticas detalhadas de uma partida via ESPN summary."""
+    stats = {}
+    try:
+        url = f"https://site.api.espn.com/apis/site/v2/sports/soccer/{league_slug}/summary?event={fid_raw}"
+        r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=8)
+        if r.status_code != 200:
+            return stats
+
+        data = r.json()
+        bs = data.get("boxscore", {})
+        teams = bs.get("teams", [])
+
+        if len(teams) < 2:
+            return stats
+
+        # teams[0] = casa, teams[1] = fora
+        home_stats = {}
+        away_stats = {}
+        for s in teams[0].get("statistics", []):
+            label = s.get("label", "").lower()
+            totals = s.get("totals", [])
+            if totals and len(totals) > 0:
+                try:
+                    home_stats[label] = float(totals[0])
+                except:
+                    home_stats[label] = 0
+        for s in teams[1].get("statistics", []):
+            label = s.get("label", "").lower()
+            totals = s.get("totals", [])
+            if totals and len(totals) > 0:
+                try:
+                    away_stats[label] = float(totals[0])
+                except:
+                    away_stats[label] = 0
+
+        # Mapear para o formato do bot
+        stats["chutes_tot_h"] = int(home_stats.get("shots", 0))
+        stats["chutes_tot_a"] = int(away_stats.get("shots", 0))
+        stats["chutes_gol_h"] = int(home_stats.get("on goal", 0))
+        stats["chutes_gol_a"] = int(away_stats.get("on goal", 0))
+        stats["escanteios_h"] = int(home_stats.get("corner kicks", 0))
+        stats["escanteios_a"] = int(away_stats.get("corner kicks", 0))
+        stats["posse_h"] = home_stats.get("possession", 0)
+        stats["posse_a"] = away_stats.get("possession", 0)
+        stats["yellow_cards_h"] = int(home_stats.get("yellow cards", 0))
+        stats["yellow_cards_a"] = int(away_stats.get("yellow cards", 0))
+        stats["red_cards_h"] = int(home_stats.get("red cards", 0))
+        stats["red_cards_a"] = int(away_stats.get("red cards", 0))
+        stats["ataques_perigosos_h"] = int(home_stats.get("shots", 0) + home_stats.get("on goal", 0))
+        stats["ataques_perigosos_a"] = int(away_stats.get("shots", 0) + away_stats.get("on goal", 0))
+        stats["faltas_h"] = int(home_stats.get("fouls", 0))
+        stats["faltas_a"] = int(away_stats.get("fouls", 0))
+
+        # Odds do pickcenter (homeTeamOdds/awayTeamOdds)
+        pc = data.get("pickcenter", [])
+        for p in pc:
+            prov = p.get("provider", {}).get("name", "").lower()
+            if "draftkings" in prov:
+                # homeTeamOdds / awayTeamOdds têm os moneyLine
+                hto = p.get("homeTeamOdds") or {}
+                ato = p.get("awayTeamOdds") or {}
+                stats["odd_h"] = american_to_decimal(hto.get("moneyLine"))
+                stats["odd_a"] = american_to_decimal(ato.get("moneyLine"))
+                stats["odd_empate"] = american_to_decimal(p.get("drawMoneyLine"))
+                stats["over_under"] = p.get("overUnder")
+                stats["over_odds"] = american_to_decimal(p.get("overOdds"))
+                stats["under_odds"] = american_to_decimal(p.get("underOdds"))
+                # Fallback: parse do details se não veio ML
+                if not stats.get("odd_h") and not stats.get("odd_a"):
+                    details = p.get("details", "")
+                    if details and " -" in details:
+                        parts = details.split()
+                        if len(parts) >= 2:
+                            try:
+                                am = float(parts[-1].replace(",", ""))
+                                dec = american_to_decimal(am)
+                                stats["odd_h"] = dec
+                                stats["odd_a"] = round(1.0 / (0.94 - 1.0/dec), 2) if dec > 1 else 2.0
+                            except:
+                                pass
+                break
+
+        print(f"[ESPN-STATS] chutes: {stats.get('chutes_tot_h',0)}/{stats.get('chutes_tot_a',0)} | cantos: {stats.get('escanteios_h',0)}/{stats.get('escanteios_a',0)}")
+        return stats
+    except Exception as e:
+        print(f"[ESPN-STATS ERRO] {e}")
+        return stats
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# FILTRO DE JANELAS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+def calcular_prob_gols_ht(chutes_tot, chutes_gol, minuto):
+    """Estima prob de gols usando taxa de chutes como proxy de xG."""
+    import math as _math
+    taxa_conversao = 0.10
+    xg = chutes_gol * taxa_conversao + chutes_tot * 0.04
+    min_restantes_ht = max(45 - minuto, 1)
+    min_restantes_ft = max(90 - minuto, 1)
+    taxa_por_min = xg / max(minuto, 1)
+    xg_rest_ht = taxa_por_min * min_restantes_ht
+    xg_rest_ft = taxa_por_min * min_restantes_ft
+    xg_total_ft = xg + xg_rest_ft
+    prob_05_ht = round((1 - _math.exp(-max(xg_rest_ht, 0.05))) * 100, 1)
+    prob_15_ft = round((1 - _math.exp(-max(xg_total_ft - 1, 0.1))) * 100, 1)
+    return prob_15_ft, prob_05_ht
+
+def filtrar_janelas(jogos):
+    resultado = []
+    for j in jogos:
+        m = j["minuto"]
+        p_raw = j["period"]
+        if isinstance(p_raw, str):
+            p = 2 if '2' in p_raw else 1
+        else:
+            p = p_raw
+            
+        em_janela = (
+            (p == 1 and 15 <= m <= 27) or
+            (p == 1 and 28 <= m <= 38) or
+            (p == 2 and 55 <= m <= 77) or
+            (p == 2 and 78 <= m <= 88)
+        )
+        if em_janela:
+            resultado.append(j)
+    return resultado
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MENSAGEM PADRÃO
+# ═══════════════════════════════════════════════════════════════════════════════
+def gerar_motivo(mercado, stats, sh, sa, fav_final, minuto, cantos_atual=0):
+    chutes_h          = stats.get("chutes_tot_h", 0) if stats else 0
+    chutes_a          = stats.get("chutes_tot_a", 0) if stats else 0
+    chutes_gol_h      = stats.get("chutes_gol_h", 0) if stats else 0
+    chutes_gol_a      = stats.get("chutes_gol_a", 0) if stats else 0
+    cantos_h          = max(0, stats.get("escanteios_h", 0)) if stats else 0
+    cantos_a          = max(0, stats.get("escanteios_a", 0)) if stats else 0
+    red_h             = stats.get("red_cards_h", 0) if stats else 0
+    red_a             = stats.get("red_cards_a", 0) if stats else 0
+    posse_h_raw       = stats.get("posse_h", 0.0) if stats else 0.0
+    posse_a_raw       = stats.get("posse_a", 0.0) if stats else 0.0
+    atq_perig_h       = stats.get("ataques_perigosos_h", 0) if stats else 0
+    atq_perig_a       = stats.get("ataques_perigosos_a", 0) if stats else 0
+    posse_h = int(round(float(posse_h_raw) * 100)) if float(posse_h_raw) <= 1 else int(round(float(posse_h_raw)))
+    posse_a = int(round(float(posse_a_raw) * 100)) if float(posse_a_raw) <= 1 else int(round(float(posse_a_raw)))
+    total_chutes      = chutes_h + chutes_a
+    total_cantos      = cantos_h + cantos_a
+    total_atq_perig   = atq_perig_h + atq_perig_a
+    tem_dados         = total_chutes > 0 or total_cantos > 0 or total_atq_perig > 0
+
+    if not tem_dados:
+        return "Estatísticas não disponíveis para esta liga"
+
+    # Labels
+    if fav_final == "h":
+        fav_label   = "Favorito"
+        zebra_label = "Zebra"
+        fav_chutes  = chutes_h; fav_gol = chutes_gol_h
+        adv_chutes  = chutes_a; adv_gol = chutes_gol_a
+        fav_atq     = atq_perig_h
+        adv_atq     = atq_perig_a
+    elif fav_final == "a":
+        fav_label   = "Favorito"
+        zebra_label = "Zebra"
+        fav_chutes  = chutes_a; fav_gol = chutes_gol_a
+        adv_chutes  = chutes_h; adv_gol = chutes_gol_h
+        fav_atq     = atq_perig_a
+        adv_atq     = atq_perig_h
+    else:
+        fav_label   = "Casa"
+        zebra_label = "Fora"
+        fav_chutes  = chutes_h; fav_gol = chutes_gol_h
+        adv_chutes  = chutes_a; adv_gol = chutes_gol_a
+        fav_atq     = atq_perig_h
+        adv_atq     = atq_perig_a
+
+    jogo_aberto    = sh == 0 and sa == 0
+    fav_perdendo   = (fav_final == "h" and sh < sa) or (fav_final == "a" and sa < sh)
+    fav_ganhando   = (fav_final == "h" and sh > sa) or (fav_final == "a" and sa > sh)
+    zebra_dominando = adv_chutes > fav_chutes
+    minuto_seguro  = max(minuto, 1)
+    fav_atq_por_min = round(fav_atq / minuto_seguro, 2)
+    adv_atq_por_min = round(adv_atq / minuto_seguro, 2)
+    fav_amassando   = fav_atq_por_min >= 0.70 and adv_atq_por_min < 0.70
+    adv_amassando   = adv_atq_por_min >= 0.70 and fav_atq_por_min < 0.70
+    ambos_pressionando = fav_atq_por_min >= 0.70 and adv_atq_por_min >= 0.70
+
+    vermelho = ""
+    if red_h > 0 or red_a > 0:
+        vermelho = " 🟥 Vermelho: " + ("Casa" if red_h > 0 else "Fora")
+
+    posse_txt = ""
+    if posse_h >= 55:
+        posse_txt = f", Casa com {posse_h}% de posse"
+    elif posse_a >= 55:
+        posse_txt = f", Fora com {posse_a}% de posse"
+
+    # ════════════════════════════════════════════════════════════════
+    # ALERTAS POR MERCADO — motivo da entrada
+    # ════════════════════════════════════════════════════════════════
+
+    if "CORNER" in mercado or "ESCANTEIO" in mercado:
+        if "HT" in mercado:
+            if total_atq_perig >= 12:
+                return f"Pressão ofensiva muito alta no 1º tempo{vermelho}"
+            elif total_atq_perig >= 8:
+                return f"Pressão ofensiva elevada no 1º tempo{vermelho}"
+            return f"Pressão ofensiva em crescimento no 1º tempo{vermelho}"
+        else:
+            if total_atq_perig >= 25:
+                return f"Pressão ofensiva constante durante a partida{vermelho}"
+            elif total_atq_perig >= 15:
+                return f"Pressão ofensiva sustentada na partida{vermelho}"
+            return f"Pressão ofensiva contínua na partida{vermelho}"
+
+    if mercado == "HT":
+        if chutes_gol_h >= 1 and chutes_gol_a >= 1:
+            return f"Ambas equipes finalizando no alvo{vermelho}"
+        if chutes_gol_h >= 1:
+            return f"{fav_label if fav_final=='h' else 'Casa'} finalizando no alvo{vermelho}"
+        if chutes_gol_a >= 1:
+            return f"{fav_label if fav_final=='a' else 'Fora'} finalizando no alvo{vermelho}"
+        if total_chutes >= 8:
+            return f"Alta intensidade de chutes no 1º tempo{vermelho}"
+        if fav_amassando:
+            return f"{fav_label} dominando as ações ofensivas no 1º tempo{vermelho}"
+        if ambos_pressionando:
+            return f"Ambas equipes pressionando no campo de ataque{vermelho}"
+        return f"Jogo movimentado com chances nos dois lados{vermelho}"
+
+    if mercado == "LIMITEHT":
+        if jogo_aberto and total_chutes >= 8:
+            return f"Jogo aberto com muitas finalizações e sem gols{vermelho}"
+        if fav_perdendo and fav_chutes >= 6:
+            return f"{fav_label} perdendo e pressionando no campo ofensivo{vermelho}"
+        if fav_amassando:
+            return f"{fav_label} amassando em busca do empate{vermelho}"
+        if total_atq_perig >= 8:
+            return f"Alta pressão ofensiva nos minutos finais do 1º tempo{vermelho}"
+        return f"Pressão ofensiva para gol antes do intervalo{vermelho}"
+
+    if mercado == "BTTS":
+        if chutes_gol_h >= 2 and chutes_gol_a >= 1:
+            return f"Ambas equipes com finalizações no alvo{vermelho}"
+        if fav_chutes >= 6 and adv_chutes >= 4:
+            return f"Ambas equipes atacando com frequência{vermelho}"
+        if ambos_pressionando:
+            return f"Pressão ofensiva dos dois lados{vermelho}"
+        if fav_amassando and adv_chutes >= 4:
+            return f"{fav_label} dominando mas {zebra_label} também responde no ataque{vermelho}"
+        return f"Ambas equipes com volume de ataque{vermelho}"
+
+    if mercado == "OFT":
+        if sh + sa == 1:
+            return f"Placar em {sh}x{sa} com movimentação — {total_chutes} chutes | Mais um gol esperado para Over 1.5{vermelho}"
+        if total_chutes >= 12:
+            return f"Jogo com {total_chutes} finalizações — forte tendência de mais gols no 2º tempo{vermelho}"
+        if ambos_pressionando:
+            return f"Pressão total — {total_atq_perig} ataques perigosos | Over 1.5 FT com boa projeção{vermelho}"
+        if total_atq_perig >= 10:
+            return f"{total_atq_perig} ataques perigosos — placar deve se mover para Over 1.5{vermelho}"
+        return f"Partida com bons números ofensivos — {total_chutes} chutes em {minuto}' | Over 1.5{vermelho}"
+
+    if mercado == "OVERGOAL":
+        if jogo_aberto:
+            return f"Jogo 0x0 mas aberto — {total_chutes} chutes, {total_atq_perig} ataques perigosos | Gol esperado{vermelho}"
+        if fav_amassando or adv_amassando:
+            return f"Time amassando e placar ainda baixo — {total_atq_perig} atq. perigosos | Over Gol Partida{vermelho}"
+        if total_atq_perig >= 12:
+            return f"Pressão ofensiva muito alta — {total_atq_perig} ataques perigosos | Gol no FT{vermelho}"
+        return f"Expectativa de gol com base no volume — {total_chutes} chutes, {total_atq_perig} ataques{vermelho}"
+
+    # ── Fallback: análise geral (pra segurança) ──
+    if jogo_aberto:
+        if chutes_gol_h >= 3 and chutes_gol_a >= 3:
+            return f"Jogo aberto com grandes chances de gol dos dois lados — {chutes_gol_h} finalizações de Casa, {chutes_gol_a} de Fora{posse_txt}{vermelho}"
+        if fav_chutes >= 8 and fav_gol >= 3:
+            return f"Jogo aberto, {fav_label} criando grandes chances — {fav_chutes} chutes, {fav_gol} no alvo{posse_txt}{vermelho}"
+        if zebra_dominando and adv_chutes >= 6 and adv_gol >= 2:
+            return f"Jogo aberto, {zebra_label} surpreendendo — {adv_chutes} chutes, {adv_gol} no alvo{posse_txt}{vermelho}"
+        if total_chutes >= 12:
+            return f"Jogo aberto e bastante movimentado — {chutes_h} chutes de Casa, {chutes_a} de Fora, sem gols ainda{posse_txt}{vermelho}"
+        if fav_chutes > adv_chutes and fav_gol > 0:
+            return f"Jogo aberto, {fav_label} dominando com {fav_chutes} chutes ({fav_gol} no alvo){posse_txt}{vermelho}"
+        if fav_amassando:
+            return f"Jogo aberto, {fav_label} amassando — {fav_atq} ataques perigosos x {adv_atq}{posse_txt}{vermelho}"
+        if adv_amassando:
+            return f"Jogo aberto, {zebra_label} pressionando muito — {adv_atq} ataques perigosos x {fav_atq}{posse_txt}{vermelho}"
+        if ambos_pressionando:
+            return f"Jogo aberto, ambas equipes pressionando forte — {total_atq_perig} ataques perigosos no total{posse_txt}{vermelho}"
+        return f"Jogo aberto, ambas buscando o primeiro gol — {chutes_h} chutes x {chutes_a}{posse_txt}{vermelho}"
+
+    if fav_perdendo:
+        if fav_chutes >= 8 and fav_gol >= 3:
+            return f"Grandes chances do {fav_label} empatar — chegando constantemente com {fav_chutes} chutes, {fav_gol} no alvo{posse_txt}{vermelho}"
+        if fav_chutes >= 6 and fav_gol >= 2:
+            return f"{fav_label} em busca do empate, criando boas chances — {fav_chutes} chutes, {fav_gol} no alvo{posse_txt}{vermelho}"
+        if fav_amassando:
+            return f"{fav_label} perdendo mas amassando! — {fav_atq} ataques perigosos x {adv_atq}{posse_txt}{vermelho}"
+        if zebra_dominando and adv_chutes >= 8:
+            return f"{zebra_label} dominando e ameaçando ampliar — {adv_chutes} chutes, {adv_gol} no alvo{posse_txt}{vermelho}"
+        if adv_amassando:
+            return f"{zebra_label} com mais volume de ataque — {adv_atq} ataques perigosos x {fav_atq}{posse_txt}{vermelho}"
+        if ambos_pressionando:
+            return f"Ambas pressionando — {total_atq_perig} ataques perigosos, jogo aberto{posse_txt}{vermelho}"
+        if fav_chutes > adv_chutes:
+            return f"{fav_label} em busca do empate, pressionando com {fav_chutes} chutes x {adv_chutes}{posse_txt}{vermelho}"
+        return f"{fav_label} perdendo e tentando reagir — {fav_chutes} chutes x {adv_chutes} da {zebra_label}{posse_txt}{vermelho}"
+
+    if fav_ganhando:
+        if adv_chutes >= 8 and adv_gol >= 3:
+            return f"{zebra_label} pressionando forte em busca do empate — {adv_chutes} chutes, {adv_gol} no alvo{posse_txt}{vermelho}"
+        if adv_amassando:
+            return f"{zebra_label} amassando mesmo perdendo — {adv_atq} ataques perigosos x {fav_atq}{posse_txt}{vermelho}"
+        if fav_chutes >= 8:
+            return f"{fav_label} controlando e ampliando a pressão — {fav_chutes} chutes, {fav_gol} no alvo{posse_txt}{vermelho}"
+        if fav_amassando:
+            return f"{fav_label} na frente e amassando — {fav_atq} ataques perigosos x {adv_atq}{posse_txt}{vermelho}"
+        if ambos_pressionando:
+            return f"Ambas pressionando, placar aberto — {total_atq_perig} ataques perigosos{posse_txt}{vermelho}"
+        return f"{fav_label} vencendo, jogo controlado — {chutes_h} chutes de Casa x {chutes_a} de Fora{posse_txt}{vermelho}"
+
+    if chutes_gol_h >= 3 and chutes_gol_a >= 3:
+        return f"Jogo bastante movimentado, ambas chutando no alvo — {chutes_gol_h} finalizações de Casa, {chutes_gol_a} de Fora{posse_txt}{vermelho}"
+    if chutes_h >= 8 and chutes_a >= 8:
+        return f"Jogo intenso dos dois lados — {chutes_h} chutes de Casa, {chutes_a} de Fora{posse_txt}{vermelho}"
+    if fav_chutes >= 8 and fav_gol >= 3:
+        return f"{fav_label} chegando constantemente na área — {fav_chutes} chutes, {fav_gol} no alvo{posse_txt}{vermelho}"
+    if zebra_dominando and adv_chutes >= 6:
+        return f"{zebra_label} surpreendendo com mais volume — {adv_chutes} chutes ({adv_gol} no alvo) x {fav_chutes} do {fav_label}{posse_txt}{vermelho}"
+    if fav_chutes > adv_chutes and fav_gol > 0:
+        return f"{fav_label} criando mais chances — {fav_chutes} chutes ({fav_gol} no alvo) x {adv_chutes}{posse_txt}{vermelho}"
+    if fav_amassando:
+        return f"{fav_label} amassando em busca da virada — {fav_atq} ataques perigosos x {adv_atq}{posse_txt}{vermelho}"
+    if adv_amassando:
+        return f"{zebra_label} pressionando para virar — {adv_atq} ataques perigosos x {fav_atq}{posse_txt}{vermelho}"
+    if ambos_pressionando:
+        return f"Jogo eletrizante, ambas pressionando — {total_atq_perig} ataques perigosos{posse_txt}{vermelho}"
+    if total_cantos >= 6:
+        return f"Jogo bastante movimentado pelas laterais — {total_cantos} escanteios, {total_chutes} chutes{posse_txt}{vermelho}"
+    return f"Jogo equilibrado, ambas criando chances — {chutes_h} chutes de Casa x {chutes_a} de Fora{posse_txt}{vermelho}"
+
+def msg_universal(home, away, minuto, liga, n, mercado, entrada, placar, extra_val=None, cantos_atual=0, stats=None, sh=0, sa=0, fav_final="h", odd_h=None, odd_a=None, odd_b365=None, odd_bano=None):
+    # Definir a entrada conforme os layouts das imagens
+    if "CORNER" in mercado or "ESCANTEIO" in mercado:
+        linha = cantos_atual + 0.5
+        entrada = f"Mais de {linha}🚩"
+    elif mercado in ("HT", "LIMITEHT", "BTTS", "OFT", "OVERGOAL"):
+        if "Over" not in str(entrada) and "Ambas" not in str(entrada):
+            if mercado == "OFT": entrada = "Over 1.5"
+            elif mercado == "BTTS": entrada = "Ambas Marcam"
+            elif mercado == "HT": entrada = "Over 0.5"
+        entrada = f"{entrada}⚽️"
+
+    # Extração de estatísticas
+    chutes_h = stats.get("chutes_tot_h", 0) if stats else 0
+    chutes_a = stats.get("chutes_tot_a", 0) if stats else 0
+    alvo_h   = stats.get("chutes_gol_h", 0) if stats else 0
+    alvo_a   = stats.get("chutes_gol_a", 0) if stats else 0
+    cant_h   = stats.get("escanteios_h", 0) if stats else 0
+    cant_a   = stats.get("escanteios_a", 0) if stats else 0
+    atq_per_h = stats.get("ataques_perigosos_h", 0) if stats else 0
+    atq_per_a = stats.get("ataques_perigosos_a", 0) if stats else 0
+    
+    # ════════════════════════════════════════════════════════════════
+    # SISTEMA DE ALERTAS UNIFICADO
+    # ════════════════════════════════════════════════════════════════
+    # Cleubiano thresholds (APPM puro) — definem a intensidade da pressão
+    # Zapia thresholds (APPM + mercado + stats) — refinam o contexto
+    # ════════════════════════════════════════════════════════════════
+    
+    atq_max = max(atq_per_h, atq_per_a)
+    appm_val = round(atq_max / minuto, 2) if minuto > 0 else 0
+    
+    # — Quem está pressionando —
+    if atq_per_h > atq_per_a:
+        quem = "do Mandante"
+        dominante = home
+    elif atq_per_a > atq_per_h:
+        quem = "do Visitante"
+        dominante = away
+    else:
+        quem = "de ambas equipes"
+        dominante = "Ambos"
+    
+    periodo = "1º tempo" if minuto <= 45 else "2º tempo"
+    
+    # — Variáveis auxiliares —
+    total_chutes = chutes_h + chutes_a
+    total_alvo = alvo_h + alvo_a
+    total_atq = atq_per_h + atq_per_a
+    total_cant = cant_h + cant_a
+    jogo_aberto = placar == "0x0"
+    fav_nome = home if fav_final == "h" else (away if fav_final == "a" else "—")
+    
+    # ════════════════════════════════════════════════════════════════
+    # THRESHOLDS CLEUBIANO — APPM PURO (ÚNICO SISTEMA DE ALERTA)
+    # ════════════════════════════════════════════════════════════════
+    if appm_val >= 2.0:
+        alerta = "Partida Com Pressão Constante."
+    elif appm_val >= 1.5:
+        alerta = "Partida Pegando Fogo."
+    elif appm_val >= 1.0:
+        alerta = "Partida Com Ritmo Intenso."
+    elif appm_val >= 0.8:
+        alerta = f"Partida com pressão {quem}."
+    elif appm_val >= 0.7:
+        alerta = "Partida Com Ritmo Moderado."
+    elif appm_val >= 0.5:
+        alerta = "Partida Com Ritmo Médio."
+    elif appm_val >= 0.3:
+        alerta = "Partida Com Ritmo Fraco."
+    else:
+        alerta = "Partida Com Ritmo Muito Baixo."
+
+    # APPM para exibição no layout
+    appm = appm_val
+
+    # Emojis EXATOS do print 1784355796901
+    seta = "🚩" # No print é a seta vermelha que o Telegram renderiza como o emoji 🚩 ou similar
+    seta_v = "🚩" 
+
+    if "CORNER" in mercado or "ESCANTEIO" in mercado:
+        nome_m = mercado.replace('CORNER_', 'ESCANTEIO ÁSIAT/LMT ')
+        title = f"🚩🔥{nome_m}🔥🚩"
+    else:
+        titles_map = {
+            "HT": "OVER GOL INTERVALO",
+            "LIMITEHT": "OVER GOL LIMITE HT",
+            "BTTS": "AMBAS MARCAM",
+            "OFT": "OVER 1.5 GOLS PARTIDA",
+            "OVERGOAL": "OVER GOL PARTIDA"
+        }
+        title = f"⚽️🔥{titles_map.get(mercado, mercado)}🔥⚽️"
+
+    odd_rec = "1.70"
+    sep = "━━━━━━━━━━━━━━━━━━━━"
+
+    # Layout EXATO dos 6 templates - tudo em negrito, sem "OPORTUNIDADE IDENTIFICADA"
+    msg = (
+        f"{sep}\n"
+        f"<b>{title}</b>\n"
+        f"{sep}\n"
+        f"<b>⚽️ Placar: {placar}</b>\n"
+        f"<b>🌍 Liga: {liga}</b>\n"
+        f"<b>📡 {home} x {away}</b>\n"
+        f"<b>👀 ODDs: Casa {odd_h or '—'} / Fora {odd_a or '—'}</b>\n"
+        f"<b>⏰️ Minuto: {minuto}'</b>\n"
+        f"{sep}\n"
+        f"<b>📊 Estatísticas ao Vivo da Partida:</b>\n"
+        f"<b>🚀 Chutes Totais: {chutes_h} | {chutes_a}</b>\n"
+        f"<b>🎯 Chutes No Alvo: {alvo_h} | {alvo_a}</b>\n"
+        f"<b>⚔️ Ataques Perigosos: {atq_per_h} | {atq_per_a}</b>\n"
+        f"<b>🚩 Escanteios: {cant_h} | {cant_a}</b>\n"
+        f"{sep}\n"
+        f"<b>💡 Análise Técnica da Partida:</b>\n"
+        f"<b>🎯 Favorito: {fav_nome}</b>\n"
+        f"<b>🔥 Pressão APPM:⚠️{appm}⚠️</b>\n"
+        f"<b>🚨 Alerta: {alerta}</b>\n"
+        f"{sep}\n"
+        f"<b>📌 Entrada: {entrada}</b>\n"
+        f"<b>💰 ODD Recomendada: {odd_rec}+</b>\n"
+        f"{sep}\n"
+        "<b>🔔Jogue com Responsabilidade🔔</b>"
+    )
+
+    keyboard = {
+        "inline_keyboard": [
+            [
+                {"text": "🟣BET365🟣", "url": "https://www.bet365.bet.br/#/AX/"},
+                {"text": "🔵PARIPESA🔵", "url": "https://paripesa.com/en/live/football/"}
+            ]
+        ]
+    }
+    return msg, keyboard
+    keyboard = {
+        "inline_keyboard": [
+            [
+                {"text": "🟣BET365🟣", "url": "https://www.bet365.bet.br/#/AX/"},
+                {"text": "🔵PARIPESA🔵", "url": "https://paripesa.com/en/live/football/"}
+            ]
+        ]
+    }
+    
+    return msg, keyboard
+
+def checar_resultado(sinal):
+    """Verifica se um sinal ja enviado deu green ou red — usa Promiedos como fonte."""
+    try:
+        res = checar_resultado_promiedos(sinal)
+        if res:
+            return res
+        return None
+    except: return None
+def check_status_command(total_jogos_live=0, jogos_live=None, jogos_na_janela=None):
+    import base64 as _b64
+    last_id = 0
+    # Lê last_update do GitHub para persistir entre execuções
+    if GITHUB_TOKEN and GITHUB_REPO:
+        try:
+            url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/last_update.json"
+            r = requests.get(url, headers=_github_headers(), timeout=6)
+            if r.status_code == 200:
+                last_id = json.loads(_b64.b64decode(r.json()["content"]).decode()).get("last_id", 0)
+        except: pass
+    elif os.path.exists(LAST_UPDATE_FILE):
+        try:
+            with open(LAST_UPDATE_FILE, 'r') as f: last_id = json.load(f).get("last_id", 0)
+        except: pass
+    try:
+        sep = "━━━━━━━━━━━━━━━━━━━━"
+        r   = requests.get(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/getUpdates",
+                           params={"offset": last_id + 1, "timeout": 5}, timeout=10).json()
+        if not r.get("ok"): return
+        new_last_id = last_id
+        radar_respondido = False
+        agora_ts = datetime.now(timezone.utc).timestamp()
+        for update in r.get("result", []):
+            new_last_id = update["update_id"]
+            msg     = update.get("message", {})
+            text    = msg.get("text", "")
+            chat_orig = msg.get("chat", {}).get("id", 0)
+            msg_ts  = msg.get("date", 0)
+            # Ignora comandos com mais de 30 minutos (evita processar acúmulo muito antigo)
+            if agora_ts - msg_ts > 600: # Ignora comandos com mais de 10 minutos
+                continue
+            pass  # responde em qualquer chat
+            if "/relatoriomensal" in text or text.startswith("/relatoriomensal@"):
+                msg = enviar_relatorio_mensal()
+                requests.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage",
+                              json={"chat_id": chat_orig, "text": msg, "parse_mode": "HTML"})
+            if "/relatoriodiario" in text or text.startswith("/relatoriodiario@"):
+                enviar_relatorio_diario()
+            if "/mercados" in text or text.startswith("/mercados@"):
+                try:
+                    if "/mercados24h" in text:
+                        msg = enviar_relatorio_mercados24h()
+                        if not msg:
+                            msg = "Ainda sem dados de mercado nas últimas 24h."
+                    else:
+                        msg = enviar_relatorio_performance()
+                    if msg:
+                        requests.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage",
+                                      json={"chat_id": chat_orig, "text": msg, "parse_mode": "HTML"})
+                    else:
+                        requests.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage",
+                                      json={"chat_id": chat_orig, "text": "Ainda sem dados de performance registrados.", "parse_mode": "HTML"})
+                except Exception as e:
+                    print(f"[PERFORMANCE] Erro: {e}")
+            if "/vip" in text:
+                requests.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage",
+                              json={"chat_id": chat_orig, "text": VIP_PROMO, "parse_mode": "HTML", "disable_web_page_preview": True})
+                print(f"[VIP] Divulgação enviada para {chat_orig}")
+            if "/assinar" in text:
+                try:
+                    user_info = msg.get("from", {})
+                    user_id = str(user_info.get("id", chat_orig))
+                    first = user_info.get("first_name", "")
+                    last = user_info.get("last_name", "")
+                    nome = f"{first} {last}".strip() or "Cliente"
+                    # Gera Pix via vip_manager
+                    import subprocess, sys
+                    result = subprocess.run(
+                        [sys.executable, "vip_manager.py", "pix", "--telegram", user_id, "--nome", nome],
+                        capture_output=True, text=True, timeout=30
+                    )
+                    output = result.stdout + result.stderr
+                    if "✅" in output and "payload" in output.lower():
+                        lines = output.split("\n")
+                        pix_code = ""
+                        for line in lines:
+                            if "Pix Copia e Cola" in line or "payload" in line.lower():
+                                pix_code = line.split(":", 1)[-1].strip() if ":" in line else ""
+                            elif "000201" in line:
+                                pix_code = line.strip()
+                        msg_vip = (
+                            f"🎉 <b>Pix gerado com sucesso!</b>\n\n"
+                            f"Olá <b>{nome}</b>, sua assinatura <b>Máquina de Greens VIP</b>\n"
+                            f"está quase pronta!\n\n"
+                            f"💰 <b>Valor: R$ 50,00</b>\n"
+                            f"📅 <b>Validade:</b> 30 dias após confirmação\n\n"
+                            f"👇 <b>PIX COPIA E COLA:</b>\n"
+                            f"<code>{pix_code}</code>\n\n"
+                            f"📱 <b>Ou pague pelo QR Code:</b>\n"
+                            f"Basta abrir o app do seu banco, escanear e pagar!\n\n"
+                            f"✅ Após a confirmação, você receberá o link do grupo VIP automaticamente!"
+                        )
+                        requests.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage",
+                                      json={"chat_id": chat_orig, "text": msg_vip, "parse_mode": "HTML"})
+                        print(f"[VIP] Pix gerado para {nome} ({user_id})")
+                    else:
+                        requests.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage",
+                                      json={"chat_id": chat_orig, "text": "❌ Erro ao gerar Pix. Tente novamente mais tarde ou contate o suporte.", "parse_mode": "HTML"})
+                        print(f"[VIP] Erro gerando Pix para {nome}: {output[:200]}")
+                except Exception as e:
+                    print(f"[VIP-ASSINAR] Erro: {e}")
+                    requests.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage",
+                                  json={"chat_id": chat_orig, "text": "❌ Erro ao processar. Tente /assinar novamente.", "parse_mode": "HTML"})
+            if "/radar" in text or text.startswith("/radar@"):
+                jogos_live = jogos_live or []
+                jogos_na_janela = jogos_na_janela or []
+                # Monta lista de jogos na janela
+                if jogos_na_janela:
+                    linhas_janela = ""
+                    for j in jogos_na_janela:
+                        h = j.get("home", "")
+                        a = j.get("away", "")
+                        m = j.get("minuto", 0)
+                        sh = j.get("sh", 0)
+                        sa = j.get("sa", 0)
+                        liga = j.get("liga", "")
+                        linhas_janela += f"🎯 <b>{h} x {a}</b> | {m}' | {sh}x{sa} | {liga}\n"
+                else:
+                    linhas_janela = "Nenhum jogo na janela no momento."
+                # Monta lista de jogos ao vivo fora da janela (até 10)
+                fora_janela = [j for j in jogos_live if j not in jogos_na_janela]
+                if fora_janela:
+                    linhas_fora = ""
+                    for j in fora_janela[:10]:
+                        h = j.get("home", "")
+                        a = j.get("away", "")
+                        m = j.get("minuto", 0)
+                        sh = j.get("sh", 0)
+                        sa = j.get("sa", 0)
+                        linhas_fora += f"⏳ {h} x {a} | {m}' | {sh}x{sa}\n"
+                    if len(fora_janela) > 10:
+                        linhas_fora += f"... e mais {len(fora_janela)-10} jogos"
+                else:
+                    linhas_fora = "—"
+                msg_radar = (
+                    f"{sep}\n"
+                    f"📡👉<b>RADAR DE JOGOS AO VIVO</b>👈📡\n"
+                    f"{sep}\n"
+                    f"🔴 <b>{total_jogos_live} jogos ao vivo</b>\n"
+                    f"🎯 <b>{len(jogos_na_janela)} na janela alvo</b>\n"
+                    f"{sep}\n"
+                    f"🚨<b>JOGOS NO ALVO:</b>\n{linhas_janela}"
+                    f"{sep}\n"
+                    f"<b>⏳ FORA DA JANELA:</b>\n{linhas_fora}"
+                    f"{sep}"
+                )
+                requests.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage", json={"chat_id": chat_orig, "text": msg_radar, "parse_mode": "HTML"}, timeout=10)
+        if new_last_id > last_id:
+            with open(LAST_UPDATE_FILE, 'w') as f: json.dump({"last_id": new_last_id}, f)
+            # Salva no GitHub para persistir entre execuções
+            import base64 as _b64
+            url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/last_update.json"
+            r_get = requests.get(url, headers=_github_headers(), timeout=6)
+            sha_lu = r_get.json().get("sha", "") if r_get.status_code == 200 else ""
+            content_b64 = _b64.b64encode(json.dumps({"last_id": new_last_id}).encode()).decode()
+            payload = {"message": "state: last_update [skip ci]", "content": content_b64}
+            if sha_lu: payload["sha"] = sha_lu
+            r_put = requests.put(url, headers=_github_headers(), json=payload, timeout=8)
+            print(f"[CMD] last_id salvo: {new_last_id} | status: {r_put.status_code} | token_ok: {bool(GITHUB_TOKEN)}")
+    except Exception as e:
+        print(f"[CMD] Erro ao processar comandos: {e}")
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# HISTÓRICO — Média de gols (usando H2H da apifootball)
+# ═══════════════════════════════════════════════════════════════════════════════
+_HIST_CACHE = {}
+def get_media_gols_historica(home_id, away_id):
+    try:
+        _HIST_CACHE[chave] = -1.0
+        return -1.0
+    except:
+        _HIST_CACHE[chave] = 0.0
+        return 0.0
+
+
+def run():
+    # ─── FONTE PRINCIPAL: Promiedos | fallback: ESPN ───
+    BOT_SOURCE = "promiedos"
+    print(f"[Iniciando monitoramento — Fonte: Promiedos (principal) + ESPN (fallback)]")
+    sent      = load_sent()
+    total_env = 0
+    janela_id = datetime.now(BRT).strftime('%Y%m%d%H')
+
+    # ─────────────────────────────────────────────────────────────
+    # PASSO 1: Coleta — Flashscore como principal, ESPN + apifootball como fallback
+    # ─────────────────────────────────────────────────────────────
+    jogos_live = []
+    if BOT_SOURCE == "promiedos":
+        # Promiedos: fonte principal com odds pre-live e estatisticas
+        jogos_prom = get_jogos_promiedos(set())
+        print(f"[PROMIEDOS] {len(jogos_prom)} jogos ao vivo")
+        jogos_live.extend(jogos_prom)
+        # Fallback: ESPN complementa
+        try:
+            jogos_espn = get_jogos_espn(set())
+            if jogos_espn:
+                print(f"[ESPN-FALLBACK] {len(jogos_espn)} jogos adicionais da ESPN")
+                nomes_prom = set()
+                for j in jogos_prom:
+                    hn = norm_nome_time(j["home"])
+                    an = norm_nome_time(j["away"])
+                    nomes_prom.add(hashlib.md5(f"{hn}-{an}".encode()).hexdigest()[:16])
+                for j in jogos_espn:
+                    hn = norm_nome_time(j["home"])
+                    an = norm_nome_time(j["away"])
+                    chave = hashlib.md5(f"{hn}-{an}".encode()).hexdigest()[:16]
+                    if chave not in nomes_prom:
+                        jogos_live.append(j)
+                        print(f"[ESPN-FALLBACK] Adicionado: {j['home']} x {j['away']} ({j['liga']})")
+        except Exception as e:
+            print(f"[ESPN-FALLBACK ERRO] {e}")
+        # PASSO 2: Filtra janelas alvo
+    jogos_na_janela = filtrar_janelas(jogos_live)
+    print(f"[Janela] {len(jogos_na_janela)} jogos nas janelas alvo")
+
+    check_status_command(total_jogos_live=len(jogos_live), jogos_live=jogos_live, jogos_na_janela=jogos_na_janela)
+
+    if not jogos_na_janela:
+        print("[OK] Nenhum jogo na janela — aguardando próximo ciclo")
+        save_sent(sent)
+        print("Finalizado. Enviados: 0")
+        return
+
+    # PASSO 3: Dedup simples (dentro da própria fonte — remove duplicatas do mesmo jogo)
+    jogos_dedup = []
+    vistos_chaves = set()
+    for j in jogos_na_janela:
+        hn_j = norm_nome_time(j["home"])
+        an_j = norm_nome_time(j["away"])
+        chave = hashlib.md5(f"{hn_j}-{an_j}".encode()).hexdigest()[:16]
+        if chave not in vistos_chaves:
+            vistos_chaves.add(chave)
+            jogos_dedup.append(j)
+    print(f"[Dedup] {len(jogos_na_janela)} -> {len(jogos_dedup)} jogos unicos")
+    
+    for j in jogos_dedup:
+        fid    = j["fid"]
+        h, a   = j["home"], j["away"]
+        # Normaliza nomes pra chave estável entre APIs diferentes
+        hn = norm_nome_time(h)
+        an = norm_nome_time(a)
+        dedup_id = hashlib.md5(f"{hn}-{an}".encode()).hexdigest()[:12]
+        m, p   = j["minuto"], j["period"]
+        sh, sa = j["sh"], j["sa"]
+        liga   = str(j["liga"])
+        stot   = sh + sa
+        placar = f"{sh}x{sa}"
+
+        print(f"[Analisando] {h} x {a} | {placar} | {m}min")
+
+        # ─── Stats: Promiedos (principal) → ESPN (fallback) ───
+        fid_raw = j.get("fid_raw", fid)
+        stats = {}
+        if BOT_SOURCE == "promiedos":
+            # Promiedos: stats principais (chutes, escanteios, ataques perigosos)
+            try:
+                sa_prom = get_stats_promiedos(fid_raw)
+                if isinstance(sa_prom, dict) and sa_prom.get("escanteios_h", -1) >= 0:
+                    stats = sa_prom
+                    print(f"[PROMIEDOS-STATS] Stats OK: esc {stats.get('escanteios_h')}x{stats.get('escanteios_a')} | atq_perig {stats.get('ataques_perigosos_h')}x{stats.get('ataques_perigosos_a')} | chutes: {stats.get('chutes_tot_h')}/{stats.get('chutes_tot_a')}")
+            except Exception as e:
+                print(f"[PROMIEDOS-STATS ERRO] {e}")
+
+            # Complemento: se Promiedos não tem chutes, busca da ESPN
+            if stats and stats.get("chutes_tot_h", 0) == 0 and stats.get("chutes_tot_a", 0) == 0:
+                try:
+                    league_slug = j.get("league_slug", "")
+                    if league_slug:
+                        sa_espn = get_stats_espn(fid_raw, league_slug)
+                        if isinstance(sa_espn, dict) and sa_espn.get("chutes_tot_h", 0) > 0:
+                            stats["chutes_tot_h"] = sa_espn["chutes_tot_h"]
+                            stats["chutes_tot_a"] = sa_espn["chutes_tot_a"]
+                            stats["chutes_gol_h"] = sa_espn.get("chutes_gol_h", 0)
+                            stats["chutes_gol_a"] = sa_espn.get("chutes_gol_a", 0)
+                            print(f"[CHUTES-ESPN] Chutes complementados: {stats['chutes_tot_h']}/{stats['chutes_tot_a']} | alvo: {stats['chutes_gol_h']}/{stats['chutes_gol_a']}")
+                except Exception as e:
+                    print(f"[CHUTES-ESPN ERRO] {e}")
+
+            # Fallback completo: se Promiedos não retornou NADA, tenta ESPN
+            if not stats or not (stats.get("escanteios_h", -1) >= 0 and stats.get("escanteios_a", -1) >= 0):
+                try:
+                    league_slug = j.get("league_slug", "")
+                    if league_slug:
+                        sa_espn = get_stats_espn(fid_raw, league_slug)
+                        if isinstance(sa_espn, dict) and sa_espn.get("chutes_tot_h", 0) > 0:
+                            stats = sa_espn
+                            print(f"[ESPN-STATS-FALLBACK] Stats ESPN OK: {stats.get('chutes_tot_h')}x{stats.get('chutes_tot_a')} chutes")
+                except Exception as e:
+                    print(f"[ESPN-STATS-FALLBACK ERRO] {e}")
+
+        # Preenche defaults para campos que faltam
+        for k in ["chutes_tot_h","chutes_tot_a","chutes_gol_h","chutes_gol_a"]:
+            stats.setdefault(k, 0)
+        for k in ["escanteios_h","escanteios_a"]:
+            stats.setdefault(k, -1)
+        for k in ["red_cards_h","red_cards_a"]:
+            stats.setdefault(k, 0)
+
+        if stats:
+            print(f"[STATS-{BOT_SOURCE.upper()}] {h} x {a} | chutes: {stats.get('chutes_tot_h',0)}/{stats.get('chutes_tot_a',0)} | cantos: {stats.get('escanteios_h',-1)}/{stats.get('escanteios_a',-1)} | atq_perig: {stats.get('ataques_perigosos_h',0)}/{stats.get('ataques_perigosos_a',0)}")
+
+        # Verifica se tem dados reais — sem stats E sem odds, pula o jogo
+        tem_stats = stats and (
+            stats.get("chutes_tot_h", 0) > 0 or
+            stats.get("chutes_tot_a", 0) > 0 or
+            stats.get("escanteios_h", -1) > 0 or
+            stats.get("escanteios_a", -1) > 0 or
+            stats.get("ataques_perigosos_h", 0) > 0 or
+            stats.get("ataques_perigosos_a", 0) > 0
+        )
+        if not tem_stats:
+            print(f"[SKIP] {h} x {a} — sem stats reais (chutes, cantos ou ataques perigosos) em nenhuma API, pulando jogo")
+            continue
+
+        # Favorito: SOMENTE odds Pre-Live — Promiedos (principal) → ESPN (DraftKings)
+        # NADA de chutes, estatísticas ou achismo. Se não tem odds, pula o jogo.
+        odd_h = None
+        odd_a = None
+        fav_identificado = False
+
+        # PASSO 1: Promiedos odds (vem nos dados do jogo)
+        try:
+            odd_h = j.get("odd_h")
+            odd_a = j.get("odd_a")
+            if odd_h and odd_a and odd_h > 1 and odd_a > 1:
+                fav_final = "h" if odd_h <= odd_a else "a"
+                fav_identificado = True
+                print(f"[ODDS-PROM] {h} x {a} — Casa:{odd_h:.2f} Fora:{odd_a:.2f} → Fav:{fav_final}")
+        except Exception as e:
+            print(f"[ODDS-PROM ERRO] {e}")
+
+        # PASSO 2: ESPN odds (DraftKings do summary) — se Promiedos não retornou
+        if not fav_identificado:
+            if stats and stats.get("odd_h") and stats.get("odd_a"):
+                odd_h_s, odd_a_s = stats["odd_h"], stats["odd_a"]
+                if odd_h_s > 1 and odd_a_s > 1:
+                    odd_h, odd_a = odd_h_s, odd_a_s
+                    fav_final = "h" if odd_h <= odd_a else "a"
+                    fav_identificado = True
+                    print(f"[ODDS] {h} x {a} — odd Casa:{odd_h:.2f} Fora:{odd_a:.2f} (ESPN-summary)")
+            else:
+                try:
+                    league_slug = j.get("league_slug", "")
+                    if league_slug:
+                        sa_espn = get_stats_espn(fid_raw, league_slug)
+                        if isinstance(sa_espn, dict) and sa_espn.get("odd_h") and sa_espn.get("odd_a"):
+                            odd_h, odd_a = sa_espn["odd_h"], sa_espn["odd_a"]
+                            if odd_h > 1 and odd_a > 1:
+                                fav_final = "h" if odd_h <= odd_a else "a"
+                                fav_identificado = True
+                                print(f"[ODDS] {h} x {a} — odd Casa:{odd_h:.2f} Fora:{odd_a:.2f} (ESPN-DraftKings)")
+                except Exception as e:
+                    print(f"[ODDS-ESPN ERRO] {e}")
+
+        # Se NENHUMA fonte retornou odds Pre-Live, pula o jogo
+        if not fav_identificado:
+            print(f"[SKIP-SEM-ODDS] {h} x {a} — nenhuma odd Pre-Live disponível, pulando jogo")
+            continue
+
+        red_fav = stats.get(f"red_cards_{fav_final}", 0) if stats else 0
+
+        # Placar do favorito e adversário
+        fav_gols = sh if fav_final == "h" else sa
+        adv_gols = sa if fav_final == "h" else sh
+
+        # ─── DIAGNÓSTICO INICIAL DO JOGO ───
+        print(f"[DIAG] {h} x {a} | placar={placar} | min={m} | periodo={p} | fav={fav_final} | gols_fav={fav_gols} gols_adv={adv_gols} | odds_casa={odd_h} odds_fora={odd_a} | chutes_totais={stats.get('chutes_tot_h',0)}x{stats.get('chutes_tot_a',0)} | chutes_gol={stats.get('chutes_gol_h',0)}x{stats.get('chutes_gol_a',0)} | atq_perig={stats.get('ataques_perigosos_h',0)}x{stats.get('ataques_perigosos_a',0)} | escanteios={stats.get('escanteios_h','?')}x{stats.get('escanteios_a','?')} | red_fav={red_fav}")
+
+        # Favorito empatando = placar igual
+        fav_empatando = (sh == sa)
+        # Favorito perdendo por exatamente 1 gol — SOMENTE placares 0x1 ou 1x0 (total = 1 gol) — usado em OFT
+        fav_perdendo_1 = (adv_gols - fav_gols) == 1 and (sh + sa) == 1
+        # Favorito perdendo por exatamente 1 gol sem restrição de total — usado em escanteios e overgoal
+        fav_perdendo_1_livre = (adv_gols - fav_gols) == 1
+        # Condição escanteio: fav empatando OU perdendo por 1 (qualquer placar)
+        corner_valido = fav_empatando or fav_perdendo_1_livre
+        # Over 1.5 FT: placares válidos APENAS 1x0 ou 0x1 (fav perdendo por 1, total = 1 gol)
+        fav_gols_oft = sh if fav_final == "h" else sa
+        adv_gols_oft = sa if fav_final == "h" else sh
+        oft_valido = (
+            (adv_gols_oft - fav_gols_oft) == 1 and
+            (sh + sa) == 1
+        )
+
+        # APPM removido — bot APIFootball é livre, sem filtro de ataques
+
+        # HISTÓRICO — Média de gols por partida (jogo todo) ≥ 2.0
+        # Req. para: Over Gol HT, Over Gol FT e BTTS
+        home_id = j.get("home_id", "")
+        away_id = j.get("away_id", "")
+        media_hist = 0.0
+        if home_id and away_id:
+            media_hist = get_media_gols_historica(home_id, away_id)
+        hist_ok = media_hist < 0 or media_hist >= 2.0  # -1 = sem dados históricos (não bloqueia)
+        if not hist_ok:
+            print(f"[HIST-BLOQUEADO] {h} x {a} — média {media_hist:.1f} < 2.0, pulando mercados de gol")
+
+        # MERCADO 1: OVER 0.5 HT (15-27 min, 0x0, favorito empatando, sem vermelho do fav, média hist ≥ 2.0)
+        if p == 1 and 15 <= m <= 27:
+            if not (sh == 0 and sa == 0):
+                print(f"[DIAG-HT-BARRA] {h} x {a} — placar não é 0x0 ({placar}), pulando")
+            elif not fav_empatando:
+                print(f"[DIAG-HT-BARRA] {h} x {a} — favorito não empatando (fav={fav_final}, gols_fav={fav_gols} adv={adv_gols}), pulando")
+            elif red_fav != 0:
+                print(f"[DIAG-HT-BARRA] {h} x {a} — favorito com cartão vermelho ({red_fav}), pulando")
+            elif not hist_ok:
+                print(f"[DIAG-HT-BARRA] {h} x {a} — média histórica {media_hist:.1f} < 2.0, pulando")
+            else:
+                hoje = datetime.now(BRT).strftime('%Y%m%d')
+                key = f"{dedup_id}_ht_{hoje}"
+                if key in sent:
+                    print(f"[DIAG-HT-DUP] {h} x {a} — já enviado hoje ({key}), pulando")
+                else:
+                    ob365 = j.get("odds_b365", {}).get("o+0.5") if j.get("odds_b365") else None
+                    obano = j.get("odds_bano", {}).get("o+0.5") if j.get("odds_bano") else None
+                    mid = send_telegram(msg_universal(h, a, m, liga, 3, "HT", "Over 0.5", placar, stats=stats, sh=sh, sa=sa, fav_final=fav_final, odd_h=odd_h, odd_a=odd_a, odd_b365=ob365, odd_bano=obano), marca=key, home=h, away=a, odd_b365_val=ob365, odd_bano_val=obano)
+                    if mid:
+                        sent.add(key); total_env += 1
+                        registrar_sinal(fid, "HT", h, a, mid)
+
+        # MERCADO 1B: OVER GOL LIMITE HT (15-27 min, 0x0, odd fav ≤ 1.80, prob 1.5 FT ≥ 60%, prob 0.5 HT ≥ 50%)
+        if p == 1 and 15 <= m <= 27 and sh == 0 and sa == 0 and red_fav == 0:
+            fid_raw = j.get("fid_raw")
+            odd_h = j.get("odd_h") or (stats.get("odd_h") if stats else None)
+            odd_a = j.get("odd_a") or (stats.get("odd_a") if stats else None)
+            
+            # Cálculo de probabilidades via chutes (se tiver)
+            chutes_tot_total = (stats.get("chutes_tot_h", 0) + stats.get("chutes_tot_a", 0)) if stats else 0
+            chutes_gol_total = (stats.get("chutes_gol_h", 0) + stats.get("chutes_gol_a", 0)) if stats else 0
+            prob_15_ft, prob_05_ht = calcular_prob_gols_ht(chutes_tot_total, chutes_gol_total, m)
+            
+            # Fallback: se não tem stats de chutes, usa odd do favorito como proxy
+            if chutes_tot_total == 0 and odd_fav_num <= 1.80:
+                prob_15_ft = max(prob_15_ft, 65)
+                prob_05_ht = max(prob_05_ht, 55)
+            
+            print(f"[LIMITE-HT] {h} x {a} | odd_fav={odd_fav_num} | prob_15ft={prob_15_ft}% | prob_05ht={prob_05_ht}%")
+            
+            # Diagnóstico detalhado
+            limite_ht_ok = True
+            if odd_fav_num > 1.80:
+                print(f"[DIAG-LIMITEHT-BARRA] {h} x {a} — odd do favorito {odd_fav_num} > 1.80, pulando")
+                limite_ht_ok = False
+            elif prob_15_ft < 60:
+                print(f"[DIAG-LIMITEHT-BARRA] {h} x {a} — prob 1.5 FT {prob_15_ft}% < 60%, pulando")
+                limite_ht_ok = False
+            elif prob_05_ht < 50:
+                print(f"[DIAG-LIMITEHT-BARRA] {h} x {a} — prob 0.5 HT {prob_05_ht}% < 50%, pulando")
+                limite_ht_ok = False
+            elif not hist_ok:
+                print(f"[DIAG-LIMITEHT-BARRA] {h} x {a} — média histórica {media_hist:.1f} < 2.0, pulando")
+                limite_ht_ok = False
+            if limite_ht_ok:
+                hoje = datetime.now(BRT).strftime('%Y%m%d')
+                key = f"{dedup_id}_limiteht_{hoje}"
+                if key not in sent:
+                    ob365 = j.get("odds_b365", {}).get("o+0.5") if j.get("odds_b365") else None
+                    obano = j.get("odds_bano", {}).get("o+0.5") if j.get("odds_bano") else None
+                    mid = send_telegram(msg_universal(h, a, m, liga, 4, "LIMITEHT", "Over 0.5", placar, stats=stats, sh=sh, sa=sa, fav_final=fav_final, odd_h=odd_h, odd_a=odd_a, odd_b365=ob365, odd_bano=obano), marca=key, home=h, away=a, odd_b365_val=ob365, odd_bano_val=obano)
+                    if mid:
+                        sent.add(key); total_env += 1
+                        registrar_sinal(fid, "LIMITEHT", h, a, mid)
+
+        # MERCADO 2: AMBAS MARCAM BTTS (55-75 min, fav perdendo por 1, sem vermelho do fav, média hist ≥ 2.0)
+        if p == 2 and 55 <= m <= 75 and ((sh == 1 and sa == 0) or (sh == 0 and sa == 1)):
+            if not fav_perdendo_1:
+                print(f"[DIAG-BTTS-BARRA] {h} x {a} — favorito não perdendo por 1 (fav_gols={fav_gols} adv={adv_gols}), pulando")
+            elif red_fav != 0:
+                print(f"[DIAG-BTTS-BARRA] {h} x {a} — favorito com cartão vermelho ({red_fav}), pulando")
+            elif not hist_ok:
+                print(f"[DIAG-BTTS-BARRA] {h} x {a} — média histórica {media_hist:.1f} < 2.0, pulando")
+            else:
+                hoje = datetime.now(BRT).strftime('%Y%m%d')
+                key = f"{dedup_id}_btts_{hoje}"
+                if key in sent:
+                    print(f"[DIAG-BTTS-DUP] {h} x {a} — já enviado hoje, pulando")
+                else:
+                    ob365 = j.get("odds_b365", {}).get("bts_yes") if j.get("odds_b365") else None
+                    obano = j.get("odds_bano", {}).get("bts_yes") if j.get("odds_bano") else None
+                    mid = send_telegram(msg_universal(h, a, m, liga, 4, "BTTS", "Ambas Marcam", placar, stats=stats, sh=sh, sa=sa, fav_final=fav_final, odd_h=odd_h, odd_a=odd_a, odd_b365=ob365, odd_bano=obano), marca=key, home=h, away=a, odd_b365_val=ob365, odd_bano_val=obano)
+                    if mid:
+                        sent.add(key); total_env += 1
+                        registrar_sinal(fid, "BTTS", h, a, mid)
+
+        # MERCADO 3: OVER 1.5 FT (55-75 min, fav perdendo por 1, placar 1x0/0x1, sem vermelho do fav, média hist ≥ 2.0)
+        if p == 2 and 55 <= m <= 75 and ((sh == 1 and sa == 0) or (sh == 0 and sa == 1)):
+            if not fav_perdendo_1:
+                print(f"[DIAG-OFT-BARRA] {h} x {a} — favorito não perdendo por 1 (fav_gols={fav_gols} adv={adv_gols}), pulando")
+            elif red_fav != 0:
+                print(f"[DIAG-OFT-BARRA] {h} x {a} — favorito com cartão vermelho ({red_fav}), pulando")
+            elif not hist_ok:
+                print(f"[DIAG-OFT-BARRA] {h} x {a} — média histórica {media_hist:.1f} < 2.0, pulando")
+            else:
+                hoje = datetime.now(BRT).strftime('%Y%m%d')
+                key = f"{dedup_id}_oft_{hoje}"
+                mid = None
+                if key in sent:
+                    print(f"[DIAG-OFT-DUP] {h} x {a} — já enviado hoje, pulando")
+                else:
+                    ob365 = j.get("odds_b365", {}).get("o+1.5") if j.get("odds_b365") else None
+                    obano = j.get("odds_bano", {}).get("o+1.5") if j.get("odds_bano") else None
+                    mid = send_telegram(msg_universal(h, a, m, liga, 4, "OFT", "Over 1.5", placar, stats=stats, sh=sh, sa=sa, fav_final=fav_final, odd_h=odd_h, odd_a=odd_a, odd_b365=ob365, odd_bano=obano), marca=key, home=h, away=a, odd_b365_val=ob365, odd_bano_val=obano)
+                if mid:
+                    sent.add(key); total_env += 1
+                    registrar_sinal(fid, "OFT", h, a, mid)
+
+        # MERCADO 4: OVER GOL PARTIDA (55-75 min, placares 0x0/1x1/0x1/1x0, favorito empatando ou perdendo por 1, média hist ≥ 2.0)
+        overgoal_valido = (fav_empatando or fav_perdendo_1)
+        if p == 2 and 55 <= m <= 75:
+            if not overgoal_valido:
+                print(f"[DIAG-OVERGOAL-BARRA] {h} x {a} — favorito não empata nem perde por 1 (fav_empatando={fav_empatando} fav_perdendo_1={fav_perdendo_1}), pulando")
+            elif red_fav != 0:
+                print(f"[DIAG-OVERGOAL-BARRA] {h} x {a} — favorito com cartão vermelho ({red_fav}), pulando")
+            elif not hist_ok:
+                print(f"[DIAG-OVERGOAL-BARRA] {h} x {a} — média histórica {media_hist:.1f} < 2.0, pulando")
+            else:
+                hoje = datetime.now(BRT).strftime('%Y%m%d')
+                key = f"{dedup_id}_overgoal_{hoje}"
+                # Linha dinâmica: sempre acima do total de gols atual
+                total_gols = sh + sa
+                if total_gols == 0:
+                    linha_over = "Over 0.5"
+                elif total_gols == 1:
+                    linha_over = "Over 1.5"
+                elif total_gols == 2:
+                    linha_over = "Over 2.5"
+                elif total_gols == 3:
+                    linha_over = "Over 3.5"
+                else:
+                    linha_over = f"Over {total_gols + 0.5:.1f}"
+                mid = None
+                if key in sent:
+                    print(f"[DIAG-OVERGOAL-DUP] {h} x {a} — já enviado hoje ({key}), pulando")
+                else:
+                    ob365 = j.get("odds_b365", {}).get("o+0.5") if j.get("odds_b365") else None
+                    obano = j.get("odds_bano", {}).get("o+0.5") if j.get("odds_bano") else None
+                    mid = send_telegram(msg_universal(h, a, m, liga, 4, "OVERGOAL", linha_over, placar, stats=stats, sh=sh, sa=sa, fav_final=fav_final, odd_h=odd_h, odd_a=odd_a, odd_b365=ob365, odd_bano=obano), marca=key, home=h, away=a, odd_b365_val=ob365, odd_bano_val=obano)
+                if mid:
+                    sent.add(key); total_env += 1
+                    registrar_sinal(fid, "OVERGOAL", h, a, mid, extra_val=total_gols)
+
+        # MERCADO 5: ESCANTEIO LIMITE HT (32-38 min, fav confirmado, empatando ou perdendo por 1, sem vermelho, APPM ≥ 1)
+        if p == 1 and 32 <= m <= 38:
+            corner_cond = (fav_empatando or fav_perdendo_1)
+            if not corner_cond:
+                print(f"[DIAG-CORNER-HT-BARRA] {h} x {a} — favorito não empata nem perde por 1 (fav_empatando={fav_empatando} fav_perdendo_1={fav_perdendo_1}), pulando")
+            elif red_fav != 0:
+                print(f"[DIAG-CORNER-HT-BARRA] {h} x {a} — favorito com cartão vermelho ({red_fav}), pulando")
+            else:
+                hoje = datetime.now(BRT).strftime('%Y%m%d')
+                key = f"{dedup_id}_cht_{hoje}"
+                cantos_h = stats.get("escanteios_h", -1) if stats else -1
+                cantos_a = stats.get("escanteios_a", -1) if stats else -1
+                cantos = (max(0, cantos_h) + max(0, cantos_a)) if (cantos_h >= 0 and cantos_a >= 0) else -1
+                mid = None
+                if cantos < 0:
+                    print(f"[DIAG-CORNER-HT-BARRA] {h} x {a} — cantos={cantos} sem dados, pulando")
+                elif key in sent:
+                    print(f"[DIAG-CORNER-HT-DUP] {h} x {a} — já enviado hoje, pulando")
+                else:
+                    ob365_e = j.get("odds_b365", {}).get("o+0.5") if j.get("odds_b365") else None
+                    obano_e = j.get("odds_bano", {}).get("o+0.5") if j.get("odds_bano") else None
+                    mid = send_telegram(msg_universal(h, a, m, liga, 5, "CORNER_HT", "", placar, cantos_atual=cantos, stats=stats, sh=sh, sa=sa, fav_final=fav_final, odd_h=odd_h, odd_a=odd_a, odd_b365=ob365_e, odd_bano=obano_e), marca=key, home=h, away=a, odd_b365_val=ob365_e, odd_bano_val=obano_e)
+                if mid:
+                    sent.add(key); total_env += 1
+                    registrar_sinal(fid, "CORNER_HT", h, a, mid, extra_val=cantos)
+
+        # MERCADO 6: ESCANTEIO LIMITE FT (82-88 min, fav confirmado, empatando ou perdendo por 1, sem vermelho)
+        if p == 2 and 82 <= m <= 88:
+            corner_ft_cond = (fav_empatando or fav_perdendo_1)
+            if not corner_ft_cond:
+                print(f"[DIAG-CORNER-FT-BARRA] {h} x {a} — favorito não empata nem perde por 1 (fav_empatando={fav_empatando} fav_perdendo_1={fav_perdendo_1}), pulando")
+            elif red_fav != 0:
+                print(f"[DIAG-CORNER-FT-BARRA] {h} x {a} — favorito com cartão vermelho ({red_fav}), pulando")
+            else:
+                hoje = datetime.now(BRT).strftime('%Y%m%d')
+                key = f"{dedup_id}_cft_{hoje}"
+                cantos_h = stats.get("escanteios_h", -1) if stats else -1
+                cantos_a = stats.get("escanteios_a", -1) if stats else -1
+                if cantos_h >= 0 and cantos_a >= 0:
+                    cantos = max(0, cantos_h) + max(0, cantos_a)
+                else:
+                    cantos = -1
+                mid = None
+                if cantos < 0:
+                    print(f"[DIAG-CORNER-FT-BARRA] {h} x {a} — cantos={cantos} sem dados, pulando")
+                elif key in sent:
+                    print(f"[DIAG-CORNER-FT-DUP] {h} x {a} — já enviado hoje, pulando")
+                else:
+                    ob365_e = j.get("odds_b365", {}).get("o+0.5") if j.get("odds_b365") else None
+                    obano_e = j.get("odds_bano", {}).get("o+0.5") if j.get("odds_bano") else None
+                    mid = send_telegram(msg_universal(h, a, m, liga, 5, "CORNER_FT", "", placar, cantos_atual=cantos, stats=stats, sh=sh, sa=sa, fav_final=fav_final, odd_h=odd_h, odd_a=odd_a, odd_b365=ob365_e, odd_bano=obano_e), marca=key, home=h, away=a, odd_b365_val=ob365_e, odd_bano_val=obano_e)
+                if mid:
+                    sent.add(key); total_env += 1
+                    registrar_sinal(fid, "CORNER_FT", h, a, mid, extra_val=cantos)
+
+    save_sent(sent)
+
+    # Validação de resultados pendentes — lê e salva via GitHub
+    try:
+        sinais_p = _load_sinais_github()
+        rest = []
+        for s in sinais_p:
+            res = checar_resultado(s)
+            if res:
+                emoji = "🟢GREEN CONFIRMADO🟢" if res == "green" else "🔴RED CONFIRMADO🔴"
+                send_telegram(emoji, reply_to=s.get("message_id"))
+                salvar_resultado(res, mercado=s.get("mercado"))
+                registrar_performance(s.get("mercado"), res)
+            else:
+                rest.append(s)
+        _save_sinais_github(rest)
+        print(f"[SINAIS] {len(sinais_p) - len(rest)} resultados confirmados, {len(rest)} ainda pendentes")
+    except Exception as e:
+        print(f"[SINAIS] Erro validação: {e}")
+
+    # (Comandos processados via check_status_command com offset)
+    # ═══════════════════════════════════════════════════════════════════════════
+    # AUTO-DISPATCH: /relatoriodiario + /mercados24h às 23:55
+    # ═══════════════════════════════════════════════════════════════════════════
+    try:
+        agora_hora = datetime.now(BRT)
+        if agora_hora.hour == 23 and agora_hora.minute >= 55:
+            print(f"[AUTO] 23:55 — disparando relatório diário + mercados 24h")
+            enviar_relatorio_diario()
+            msg_mercados = enviar_relatorio_mercados24h()
+            if msg_mercados:
+                send_telegram(msg_mercados)
+    except Exception as e:
+        print(f"[AUTO] Erro auto-dispatch: {e}")
+    print(f"Finalizado. Enviados: {total_env}")
+
+
+
+def processar_comandos_pendentes(token, chat_id, jogos_live=None, jogos_na_janela=None):
+    """Processa comandos /relatoriodiario e /radar com checkpoint de update_id."""
+    if jogos_live is None: jogos_live = []
+    if jogos_na_janela is None: jogos_na_janela = []
+    max_id = 0
+    try:
+        r = requests.get(f"https://api.telegram.org/bot{token}/getUpdates", timeout=10).json()
+        if r.get("ok"):
+            for update in r.get("result", []):
+                uid = update.get("update_id", 0)
+                if uid > max_id: max_id = uid
+                msg = update.get("message", {})
+                text = (msg.get("text", "") or "").strip()
+                chat_orig = msg.get("chat", {}).get("id", 0)
+                sep = "━" * 20
+                if "/radar" in text:
+                    minuto_map = {}
+
+                    linhas_jan = ""
+                    for j in jogos_na_janela:
+                        h = j.get("home",""); a = j.get("away","")
+                        sh = j.get("sh",0); sa = j.get("sa",0)
+                        liga = j.get("liga","")
+                        # Usa minuto atualizado se disponível
+                        m = minuto_map.get((h.lower(), a.lower()), j.get("minuto",""))
+                        linhas_jan += f"🎯 <b>{h} x {a}</b> | {m}' | {sh}x{sa} | {liga}\n"
+                    if not linhas_jan:
+                        linhas_jan = "Nenhum jogo na janela no momento."
+                    fora = [j for j in jogos_live if j not in jogos_na_janela][:10]
+                    linhas_fora = ""
+                    for j in fora:
+                        h = j.get("home",""); a = j.get("away","")
+                        sh = j.get("sh",0); sa = j.get("sa",0)
+                        # Usa minuto atualizado se disponível
+                        m = minuto_map.get((h.lower(), a.lower()), j.get("minuto",""))
+                        linhas_fora += f"⏳ {h} x {a} | {m}' | {sh}x{sa}\n"
+                    if not linhas_fora: linhas_fora = "—"
+                    msg_radar = (
+                        f"{sep}\n"
+                        f"📡👉<b>RADAR DE JOGOS AO VIVO</b>👇📡\n"
+                        f"{sep}\n"
+                        f"🔴 <b>{len(jogos_live)} jogos ao vivo</b>\n"
+                        f"🎯 <b>{len(jogos_na_janela)} na janela alvo</b>\n"
+                        f"{sep}\n"
+                        f"🚨<b>JOGOS NO ALVO:</b>\n{linhas_jan}"
+                        f"{sep}\n"
+                        f"<b>⏳ FORA DA JANELA:</b>\n{linhas_fora}"
+                        f"{sep}"
+                    )
+                    requests.post(f"https://api.telegram.org/bot{token}/sendMessage",
+                                  json={"chat_id": chat_orig, "text": msg_radar, "parse_mode": "HTML"})
+                    print(f"[CMD] Radar respondido com {len(jogos_live)} jogos live, {len(jogos_na_janela)} na janela")
+                elif "/relatoriomensal" in text:
+                    try:
+                        msg = enviar_relatorio_mensal()
+                        requests.post(f"https://api.telegram.org/bot{token}/sendMessage",
+                                      json={"chat_id": chat_orig, "text": msg, "parse_mode": "HTML"})
+                    except Exception as e:
+                        print(f"[REL-MENSAL] Erro: {e}")
+                elif "/relatoriodiario" in text:
+                    try: enviar_relatorio_diario()
+                    except: pass
+                elif "/mercados" in text:
+                    try:
+                        if "/mercados24h" in text:
+                            msg = gerar_layout_mercados24h()
+                        else:
+                            msg = enviar_relatorio_performance()
+                        if msg:
+                            requests.post(f"https://api.telegram.org/bot{token}/sendMessage",
+                                          json={"chat_id": chat_orig, "text": msg, "parse_mode": "HTML"})
+                        else:
+                            requests.post(f"https://api.telegram.org/bot{token}/sendMessage",
+                                          json={"chat_id": chat_orig, "text": "Ainda sem dados de performance registrados.", "parse_mode": "HTML"})
+                    except Exception as e:
+                        print(f"[PERFORMANCE] Erro: {e}")
+                elif "/vip" in text:
+                    requests.post(f"https://api.telegram.org/bot{token}/sendMessage",
+                                  json={"chat_id": chat_orig, "text": VIP_PROMO, "parse_mode": "HTML", "disable_web_page_preview": True})
+                    print(f"[VIP] Divulgação enviada para {chat_orig}")
+                elif "/assinar" in text:
+                    try:
+                        user_info = msg.get("from", {})
+                        user_id = str(user_info.get("id", chat_orig))
+                        first = user_info.get("first_name", "")
+                        last = user_info.get("last_name", "")
+                        nome = f"{first} {last}".strip() or "Cliente"
+                        
+                        # Gera Pix via vip_manager
+                        import subprocess, sys
+                        result = subprocess.run(
+                            [sys.executable, "vip_manager.py", "pix", "--telegram", user_id, "--nome", nome],
+                            capture_output=True, text=True, timeout=30
+                        )
+                        output = result.stdout + result.stderr
+                        
+                        if "✅" in output and "payload" in output.lower():
+                            # Extrai o Pix copia e cola
+                            lines = output.split("\n")
+                            pix_code = ""
+                            for line in lines:
+                                if "Pix Copia e Cola" in line or "payload" in line.lower():
+                                    pix_code = line.split(":", 1)[-1].strip() if ":" in line else ""
+                                elif "000201" in line:
+                                    pix_code = line.strip()
+                            
+                            msg_vip = (
+                                f"🎉 <b>Pix gerado com sucesso!</b>\n\n"
+                                f"Olá <b>{nome}</b>, sua assinatura <b>Máquina de Greens VIP</b>\n"
+                                f"está quase pronta!\n\n"
+                                f"💰 <b>Valor: R$ 50,00</b>\n"
+                                f"📅 <b>Validade:</b> 30 dias após confirmação\n\n"
+                                f"👇 <b>PIX COPIA E COLA:</b>\n"
+                                f"<code>{pix_code}</code>\n\n"
+                                f"📱 <b>Ou pague pelo QR Code:</b>\n"
+                                f"Basta abrir o app do seu banco, escanear e pagar!\n\n"
+                                f"✅ Após a confirmação, você receberá o link do grupo VIP automaticamente!"
+                            )
+                            requests.post(f"https://api.telegram.org/bot{token}/sendMessage",
+                                          json={"chat_id": chat_orig, "text": msg_vip, "parse_mode": "HTML", "disable_web_page_preview": True})
+                            print(f"[VIP] Pix gerado para {nome} ({user_id})")
+                        else:
+                            requests.post(f"https://api.telegram.org/bot{token}/sendMessage",
+                                          json={"chat_id": chat_orig, "text": "❌ Erro ao gerar Pix. Tente novamente mais tarde ou contate o suporte.", "parse_mode": "HTML"})
+                            print(f"[VIP] Erro gerando Pix para {nome}: {output[:200]}")
+                    except Exception as e:
+                        print(f"[VIP-ASSINAR] Erro: {e}")
+                        requests.post(f"https://api.telegram.org/bot{token}/sendMessage",
+                                      json={"chat_id": chat_orig, "text": "❌ Erro ao processar. Tente /assinar novamente.", "parse_mode": "HTML"})
+        if max_id > 0:
+            try:
+                off = max_id
+                requests.get(f"https://api.telegram.org/bot{token}/getUpdates?offset={off+1}", timeout=5)
+            except: pass
+    except Exception as e:
+        print(f"[CMD] Erro processar comandos: {e}")
+
+# ========== TEXTO VIP ==========
+VIP_PROMO = (
+    f"━━━━━━━━━━━━━━━━━━━━\n"
+    f"<b>🚀 MÁQUINA DE GREENS VIP</b>\n"
+    f"━━━━━━━━━━━━━━━━━━━━\n\n"
+    f"🔥 <b>SINAIS AO VIVO COM ALTA ASSERTIVIDADE</b>\n\n"
+    f"📊 <b>6 MERCADOS:</b>\n"
+    f"⚽️ Over Gol Intervalo\n"
+    f"⚽️ Over Gol Partida\n"
+    f"⚽️ Over 1.5 Gols Partida\n"
+    f"⚽️ Ambas Marcam\n"
+    f"🚩 Escanteio Limite HT\n"
+    f"🚩 Escanteio Limite FT\n\n"
+    f"💰 <b>Investimento: R$ 50,00/mês</b>\n"
+    f"💳 Pagamento via <b>PIX</b> (entrada automática)\n\n"
+    f"📩 Envie <b>/assinar</b> no direct do bot para garantir sua vaga!"
+)
+
+# ========== VIP MANAGER ==========
+def run_vip():
+    """Executa verificacao VIP ao final do ciclo"""
+    try:
+        # Busca ASAAS_TOKEN do GitHub Secrets usando o GH_PAT
+        import subprocess, sys, os, json
+        gh_pat = os.environ.get("GH_PAT", "")
+        asaas_token = os.environ.get("ASAAS_TOKEN", "")
+        if not asaas_token and gh_pat:
+            try:
+                import urllib.request
+                req = urllib.request.Request(
+                    "https://api.github.com/repos/cleubianodasilva-png/BOT-ESPN/actions/secrets/ASAAS_TOKEN",
+                    headers={"Authorization": f"Bearer {gh_pat}", "Accept": "application/vnd.github.v3+json"}
+                )
+                # This won't return the value, only metadata. Let's use a different approach.
+                pass
+            except:
+                pass
+        
+        # Fallback: tenta ler de config.json no repositório
+        if not asaas_token:
+            try:
+                with open("config.json") as f:
+                    cfg = json.load(f)
+                    asaas_token = cfg.get("asaas_token", "")
+            except:
+                pass
+        
+        if not asaas_token:
+            print("[VIP] ASAAS_TOKEN não disponível - pulando")
+            return
+        
+        os.environ["ASAAS_TOKEN"] = asaas_token
+        
+        print("[VIP] Verificando novos pagamentos...")
+        subprocess.run([sys.executable, "vip_manager.py", "check"], capture_output=True, timeout=30, env={**os.environ, "ASAAS_TOKEN": asaas_token})
+        print("[VIP] Removendo expirados...")
+        subprocess.run([sys.executable, "vip_manager.py", "purge"], capture_output=True, timeout=30, env={**os.environ, "ASAAS_TOKEN": asaas_token})
+    except Exception as e:
+        print(f"[VIP] Erro: {e}")
+
+if __name__ == "__main__":
+    run()
+    run_vip()
