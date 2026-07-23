@@ -149,14 +149,12 @@ def get_stats_bzzoiro(fid_raw):
         if not home or not away:
             return stats
         
-        # Bzzoiro NÃO TEM dados de chutes (shots/shots on goal).
-        # O campo "attack" são ataques totais, não chutes.
-        # chutes_tot e chutes_gol ficam 0 — serão preenchidos
-        # pela ESPN ou apifootball no loop principal.
-        stats["chutes_tot_h"] = 0
-        stats["chutes_tot_a"] = 0
-        stats["chutes_gol_h"] = 0
-        stats["chutes_gol_a"] = 0
+        # ✅ Bzzoiro v2 AGORA TEM dados de chutes nativos (total_shots, shots_on_target).
+        #    Extrai direto sem depender de fallback ESPN/Promiedos.
+        stats["chutes_tot_h"] = int(home.get("total_shots", 0) or 0)
+        stats["chutes_tot_a"] = int(away.get("total_shots", 0) or 0)
+        stats["chutes_gol_h"] = int(home.get("shots_on_target", 0) or 0)
+        stats["chutes_gol_a"] = int(away.get("shots_on_target", 0) or 0)
         
         # Campos diretos da Bzzoiro
         stats["escanteios_h"] = int(home.get("corner_kicks", 0) or 0)
