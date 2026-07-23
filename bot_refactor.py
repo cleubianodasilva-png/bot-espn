@@ -42,11 +42,6 @@ def analisar_e_disparar(game, stats, p, m, sh, sa, odd_h, odd_a, sent_vistos):
         if (fav_gols <= adv_gols) and (adv_gols - fav_gols <= 1) and red_fav == 0:
             return "CORNER_HT", "Escanteio Limite HT"
 
-    # 5B. ESCANTEIO LIMITE HT (APPM 0.90 + Posse 58%)
-    if p == 1 and 32 <= m <= 38:
-        if (fav_gols <= adv_gols) and (adv_gols - fav_gols <= 1) and red_fav == 0:
-            return "CORNER_HT2", "Escanteio Limite HT"
-
     # 6. ESCANTEIO LIMITE FT
     if p == 2 and 78 <= m <= 88:
         if (fav_gols <= adv_gols) and (adv_gols - fav_gols <= 1) and red_fav == 0:
@@ -451,12 +446,10 @@ def enviar_relatorio_diario():
 # ─── Performance por Mercado ────────────────────────────────────────────────────
 MAPA_MERCADO = {
     "HT": "⚽️🔥OVER GOL INTERVALO🔥⚽️",
-    "LIMITEHT": "⚽️🔥OVER GOL LIMITE HT🔥⚽️",
     "BTTS": "⚽🔥AMBAS MARCAM🔥⚽️",
     "OFT": "⚽🔥OVER 1.5 GOLS FT🔥⚽️",
     "OVERGOAL": "⚽🔥OVER GOL PARTIDA🔥⚽️",
     "CORNER_HT": "🚩🔥ESCANTEIO ÁSIAT/LMT HT🔥🚩",
-    "CORNER_HT2": "⛳️🔥ESCANTEIO LIMITE HT🔥⛳️",
     "CORNER_FT": "🚩🔥ESCANTEIO ÁSIAT/LMT FT🔥🚩"
 }
 
@@ -1390,17 +1383,6 @@ def gerar_motivo(mercado, stats, sh, sa, fav_final, minuto, cantos_atual=0):
             return f"Ambas equipes pressionando no campo de ataque{vermelho}"
         return f"Jogo movimentado com chances nos dois lados{vermelho}"
 
-    if mercado == "LIMITEHT":
-        if jogo_aberto and total_chutes >= 8:
-            return f"Jogo aberto com muitas finalizações e sem gols{vermelho}"
-        if fav_perdendo and fav_chutes >= 6:
-            return f"{fav_label} perdendo e pressionando no campo ofensivo{vermelho}"
-        if fav_amassando:
-            return f"{fav_label} amassando em busca do empate{vermelho}"
-        if total_atq_perig >= 8:
-            return f"Alta pressão ofensiva nos minutos finais do 1º tempo{vermelho}"
-        return f"Pressão ofensiva para gol antes do intervalo{vermelho}"
-
     if mercado == "BTTS":
         if chutes_gol_h >= 2 and chutes_gol_a >= 1:
             return f"Ambas equipes com finalizações no alvo{vermelho}"
@@ -1507,7 +1489,7 @@ def msg_universal(home, away, minuto, liga, pais, n, mercado, entrada, placar, e
     if "CORNER" in mercado or "ESCANTEIO" in mercado:
         linha = cantos_atual + 0.5
         entrada = f"Mais de {linha}🚩"
-    elif mercado in ("HT", "LIMITEHT", "BTTS", "OFT", "OVERGOAL"):
+    elif mercado in ("HT", "BTTS", "OFT", "OVERGOAL"):
         if "Over" not in str(entrada) and "Ambas" not in str(entrada):
             if mercado == "OFT": entrada = "Over 1.5"
             elif mercado == "BTTS": entrada = "Ambas Marcam"
@@ -1583,15 +1565,11 @@ def msg_universal(home, away, minuto, liga, pais, n, mercado, entrada, placar, e
     seta_v = "🚩" 
 
     if "CORNER" in mercado or "ESCANTEIO" in mercado:
-        if mercado == "CORNER_HT2":
-            title = "⛳️🔥ESCANTEIO LIMITE HT🔥⛳️"
-        else:
-            nome_m = mercado.replace('CORNER_', 'ESCANTEIO ÁSIAT/LMT ')
-            title = f"🚩🔥{nome_m}🔥🚩"
+        nome_m = mercado.replace('CORNER_', 'ESCANTEIO ÁSIAT/LMT ')
+        title = f"🚩🔥{nome_m}🔥🚩"
     else:
         titles_map = {
             "HT": "OVER GOL INTERVALO",
-            "LIMITEHT": "OVER GOL LIMITE HT",
             "BTTS": "AMBAS MARCAM",
             "OFT": "OVER 1.5 GOLS PARTIDA",
             "OVERGOAL": "OVER GOL PARTIDA"
@@ -1682,7 +1660,7 @@ def checar_resultado(sinal):
         # Evita confirmar durante acrescimos do 1T (minuto 45-49 com status 1st)
         is_2h = (status in ('2nd', 'HT')) or (minute >= 50)
         
-        if not (is_final or (mercado in ["HT", "LIMITEHT", "CORNER_HT", "CORNER_HT2"] and is_2h)):
+        if not (is_final or (mercado in ["HT", "CORNER_HT"] and is_2h)):
             return None
         
         # Placar atual
@@ -1698,7 +1676,7 @@ def checar_resultado(sinal):
         total_ht = scores_ht
         
         # Lógica por Mercado
-        if mercado in ["HT", "LIMITEHT"]:
+        if mercado in ["HT"]:
             return "green" if total_ht >= 1 else ("red" if (is_2h or is_final) else None)
         
         elif mercado == "BTTS":
@@ -1711,7 +1689,7 @@ def checar_resultado(sinal):
             gols_entrada = sinal.get("extra_val", 0)
             return "green" if total_final > gols_entrada else ("red" if is_final else None)
             
-        elif mercado in ["CORNER_HT", "CORNER_HT2"]:
+        elif mercado in ["CORNER_HT"]:
             stats = get_stats_sokkerpro(fid_raw)
             c_final = max(0, stats.get("escanteios_h", 0)) + max(0, stats.get("escanteios_a", 0))
             c_entrada = sinal.get("extra_val", 0)
@@ -2187,58 +2165,6 @@ def run():
                         sent.add(key); total_env += 1
                         registrar_sinal(fid, "HT", h, a, mid)
 
-        # MERCADO 1B: OVER GOL LIMITE HT (15-27 min, 0x0, odd fav ≤ 1.80, prob 1.5 FT ≥ 60%, prob 0.5 HT ≥ 50%, APPM casa/fora ≥ 0.8)
-        if p == 1 and 15 <= m <= 27 and sh == 0 and sa == 0 and red_fav == 0:
-            fid_raw = j.get("fid_raw")
-            odd_fav_num = get_odd_favorito_num(h, a, fid=fid, league=j.get("liga_slug", j.get("liga", "")), fid_raw=fid_raw)
-            
-            # APPM: ataques perigosos por minuto (casa OU fora ≥ 0.7)
-            appm_casa = _appm_h
-            appm_fora = _appm_a
-            appm_ht_ok = appm_casa >= 0.7 or appm_fora >= 0.7
-            
-            # Cálculo de probabilidades via chutes (se tiver)
-            chutes_tot_total = (stats.get("chutes_tot_h", 0) + stats.get("chutes_tot_a", 0)) if stats else 0
-            chutes_gol_total = (stats.get("chutes_gol_h", 0) + stats.get("chutes_gol_a", 0)) if stats else 0
-            prob_15_ft, prob_05_ht = calcular_prob_gols_ht(chutes_tot_total, chutes_gol_total, m)
-            
-            # Fallback: se não tem stats de chutes nem ataques, usa odd do favorito como proxy
-            if chutes_tot_total == 0 and odd_fav_num <= 1.80:
-                prob_15_ft = max(prob_15_ft, 65)
-                prob_05_ht = max(prob_05_ht, 55)
-                if not appm_ht_ok and _aph_val == 0 and _apa_val == 0:
-                    appm_ht_ok = True
-            
-            print(f"[LIMITE-HT] {h} x {a} | odd_fav={odd_fav_num} | prob_15ft={prob_15_ft}% | prob_05ht={prob_05_ht}% | appm_casa={appm_casa} appm_fora={appm_fora} | appm_ht_ok={appm_ht_ok}")
-            
-            # Diagnóstico detalhado
-            limite_ht_ok = True
-            if odd_fav_num > 1.80:
-                print(f"[DIAG-LIMITEHT-BARRA] {h} x {a} — odd do favorito {odd_fav_num} > 1.80, pulando")
-                limite_ht_ok = False
-            elif prob_15_ft < 60:
-                print(f"[DIAG-LIMITEHT-BARRA] {h} x {a} — prob 1.5 FT {prob_15_ft}% < 60%, pulando")
-                limite_ht_ok = False
-            elif prob_05_ht < 50:
-                print(f"[DIAG-LIMITEHT-BARRA] {h} x {a} — prob 0.5 HT {prob_05_ht}% < 50%, pulando")
-                limite_ht_ok = False
-            elif not appm_ht_ok:
-                print(f"[DIAG-LIMITEHT-BARRA] {h} x {a} — APPM casa/fora insuficiente (casa={appm_casa} fora={appm_fora}, precisa ≥0.8), pulando")
-                limite_ht_ok = False
-            elif not appm_gols_ok:
-                print(f"[DIAG-LIMITEHT-BARRA] {h} x {a} — APPM gols insuficiente (casa={_appm_h} fora={_appm_a} total={_appm_total}), pulando")
-                limite_ht_ok = False
-            if limite_ht_ok:
-                hoje = datetime.now(BRT).strftime('%Y%m%d')
-                key = f"{dedup_id}_limiteht_{hoje}"
-                if key not in sent:
-                    ob365 = j.get("odds_b365", {}).get("o+0.5") if j.get("odds_b365") else None
-                    obano = j.get("odds_bano", {}).get("o+0.5") if j.get("odds_bano") else None
-                    mid = send_telegram(msg_universal(h, a, m, liga, pais, 4, "LIMITEHT", "Over 0.5", placar, stats=stats, sh=sh, sa=sa, fav_final=fav_final, odd_h=odd_h, odd_a=odd_a, odd_b365=ob365, odd_bano=obano), marca=key, home=h, away=a, odd_b365_val=ob365, odd_bano_val=obano)
-                    if mid:
-                        sent.add(key); total_env += 1
-                        registrar_sinal(fid, "LIMITEHT", h, a, mid)
-
         # MERCADO 2: AMBAS MARCAM BTTS (55-75 min, fav perdendo por 1, sem vermelho do fav, média hist ≥ 2.0)
         if p == 2 and 55 <= m <= 75 and ((sh == 1 and sa == 0) or (sh == 0 and sa == 1)):
             if not fav_perdendo_1:
@@ -2351,46 +2277,6 @@ def run():
                     sent.add(key); total_env += 1
                     registrar_sinal(fid, "CORNER_HT", h, a, mid, extra_val=cantos)
 
-        # MERCADO 5B: ESCANTEIO LIMITE HT (APPM ≥ 0.90 + Posse ≥ 58%)
-        # Minutagem 32-38, fav perdendo ou empatando, sem vermelho
-        # APPM e Posse como filtros adicionais
-        if p == 1 and 32 <= m <= 38:
-            corner_cond2 = corner_valido
-            if not corner_cond2:
-                print(f"[DIAG-CORNER-HT2-BARRA] {h} x {a} — favorito não empata nem perde por 1, pulando")
-            elif red_fav != 0:
-                print(f"[DIAG-CORNER-HT2-BARRA] {h} x {a} — favorito com cartão vermelho ({red_fav}), pulando")
-            else:
-                # APPM ≥ 0.90
-                appm_ok = _appm_h >= 0.90 or _appm_a >= 0.90
-                # Posse ≥ 58% do time dominante
-                posse_h_val = stats.get("posse_h", 0) if stats else 0
-                posse_a_val = stats.get("posse_a", 0) if stats else 0
-                posse_fav = posse_h_val if fav_final == "h" else posse_a_val
-                posse_ok = posse_fav >= 58
-                if not appm_ok:
-                    print(f"[DIAG-CORNER-HT2-BARRA] {h} x {a} — APPM insuficiente (casa={_appm_h} fora={_appm_a}, precisa ≥0.90), pulando")
-                elif not posse_ok:
-                    print(f"[DIAG-CORNER-HT2-BARRA] {h} x {a} — Posse do favorito insuficiente ({posse_fav}% < 58%), pulando")
-                else:
-                    hoje = datetime.now(BRT).strftime('%Y%m%d')
-                    key = f"{dedup_id}_cht2_{hoje}"
-                    cantos_h = stats.get("escanteios_h", -1) if stats else -1
-                    cantos_a = stats.get("escanteios_a", -1) if stats else -1
-                    cantos = (max(0, cantos_h) + max(0, cantos_a)) if (cantos_h >= 0 and cantos_a >= 0) else -1
-                    mid = None
-                    if cantos < 0:
-                        print(f"[DIAG-CORNER-HT2-BARRA] {h} x {a} — cantos={cantos} sem dados, pulando")
-                    elif key in sent:
-                        print(f"[DIAG-CORNER-HT2-DUP] {h} x {a} — já enviado hoje, pulando")
-                    else:
-                        ob365_e = j.get("odds_b365", {}).get("o+0.5") if j.get("odds_b365") else None
-                        obano_e = j.get("odds_bano", {}).get("o+0.5") if j.get("odds_bano") else None
-                        mid = send_telegram(msg_universal(h, a, m, liga, pais, 5, "CORNER_HT2", "", placar, cantos_atual=cantos, stats=stats, sh=sh, sa=sa, fav_final=fav_final, odd_h=odd_h, odd_a=odd_a, odd_b365=ob365_e, odd_bano=obano_e), marca=key, home=h, away=a, odd_b365_val=ob365_e, odd_bano_val=obano_e)
-                    if mid:
-                        sent.add(key); total_env += 1
-                        registrar_sinal(fid, "CORNER_HT2", h, a, mid, extra_val=cantos)
-
         # MERCADO 6: ESCANTEIO LIMITE FT (82-88 min, fav confirmado, empatando ou perdendo por 1, sem vermelho)
         if p == 2 and 82 <= m <= 88:
             corner_ft_cond = corner_valido
@@ -2443,4 +2329,5 @@ def run():
 
 if __name__ == "__main__":
     run()
+
 
