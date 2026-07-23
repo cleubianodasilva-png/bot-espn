@@ -21,8 +21,8 @@
   },
   "CORNER_HT": {
     "green": 15,
-    "red": 0,
-    "total": 15
+    "red": 1,
+    "total": 16
   },
   "CORNER_FT": {
     "green": 3,
