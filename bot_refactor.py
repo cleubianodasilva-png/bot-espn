@@ -260,6 +260,15 @@ SENT_API_PATH        = "sent_live_signals.json"
 RESULTADO_API_PATH   = "resultados.json"
 PERFORMANCE_API_PATH = "performance.json"
 
+def _crit(mercado, geral, key, default):
+    """Pega valor de critério: mercado > geral > default."""
+    c = mercado.get("criterios", {})
+    if key in c:
+        return c[key]
+    if key in geral:
+        return geral[key]
+    return default
+
 def _github_headers():
     return {
         "Authorization": f"Bearer {GITHUB_TOKEN}",
@@ -1981,9 +1990,6 @@ def run():
     # Carrega config dinâmico
     cfg = _load_config()
     GERAL = cfg.get("geral", {})
-    APPM_POR_TIME = GERAL.get("appm_min_por_time", 0.7)
-    APPM_TOTAL    = GERAL.get("appm_min_total", 1.4)
-    MEDIA_GOLS_MIN = GERAL.get("media_gols_minima", 2.2)
     MERCADOS = cfg.get("mercados", {})
     # Atalhos para cada mercado
     M_HT    = MERCADOS.get("over_05_ht", {})
@@ -2217,50 +2223,60 @@ def run():
             (sh + sa) == 1
         )
 
-        # APPM — Ataques Perigosos Por Minuto (filtro geral anti-jogo morno)
+        # APPM, chutes, escanteios — valores brutos (cada mercado usa seu threshold)
         _aph_val = stats.get("ataques_perigosos_h", 0) if stats else 0
         _apa_val = stats.get("ataques_perigosos_a", 0) if stats else 0
         _apt_val = _aph_val + _apa_val
         _appm_total = round(_apt_val / m, 2) if m > 0 else 0
         _appm_h = round(_aph_val / m, 2) if m > 0 else 0
         _appm_a = round(_apa_val / m, 2) if m > 0 else 0
-        # APPM universal — mínimo 0.70 em todos os mercados (anti-jogo morno)
-        appm_valido   = _appm_h >= APPM_POR_TIME or _appm_a >= APPM_POR_TIME or _appm_total >= APPM_TOTAL
-        appm_gols_ok  = _appm_h >= APPM_POR_TIME or _appm_a >= APPM_POR_TIME or _appm_total >= APPM_TOTAL
-        if not appm_valido:
-            print(f"[APPM-BLOQUEADO] {h} x {a} — APPM casa={_appm_h} fora={_appm_a} total={_appm_total} (mín: 0.7/time ou 1.4 total)")
+        _chutes_alvo_h = stats.get("chutes_gol_h", 0) if stats else 0
+        _chutes_alvo_a = stats.get("chutes_gol_a", 0) if stats else 0
+        _chutes_tot_h = stats.get("chutes_tot_h", 0) if stats else 0
+        _chutes_tot_a = stats.get("chutes_tot_a", 0) if stats else 0
+        _escanteios_h = stats.get("escanteios_h", -1) if stats else -1
+        _escanteios_a = stats.get("escanteios_a", -1) if stats else -1
 
-        # HISTÓRICO — Média de gols por partida (jogo todo) ≥ 2.2
-        # Req. para: Over Gol HT, Over Gol FT e BTTS → APENAS mercados de gol
-        # Escanteios NÃO usam filtro de média histórica
+        # HISTÓRICO — Média de gols por partida
         home_id = j.get("home_id", "")
         away_id = j.get("away_id", "")
         media_hist = 0.0
         if BOT_SOURCE == "sokkerpro":
-            # SokkerPro: usa médias nativas da própria API SokkerPro
             media_hist = get_media_gols_historica_skp(h, a, stats)
-            hist_ok = media_hist >= MEDIA_GOLS_MIN  # -1 = sem dados, bloqueia
-        else:
-            if home_id and away_id:
-                media_hist = get_media_gols_historica(home_id, away_id)
-            hist_ok = media_hist >= MEDIA_GOLS_MIN  # mínimo; -1 = sem dados, bloqueia
-        if not hist_ok:
-            print(f"[HIST-BLOQUEADO] {h} x {a} — média {media_hist:.1f} < 2.2, pulando mercados de gol")
+        elif home_id and away_id:
+            media_hist = get_media_gols_historica(home_id, away_id)
 
         # MERCADO 1: OVER 0.5 HT
         ht_ini = M_HT.get("minuto_inicio", 15)
         ht_fim = M_HT.get("minuto_fim", 27)
         if M_HT.get("ativo", True) and p == M_HT.get("periodo", 1) and ht_ini <= m <= ht_fim:
+            # Critérios dinâmicos do mercado
+            ht_appm_time = _crit(M_HT, GERAL, "appm_min_por_time", 0.7)
+            ht_appm_total = _crit(M_HT, GERAL, "appm_min_total", 1.4)
+            ht_media = _crit(M_HT, GERAL, "media_gols_partida_min", 2.2)
+            ht_chutes_alvo = _crit(M_HT, GERAL, "chutes_alvo_min", 3)
+            ht_chutes_tot = _crit(M_HT, GERAL, "chutes_totais_min", 6)
+            ht_atq_perig = _crit(M_HT, GERAL, "ataques_perigosos_min", 15)
+            ht_red_max = _crit(M_HT, GERAL, "max_red_card_fav", 0)
+            ht_diff_max = _crit(M_HT, GERAL, "diferenca_gols_fav_max", 0)
+            ht_appm_ok = _appm_h >= ht_appm_time or _appm_a >= ht_appm_time or _appm_total >= ht_appm_total
+            ht_media_ok = media_hist >= ht_media if media_hist >= 0 else False
+            ht_chutes_alvo_ok = (_chutes_alvo_h + _chutes_alvo_a) >= ht_chutes_alvo
+            ht_chutes_tot_ok = (_chutes_tot_h + _chutes_tot_a) >= ht_chutes_tot
             if not (sh == 0 and sa == 0):
                 print(f"[DIAG-HT-BARRA] {h} x {a} — placar não é 0x0 ({placar}), pulando")
             elif not fav_empatando:
                 print(f"[DIAG-HT-BARRA] {h} x {a} — favorito não empatando (fav={fav_final}, gols_fav={fav_gols} adv={adv_gols}), pulando")
-            elif red_fav != 0:
-                print(f"[DIAG-HT-BARRA] {h} x {a} — favorito com cartão vermelho ({red_fav}), pulando")
-            elif not appm_gols_ok:
-                print(f"[DIAG-HT-BARRA] {h} x {a} — APPM insuficiente (casa={_appm_h} fora={_appm_a} total={_appm_total}), pulando")
-            elif not hist_ok:
-                print(f"[DIAG-HT-BARRA] {h} x {a} — média histórica {media_hist:.1f} < 2.2, pulando")
+            elif red_fav > ht_red_max:
+                print(f"[DIAG-HT-BARRA] {h} x {a} — favorito com cartão vermelho ({red_fav} > {ht_red_max}), pulando")
+            elif not ht_appm_ok:
+                print(f"[DIAG-HT-BARRA] {h} x {a} — APPM insuficiente (casa={_appm_h} fora={_appm_a} total={_appm_total}, min {ht_appm_time}/{ht_appm_total}), pulando")
+            elif not ht_media_ok:
+                print(f"[DIAG-HT-BARRA] {h} x {a} — média histórica {media_hist:.1f} < {ht_media}, pulando")
+            elif not ht_chutes_alvo_ok:
+                print(f"[DIAG-HT-BARRA] {h} x {a} — chutes no alvo insuficientes ({_chutes_alvo_h+_chutes_alvo_a} < {ht_chutes_alvo}), pulando")
+            elif not ht_chutes_tot_ok:
+                print(f"[DIAG-HT-BARRA] {h} x {a} — chutes totais insuficientes ({_chutes_tot_h+_chutes_tot_a} < {ht_chutes_tot}), pulando")
             else:
                 hoje = datetime.now(BRT).strftime('%Y%m%d')
                 key = f"{dedup_id}_ht_{hoje}"
@@ -2278,14 +2294,27 @@ def run():
         btts_ini = M_BTTS.get("minuto_inicio", 55)
         btts_fim = M_BTTS.get("minuto_fim", 75)
         if M_BTTS.get("ativo", True) and p == M_BTTS.get("periodo", 2) and btts_ini <= m <= btts_fim and ((sh == 1 and sa == 0) or (sh == 0 and sa == 1)):
+            b_appm_time = _crit(M_BTTS, GERAL, "appm_min_por_time", 0.7)
+            b_appm_total = _crit(M_BTTS, GERAL, "appm_min_total", 1.4)
+            b_media = _crit(M_BTTS, GERAL, "media_gols_partida_min", 2.2)
+            b_chutes_alvo = _crit(M_BTTS, GERAL, "chutes_alvo_min", 3)
+            b_chutes_tot = _crit(M_BTTS, GERAL, "chutes_totais_min", 6)
+            b_atq = _crit(M_BTTS, GERAL, "ataques_perigosos_min", 15)
+            b_red_max = _crit(M_BTTS, GERAL, "max_red_card_fav", 0)
+            b_diff_max = _crit(M_BTTS, GERAL, "diferenca_gols_fav_max", 1)
+            b_appm_ok = _appm_h >= b_appm_time or _appm_a >= b_appm_time or _appm_total >= b_appm_total
+            b_media_ok = media_hist >= b_media if media_hist >= 0 else False
+            b_chutes_ok = (_chutes_alvo_h + _chutes_alvo_a) >= b_chutes_alvo
             if not fav_perdendo_1:
                 print(f"[DIAG-BTTS-BARRA] {h} x {a} — favorito não perdendo por 1 (fav_gols={fav_gols} adv={adv_gols}), pulando")
-            elif red_fav != 0:
-                print(f"[DIAG-BTTS-BARRA] {h} x {a} — favorito com cartão vermelho ({red_fav}), pulando")
-            elif not appm_gols_ok:
+            elif red_fav > b_red_max:
+                print(f"[DIAG-BTTS-BARRA] {h} x {a} — favorito com cartão vermelho ({red_fav} > {b_red_max}), pulando")
+            elif not b_appm_ok:
                 print(f"[DIAG-BTTS-BARRA] {h} x {a} — APPM insuficiente (casa={_appm_h} fora={_appm_a} total={_appm_total}), pulando")
-            elif not hist_ok:
-                print(f"[DIAG-BTTS-BARRA] {h} x {a} — média histórica {media_hist:.1f} < 2.2, pulando")
+            elif not b_media_ok:
+                print(f"[DIAG-BTTS-BARRA] {h} x {a} — média histórica {media_hist:.1f} < {b_media}, pulando")
+            elif not b_chutes_ok:
+                print(f"[DIAG-BTTS-BARRA] {h} x {a} — chutes no alvo ({_chutes_alvo_h+_chutes_alvo_a} < {b_chutes_alvo}), pulando")
             else:
                 hoje = datetime.now(BRT).strftime('%Y%m%d')
                 key = f"{dedup_id}_btts_{hoje}"
@@ -2303,14 +2332,21 @@ def run():
         oft_ini = M_OFT.get("minuto_inicio", 55)
         oft_fim = M_OFT.get("minuto_fim", 75)
         if M_OFT.get("ativo", True) and p == M_OFT.get("periodo", 2) and oft_ini <= m <= oft_fim and ((sh == 1 and sa == 0) or (sh == 0 and sa == 1)):
+            o_appm_time = _crit(M_OFT, GERAL, "appm_min_por_time", 0.7)
+            o_appm_total = _crit(M_OFT, GERAL, "appm_min_total", 1.4)
+            o_media = _crit(M_OFT, GERAL, "media_gols_partida_min", 2.2)
+            o_chutes_alvo = _crit(M_OFT, GERAL, "chutes_alvo_min", 3)
+            o_red_max = _crit(M_OFT, GERAL, "max_red_card_fav", 0)
+            o_appm_ok = _appm_h >= o_appm_time or _appm_a >= o_appm_time or _appm_total >= o_appm_total
+            o_media_ok = media_hist >= o_media if media_hist >= 0 else False
             if not fav_perdendo_1:
                 print(f"[DIAG-OFT-BARRA] {h} x {a} — favorito não perdendo por 1 (fav_gols={fav_gols} adv={adv_gols}), pulando")
-            elif red_fav != 0:
-                print(f"[DIAG-OFT-BARRA] {h} x {a} — favorito com cartão vermelho ({red_fav}), pulando")
-            elif not appm_gols_ok:
+            elif red_fav > o_red_max:
+                print(f"[DIAG-OFT-BARRA] {h} x {a} — favorito com cartão vermelho ({red_fav} > {o_red_max}), pulando")
+            elif not o_appm_ok:
                 print(f"[DIAG-OFT-BARRA] {h} x {a} — APPM insuficiente (casa={_appm_h} fora={_appm_a} total={_appm_total}), pulando")
-            elif not hist_ok:
-                print(f"[DIAG-OFT-BARRA] {h} x {a} — média histórica {media_hist:.1f} < 2.2, pulando")
+            elif not o_media_ok:
+                print(f"[DIAG-OFT-BARRA] {h} x {a} — média histórica {media_hist:.1f} < {o_media}, pulando")
             else:
                 hoje = datetime.now(BRT).strftime('%Y%m%d')
                 key = f"{dedup_id}_oft_{hoje}"
@@ -2330,14 +2366,23 @@ def run():
         og_fim = M_OG.get("minuto_fim", 75)
         overgoal_valido = (fav_empatando or fav_perdendo_1)
         if M_OG.get("ativo", True) and p == M_OG.get("periodo", 2) and og_ini <= m <= og_fim:
+            og_appm_time = _crit(M_OG, GERAL, "appm_min_por_time", 0.7)
+            og_appm_total = _crit(M_OG, GERAL, "appm_min_total", 1.4)
+            og_media = _crit(M_OG, GERAL, "media_gols_partida_min", 2.2)
+            og_chutes_alvo = _crit(M_OG, GERAL, "chutes_alvo_min", 3)
+            og_chutes_tot = _crit(M_OG, GERAL, "chutes_totais_min", 6)
+            og_atq = _crit(M_OG, GERAL, "ataques_perigosos_min", 15)
+            og_red_max = _crit(M_OG, GERAL, "max_red_card_fav", 0)
+            og_appm_ok = _appm_h >= og_appm_time or _appm_a >= og_appm_time or _appm_total >= og_appm_total
+            og_media_ok = media_hist >= og_media if media_hist >= 0 else False
             if not overgoal_valido:
                 print(f"[DIAG-OVERGOAL-BARRA] {h} x {a} — favorito não empata nem perde por 1 (fav_empatando={fav_empatando} fav_perdendo_1={fav_perdendo_1}), pulando")
-            elif red_fav != 0:
-                print(f"[DIAG-OVERGOAL-BARRA] {h} x {a} — favorito com cartão vermelho ({red_fav}), pulando")
-            elif not appm_gols_ok:
+            elif red_fav > og_red_max:
+                print(f"[DIAG-OVERGOAL-BARRA] {h} x {a} — favorito com cartão vermelho ({red_fav} > {og_red_max}), pulando")
+            elif not og_appm_ok:
                 print(f"[DIAG-OVERGOAL-BARRA] {h} x {a} — APPM insuficiente (casa={_appm_h} fora={_appm_a} total={_appm_total}), pulando")
-            elif not hist_ok:
-                print(f"[DIAG-OVERGOAL-BARRA] {h} x {a} — média histórica {media_hist:.1f} < 2.2, pulando")
+            elif not og_media_ok:
+                print(f"[DIAG-OVERGOAL-BARRA] {h} x {a} — média histórica {media_hist:.1f} < {og_media}, pulando")
             else:
                 hoje = datetime.now(BRT).strftime('%Y%m%d')
                 key = f"{dedup_id}_overgoal_{hoje}"
@@ -2368,13 +2413,21 @@ def run():
         cht_ini = M_CHT.get("minuto_inicio", 32)
         cht_fim = M_CHT.get("minuto_fim", 38)
         if M_CHT.get("ativo", True) and p == M_CHT.get("periodo", 1) and cht_ini <= m <= cht_fim:
+            cht_appm_time = _crit(M_CHT, GERAL, "appm_min_por_time", 0.7)
+            cht_appm_total = _crit(M_CHT, GERAL, "appm_min_total", 1.4)
+            cht_escanteios = _crit(M_CHT, GERAL, "escanteios_minimos", 2)
+            cht_red_max = _crit(M_CHT, GERAL, "max_red_card_fav", 0)
+            cht_appm_ok = _appm_h >= cht_appm_time or _appm_a >= cht_appm_time or _appm_total >= cht_appm_total
+            cht_esc_ok = (_escanteios_h + _escanteios_a) >= cht_escanteios if _escanteios_h >= 0 and _escanteios_a >= 0 else True
             corner_cond = corner_valido
             if not corner_cond:
                 print(f"[DIAG-CORNER-HT-BARRA] {h} x {a} — favorito não empata nem perde por 1 (fav_empatando={fav_empatando} fav_perdendo_1={fav_perdendo_1}), pulando")
-            elif red_fav != 0:
-                print(f"[DIAG-CORNER-HT-BARRA] {h} x {a} — favorito com cartão vermelho ({red_fav}), pulando")
-            elif not appm_valido:
-                print(f"[DIAG-CORNER-HT-BARRA] {h} x {a} — APPM insuficiente (casa={_appm_h} fora={_appm_a} total={_appm_total}, precisa ≥0.7/time ou ≥1.4 total), pulando")
+            elif red_fav > cht_red_max:
+                print(f"[DIAG-CORNER-HT-BARRA] {h} x {a} — favorito com cartão vermelho ({red_fav} > {cht_red_max}), pulando")
+            elif not cht_appm_ok:
+                print(f"[DIAG-CORNER-HT-BARRA] {h} x {a} — APPM insuficiente (casa={_appm_h} fora={_appm_a} total={_appm_total}), pulando")
+            elif not cht_esc_ok:
+                print(f"[DIAG-CORNER-HT-BARRA] {h} x {a} — escanteios insuficientes ({_escanteios_h+_escanteios_a} < {cht_escanteios}), pulando")
             else:
                 hoje = datetime.now(BRT).strftime('%Y%m%d')
                 key = f"{dedup_id}_cht_{hoje}"
@@ -2398,13 +2451,21 @@ def run():
         cft_ini = M_CFT.get("minuto_inicio", 82)
         cft_fim = M_CFT.get("minuto_fim", 88)
         if M_CFT.get("ativo", True) and p == M_CFT.get("periodo", 2) and cft_ini <= m <= cft_fim:
+            cft_appm_time = _crit(M_CFT, GERAL, "appm_min_por_time", 0.7)
+            cft_appm_total = _crit(M_CFT, GERAL, "appm_min_total", 1.4)
+            cft_escanteios = _crit(M_CFT, GERAL, "escanteios_minimos", 2)
+            cft_red_max = _crit(M_CFT, GERAL, "max_red_card_fav", 0)
+            cft_appm_ok = _appm_h >= cft_appm_time or _appm_a >= cft_appm_time or _appm_total >= cft_appm_total
+            cft_esc_ok = (_escanteios_h + _escanteios_a) >= cft_escanteios if _escanteios_h >= 0 and _escanteios_a >= 0 else True
             corner_ft_cond = corner_valido
             if not corner_ft_cond:
                 print(f"[DIAG-CORNER-FT-BARRA] {h} x {a} — favorito não empata nem perde por 1 (fav_empatando={fav_empatando} fav_perdendo_1={fav_perdendo_1}), pulando")
-            elif red_fav != 0:
-                print(f"[DIAG-CORNER-FT-BARRA] {h} x {a} — favorito com cartão vermelho ({red_fav}), pulando")
-            elif not appm_valido:
+            elif red_fav > cft_red_max:
+                print(f"[DIAG-CORNER-FT-BARRA] {h} x {a} — favorito com cartão vermelho ({red_fav} > {cft_red_max}), pulando")
+            elif not cft_appm_ok:
                 print(f"[DIAG-CORNER-FT-BARRA] {h} x {a} — APPM insuficiente (casa={_appm_h} fora={_appm_a} total={_appm_total}), pulando")
+            elif not cft_esc_ok:
+                print(f"[DIAG-CORNER-FT-BARRA] {h} x {a} — escanteios insuficientes ({_escanteios_h+_escanteios_a} < {cft_escanteios}), pulando")
             else:
                 hoje = datetime.now(BRT).strftime('%Y%m%d')
                 key = f"{dedup_id}_cft_{hoje}"
