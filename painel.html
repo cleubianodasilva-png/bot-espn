@@ -2,389 +2,398 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Máquina de Greens VIP - Painel</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1a1a2e">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-body { 
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-    background: linear-gradient(180deg, #1a1a2e 0%, #d48821 100%);
-    background-attachment: fixed;
-    color: #ffffff; 
-    min-height: 100vh;
-    padding-bottom: 40px;
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body {
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:linear-gradient(180deg,#1a1a2e 0%,#d48821 100%);
+  background-attachment:fixed; color:#fff; min-height:100vh; padding-bottom:40px;
 }
-.container { max-width: 900px; margin: 0 auto; padding: 20px; }
-.header { text-align: center; margin: 30px 0; }
-h1 { color: #ffffff; font-size: 1.8em; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
-.card { 
-    background: rgba(255, 255, 255, 0.1); 
-    backdrop-filter: blur(10px); 
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 15px; 
-    padding: 20px; 
-    margin-bottom: 20px; 
-    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+.container { max-width:900px; margin:0 auto; padding:15px; }
+.header { text-align:center; margin:20px 0; }
+h1 { color:#fff; font-size:1.5em; text-shadow:2px 2px 4px rgba(0,0,0,0.5); }
+.card {
+  background:rgba(255,255,255,0.1); backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,0.1); border-radius:15px;
+  padding:16px; margin-bottom:16px; box-shadow:0 8px 32px rgba(0,0,0,0.3);
 }
-h2 { color: #ffd700; font-size: 1.2em; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 5px; }
-.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
-.field { display: flex; flex-direction: column; margin-bottom: 12px; }
-label { font-size: 0.85em; color: #ddd; margin-bottom: 4px; font-weight: 500; }
-input, select { 
-    background: rgba(0,0,0,0.3); 
-    border: 1px solid rgba(255,255,255,0.3); 
-    border-radius: 8px; 
-    padding: 10px; 
-    color: white; 
-    font-size: 1em;
+h2 { color:#ffd700; font-size:1em; margin-bottom:12px; padding-bottom:5px; font-weight:bold; }
+.titulo-mercado { font-size:1.1em; font-weight:bold; }
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; }
+.field { display:flex; flex-direction:column; margin-bottom:8px; }
+label { font-size:0.8em; color:#ddd; margin-bottom:3px; font-weight:500; }
+input, select {
+  background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.3);
+  border-radius:8px; padding:9px; color:#fff; font-size:0.95em; width:100%;
 }
-input:focus { border-color: #ffd700; outline: none; }
-.switch-field { display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; }
-.btn-save { 
-    width: 100%; 
-    padding: 18px; 
-    background: #27ae60; 
-    color: white; 
-    border: none; 
-    border-radius: 12px; 
-    font-size: 1.1em; 
-    font-weight: bold; 
-    cursor: pointer; 
-    margin-top: 20px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    transition: transform 0.2s, background 0.2s;
+input:focus { border-color:#ffd700; outline:none; }
+.switch-field {
+  display:flex; align-items:center; justify-content:space-between;
+  background:rgba(0,0,0,0.2); padding:8px 12px; border-radius:8px; margin-bottom:10px;
 }
-.btn-save:active { transform: scale(0.98); }
-.btn-save:disabled { background: #555; cursor: not-allowed; }
+.switch-field input { width:auto; transform:scale(1.2); }
+.btn-save {
+  width:100%; padding:16px; background:#27ae60; color:#fff; border:none;
+  border-radius:12px; font-size:1.1em; font-weight:bold; cursor:pointer;
+  margin-top:15px; box-shadow:0 4px 15px rgba(0,0,0,0.3);
+  transition:transform 0.2s,background 0.2s;
+}
+.btn-save:active { transform:scale(0.98); }
+.btn-save:disabled { background:#555; cursor:not-allowed; }
 .btn-install {
-    display: none;
-    width: 100%;
-    margin-bottom: 15px;
-    padding: 12px;
-    background: #ffd700;
-    color: #000;
-    border: none;
-    border-radius: 8px;
-    font-weight: bold;
-    text-align: center;
-    text-decoration: none;
+  display:none; width:100%; margin-bottom:12px; padding:10px;
+  background:#ffd700; color:#000; border:none; border-radius:8px;
+  font-weight:bold; text-align:center; font-size:0.9em;
 }
-#status { text-align: center; margin-top: 15px; font-weight: 500; font-size: 0.9em; }
-.ok { color: #2ecc71; }
-.err { color: #e74c3c; }
-.loading { color: #f1c40f; }
-
-/* Mobile optimization */
-@media (max-width: 600px) {
-    .container { padding: 15px; }
-    h1 { font-size: 1.5em; }
-}
+#status { text-align:center; margin-top:12px; font-weight:500; font-size:0.85em; }
+.ok { color:#2ecc71; } .err { color:#e74c3c; } .loading { color:#f1c40f; }
+@media (max-width:600px) { .container { padding:12px; } h1 { font-size:1.3em; } }
 </style>
 </head>
 <body>
-
 <div class="container">
-    <div class="header">
-        <h1>⚽️ Máquina de Greens VIP</h1>
+  <div class="header"><h1>⚽️🚩Máquina de Greens VIP🚩⚽️</h1></div>
+  <button id="btnInstall" class="btn-install">📲 Instalar Aplicativo</button>
+
+  <!-- GLOBAIS (fallback) -->
+  <div class="card">
+    <div class="switch-field"><h2>📊 Configurações Globais (Fallback)</h2></div>
+    <div class="grid">
+      <div class="field"><label>APPM Min (por time)</label><input type="number" id="g-appm-time" step="0.1"></div>
+      <div class="field"><label>APPM Min (total)</label><input type="number" id="g-appm-total" step="0.1"></div>
+      <div class="field"><label>Média Gols Partida</label><input type="number" id="g-media-partida" step="0.1"></div>
+      <div class="field"><label>Média Gols HT</label><input type="number" id="g-media-ht" step="0.1"></div>
+      <div class="field"><label>Média Gols FT</label><input type="number" id="g-media-ft" step="0.1"></div>
+      <div class="field"><label>Chutes no Alvo Mín</label><input type="number" id="g-chutes-alvo"></div>
+      <div class="field"><label>Chutes Totais Mín</label><input type="number" id="g-chutes-tot"></div>
+      <div class="field"><label>Ataques Perigosos Mín</label><input type="number" id="g-atq-perig"></div>
+      <div class="field"><label>Escanteios Mínimos</label><input type="number" id="g-esc-min"></div>
+      <div class="field"><label>Diferença Máx (Fav perdendo)</label><input type="number" id="g-diff-max"></div>
+      <div class="field"><label>Cartão Vermelho Máx (Fav)</label><input type="number" id="g-red-max"></div>
+      <div class="field"><label>BTTS Probabilidade Mín (%)</label><input type="number" id="g-btts-prob"></div>
     </div>
+  </div>
 
-    <button id="btnInstall" class="btn-install">📲 Instalar Aplicativo</button>
-
-    <!-- Config Gerais -->
-    <div class="card">
-        <h2>📊 Configurações Globais</h2>
-        <div class="grid">
-            <div class="field">
-                <label>APPM Min (Por Time)</label>
-                <input type="number" id="g-appm-time" step="0.1" value="0.7">
-            </div>
-            <div class="field">
-                <label>APPM Min (Total)</label>
-                <input type="number" id="g-appm-total" step="0.1" value="1.4">
-            </div>
-            <div class="field">
-                <label>Média Gols Partida</label>
-                <input type="number" id="g-media-partida" step="0.1" value="2.2">
-            </div>
-            <div class="field">
-                <label>Ataques Perig. Mín (Live)</label>
-                <input type="number" id="g-atq-perig" value="15">
-            </div>
-            <div class="field">
-                <label>Chutes no Alvo Mín</label>
-                <input type="number" id="g-chutes-alvo" value="3">
-            </div>
-            <div class="field">
-                <label>Diferença Máx (Fav Perdendo)</label>
-                <input type="number" id="g-diff-max" value="1">
-            </div>
-        </div>
+  <!-- 1 - OVER GOL INTERVALO -->
+  <div class="card">
+    <div class="switch-field">
+      <span class="titulo-mercado">⚽️🔥OVER GOL INTERVALO🔥⚽️</span>
+      <input type="checkbox" id="m1-ativo" checked>
     </div>
-
-    <!-- Mercado: HT -->
-    <div class="card">
-        <div class="switch-field">
-            <h2>🔥 Over 0.5 Gols HT</h2>
-            <input type="checkbox" id="ht-ativo" checked>
-        </div>
-        <div class="grid">
-            <div class="field"><label>Minuto Início</label><input type="number" id="ht-inicio" value="15"></div>
-            <div class="field"><label>Minuto Fim</label><input type="number" id="ht-fim" value="27"></div>
-            <div class="field"><label>Média Gols HT Mín</label><input type="number" id="ht-media" step="0.1" value="1.0"></div>
-        </div>
+    <div class="grid">
+      <div class="field"><label>Minuto Início</label><input type="number" id="m1-inicio"></div>
+      <div class="field"><label>Minuto Fim</label><input type="number" id="m1-fim"></div>
+      <div class="field"><label>Período (1=HT, 2=FT)</label><input type="number" id="m1-periodo"></div>
+      <div class="field"><label>Placar Válido</label><input id="m1-placar" placeholder="0x0"></div>
+      <div class="field"><label>APPM Por Time</label><input type="number" id="m1-appm-time" step="0.1"></div>
+      <div class="field"><label>APPM Total</label><input type="number" id="m1-appm-total" step="0.1"></div>
+      <div class="field"><label>Média Gols Partida</label><input type="number" id="m1-media-partida" step="0.1"></div>
+      <div class="field"><label>Média Gols HT</label><input type="number" id="m1-media-ht" step="0.1"></div>
+      <div class="field"><label>Chutes no Alvo Mín</label><input type="number" id="m1-chutes-alvo"></div>
+      <div class="field"><label>Chutes Totais Mín</label><input type="number" id="m1-chutes-tot"></div>
+      <div class="field"><label>Ataques Perigosos Mín</label><input type="number" id="m1-atq-perig"></div>
+      <div class="field"><label>Cartão Vermelho Máx (Fav)</label><input type="number" id="m1-red-max"></div>
+      <div class="field"><label>Diferença Gols Fav Máx</label><input type="number" id="m1-diff-max"></div>
     </div>
+  </div>
 
-    <!-- Mercado: BTTS -->
-    <div class="card">
-        <div class="switch-field">
-            <h2>🔥 Ambas Marcam (BTTS)</h2>
-            <input type="checkbox" id="btts-ativo" checked>
-        </div>
-        <div class="grid">
-            <div class="field"><label>Minuto Início</label><input type="number" id="btts-inicio" value="55"></div>
-            <div class="field"><label>Minuto Fim</label><input type="number" id="btts-fim" value="75"></div>
-            <div class="field"><label>BTTS Prob. Mín (%)</label><input type="number" id="btts-prob" value="50"></div>
-        </div>
+  <!-- 2 - AMBAS MARCAM -->
+  <div class="card">
+    <div class="switch-field">
+      <span class="titulo-mercado">⚽️🔥AMBAS MARCAM🔥⚽️</span>
+      <input type="checkbox" id="m2-ativo" checked>
     </div>
-
-    <!-- Mercado: Over Goal Partida -->
-    <div class="card">
-        <div class="switch-field">
-            <h2>🔥 Over Gol Partida</h2>
-            <input type="checkbox" id="og-ativo" checked>
-        </div>
-        <div class="grid">
-            <div class="field"><label>Minuto Início</label><input type="number" id="og-inicio" value="55"></div>
-            <div class="field"><label>Minuto Fim</label><input type="number" id="og-fim" value="75"></div>
-            <div class="field"><label>Favorito Emp/Perd 1</label>
-                <select id="og-fav-cond">
-                    <option value="true">Ativo</option>
-                    <option value="false">Desativado</option>
-                </select>
-            </div>
-        </div>
+    <div class="grid">
+      <div class="field"><label>Minuto Início</label><input type="number" id="m2-inicio"></div>
+      <div class="field"><label>Minuto Fim</label><input type="number" id="m2-fim"></div>
+      <div class="field"><label>Período (1=HT, 2=FT)</label><input type="number" id="m2-periodo"></div>
+      <div class="field"><label>Placar Válido</label><input id="m2-placar" placeholder="1x0_0x1"></div>
+      <div class="field"><label>APPM Por Time</label><input type="number" id="m2-appm-time" step="0.1"></div>
+      <div class="field"><label>APPM Total</label><input type="number" id="m2-appm-total" step="0.1"></div>
+      <div class="field"><label>Média Gols Partida</label><input type="number" id="m2-media-partida" step="0.1"></div>
+      <div class="field"><label>Média Gols FT</label><input type="number" id="m2-media-ft" step="0.1"></div>
+      <div class="field"><label>Chutes no Alvo Mín</label><input type="number" id="m2-chutes-alvo"></div>
+      <div class="field"><label>Chutes Totais Mín</label><input type="number" id="m2-chutes-tot"></div>
+      <div class="field"><label>Ataques Perigosos Mín</label><input type="number" id="m2-atq-perig"></div>
+      <div class="field"><label>Cartão Vermelho Máx (Fav)</label><input type="number" id="m2-red-max"></div>
+      <div class="field"><label>Diferença Gols Fav Máx</label><input type="number" id="m2-diff-max"></div>
+      <div class="field"><label>BTTS Probabilidade Mín (%)</label><input type="number" id="m2-btts-prob"></div>
     </div>
+  </div>
 
-    <!-- Mercado: Escanteio HT -->
-    <div class="card">
-        <div class="switch-field">
-            <h2>🚩 Escanteio HT</h2>
-            <input type="checkbox" id="cht-ativo" checked>
-        </div>
-        <div class="grid">
-            <div class="field"><label>Minuto Início</label><input type="number" id="cht-inicio" value="32"></div>
-            <div class="field"><label>Minuto Fim</label><input type="number" id="cht-fim" value="38"></div>
-            <div class="field"><label>Escanteios Mín (Soma)</label><input type="number" id="cht-esc" value="2"></div>
-        </div>
+  <!-- 3 - OVER 1.5 GOLS PARTIDA -->
+  <div class="card">
+    <div class="switch-field">
+      <span class="titulo-mercado">⚽️🔥OVER 1.5 GOLS PARTIDA🔥⚽️</span>
+      <input type="checkbox" id="m3-ativo" checked>
     </div>
-
-    <!-- Mercado: Escanteio FT -->
-    <div class="card">
-        <div class="switch-field">
-            <h2>🚩 Escanteio FT</h2>
-            <input type="checkbox" id="cft-ativo" checked>
-        </div>
-        <div class="grid">
-            <div class="field"><label>Minuto Início</label><input type="number" id="cft-inicio" value="82"></div>
-            <div class="field"><label>Minuto Fim</label><input type="number" id="cft-fim" value="88"></div>
-            <div class="field"><label>Escanteios Mín (Soma)</label><input type="number" id="cft-esc" value="2"></div>
-        </div>
+    <div class="grid">
+      <div class="field"><label>Minuto Início</label><input type="number" id="m3-inicio"></div>
+      <div class="field"><label>Minuto Fim</label><input type="number" id="m3-fim"></div>
+      <div class="field"><label>Período (1=HT, 2=FT)</label><input type="number" id="m3-periodo"></div>
+      <div class="field"><label>Placar Válido</label><input id="m3-placar" placeholder="1x0_0x1"></div>
+      <div class="field"><label>APPM Por Time</label><input type="number" id="m3-appm-time" step="0.1"></div>
+      <div class="field"><label>APPM Total</label><input type="number" id="m3-appm-total" step="0.1"></div>
+      <div class="field"><label>Média Gols Partida</label><input type="number" id="m3-media-partida" step="0.1"></div>
+      <div class="field"><label>Média Gols FT</label><input type="number" id="m3-media-ft" step="0.1"></div>
+      <div class="field"><label>Chutes no Alvo Mín</label><input type="number" id="m3-chutes-alvo"></div>
+      <div class="field"><label>Chutes Totais Mín</label><input type="number" id="m3-chutes-tot"></div>
+      <div class="field"><label>Ataques Perigosos Mín</label><input type="number" id="m3-atq-perig"></div>
+      <div class="field"><label>Cartão Vermelho Máx (Fav)</label><input type="number" id="m3-red-max"></div>
+      <div class="field"><label>Diferença Gols Fav Máx</label><input type="number" id="m3-diff-max"></div>
     </div>
+  </div>
 
-    <button class="btn-save" id="btnSalvar" onclick="salvarConfig()">💾 Salvar Configuração</button>
-    <div id="status"></div>
+  <!-- 4 - OVER GOL PARTIDA -->
+  <div class="card">
+    <div class="switch-field">
+      <span class="titulo-mercado">⚽️🔥OVER GOL PARTIDA🔥⚽️</span>
+      <input type="checkbox" id="m4-ativo" checked>
+    </div>
+    <div class="grid">
+      <div class="field"><label>Minuto Início</label><input type="number" id="m4-inicio"></div>
+      <div class="field"><label>Minuto Fim</label><input type="number" id="m4-fim"></div>
+      <div class="field"><label>Período (1=HT, 2=FT)</label><input type="number" id="m4-periodo"></div>
+      <div class="field"><label>Placares Válidos</label><input id="m4-placar" placeholder="0x0_1x1_0x1_1x0"></div>
+      <div class="field"><label>APPM Por Time</label><input type="number" id="m4-appm-time" step="0.1"></div>
+      <div class="field"><label>APPM Total</label><input type="number" id="m4-appm-total" step="0.1"></div>
+      <div class="field"><label>Média Gols Partida</label><input type="number" id="m4-media-partida" step="0.1"></div>
+      <div class="field"><label>Média Gols FT</label><input type="number" id="m4-media-ft" step="0.1"></div>
+      <div class="field"><label>Chutes no Alvo Mín</label><input type="number" id="m4-chutes-alvo"></div>
+      <div class="field"><label>Chutes Totais Mín</label><input type="number" id="m4-chutes-tot"></div>
+      <div class="field"><label>Ataques Perigosos Mín</label><input type="number" id="m4-atq-perig"></div>
+      <div class="field"><label>Cartão Vermelho Máx (Fav)</label><input type="number" id="m4-red-max"></div>
+      <div class="field"><label>Diferença Gols Fav Máx</label><input type="number" id="m4-diff-max"></div>
+      <div class="field" style="display:flex;flex-direction:row;align-items:center;gap:8px;">
+        <label>Linha Dinâmica</label>
+        <input type="checkbox" id="m4-linha-dinamica" checked style="width:auto;transform:scale(1.2)">
+      </div>
+    </div>
+  </div>
+
+  <!-- 5 - ESCANTEIO HT -->
+  <div class="card">
+    <div class="switch-field">
+      <span class="titulo-mercado">🚩🔥ESCANTEIO ÁSIAT/LMT HT🔥🚩</span>
+      <input type="checkbox" id="m5-ativo" checked>
+    </div>
+    <div class="grid">
+      <div class="field"><label>Minuto Início</label><input type="number" id="m5-inicio"></div>
+      <div class="field"><label>Minuto Fim</label><input type="number" id="m5-fim"></div>
+      <div class="field"><label>Período (1=HT, 2=FT)</label><input type="number" id="m5-periodo"></div>
+      <div class="field"><label>APPM Por Time</label><input type="number" id="m5-appm-time" step="0.1"></div>
+      <div class="field"><label>APPM Total</label><input type="number" id="m5-appm-total" step="0.1"></div>
+      <div class="field"><label>Escanteios Mínimos</label><input type="number" id="m5-esc-min"></div>
+      <div class="field"><label>Cartão Vermelho Máx (Fav)</label><input type="number" id="m5-red-max"></div>
+      <div class="field"><label>Diferença Gols Fav Máx</label><input type="number" id="m5-diff-max"></div>
+    </div>
+  </div>
+
+  <!-- 6 - ESCANTEIO FT -->
+  <div class="card">
+    <div class="switch-field">
+      <span class="titulo-mercado">🚩🔥ESCANTEIO ÁSIAT/LMT FT🔥🚩</span>
+      <input type="checkbox" id="m6-ativo" checked>
+    </div>
+    <div class="grid">
+      <div class="field"><label>Minuto Início</label><input type="number" id="m6-inicio"></div>
+      <div class="field"><label>Minuto Fim</label><input type="number" id="m6-fim"></div>
+      <div class="field"><label>Período (1=HT, 2=FT)</label><input type="number" id="m6-periodo"></div>
+      <div class="field"><label>APPM Por Time</label><input type="number" id="m6-appm-time" step="0.1"></div>
+      <div class="field"><label>APPM Total</label><input type="number" id="m6-appm-total" step="0.1"></div>
+      <div class="field"><label>Escanteios Mínimos</label><input type="number" id="m6-esc-min"></div>
+      <div class="field"><label>Cartão Vermelho Máx (Fav)</label><input type="number" id="m6-red-max"></div>
+      <div class="field"><label>Diferença Gols Fav Máx</label><input type="number" id="m6-diff-max"></div>
+    </div>
+  </div>
+
+  <button class="btn-save" id="btnSalvar">💾 Salvar Configuração no GitHub</button>
+  <div id="status"></div>
 </div>
 
 <script>
-const REPO = 'cleubianodasilva-png/maquina-de-greens-vip';
-const CONFIG_PATH = 'config.json';
+const REPO='cleubianodasilva-png/maquina-de-greens-vip', PATH='config.json';
 
-function getToken() {
-  let t = localStorage.getItem('gh_token');
-  if (!t) {
-    t = prompt('🔑 Digite seu token do GitHub (GH_PAT):\n(Será salvo com segurança no seu navegador)');
-    if (t) localStorage.setItem('gh_token', t);
-  }
+function getToken(){
+  let t=localStorage.getItem('gh_token');
+  if(!t){t=prompt('🔑 Cole seu token do GitHub (GH_PAT):');if(t)localStorage.setItem('gh_token',t);}
   return t;
 }
-
-function status(txt, cl) {
-  const s = document.getElementById('status');
-  s.textContent = txt;
-  s.className = cl;
+function st(txt,cl){const s=document.getElementById('status');s.textContent=txt;s.className=cl||'';}
+function gv(id){
+  const el=document.getElementById(id);if(!el)return null;
+  if(el.type==='checkbox')return el.checked;
+  const v=parseFloat(el.value);return isNaN(v)?el.value:v;
+}
+function sv(id,val){
+  const el=document.getElementById(id);if(!el)return;
+  if(el.type==='checkbox')el.checked=!!val;
+  else if(val===null||val===undefined)el.value='';
+  else el.value=val;
 }
 
-function getVal(id, type='num') {
-  const el = document.getElementById(id);
-  if (el.type === 'checkbox') return el.checked;
-  if (type === 'num') return parseFloat(el.value);
-  return el.value;
+// Mapeamento dos mercados
+const MERCADOS={
+  m1:{key:'over_05_ht',nome:'⚽️🔥OVER GOL INTERVALO🔥⚽️'},
+  m2:{key:'ambas_marcam',nome:'⚽️🔥AMBAS MARCAM🔥⚽️'},
+  m3:{key:'over_15_ft',nome:'⚽️🔥OVER 1.5 GOLS PARTIDA🔥⚽️'},
+  m4:{key:'over_gol_partida',nome:'⚽️🔥OVER GOL PARTIDA🔥⚽️'},
+  m5:{key:'escanteio_ht',nome:'🚩🔥ESCANTEIO ÁSIAT/LMT HT🔥🚩'},
+  m6:{key:'escanteio_ft',nome:'🚩🔥ESCANTEIO ÁSIAT/LMT FT🔥🚩'},
+};
+
+// Campos de cada mercado (prefixo m1..m6)
+const CAMPOS_MERCADO=['ativo','inicio','fim','periodo','placar','appm-time','appm-total',
+  'media-partida','media-ht','media-ft','chutes-alvo','chutes-tot','atq-perig',
+  'esc-min','red-max','diff-max','btts-prob','linha-dinamica'];
+const CAMPOS_GLOBAIS=['appm-time','appm-total','media-partida','media-ht','media-ft',
+  'chutes-alvo','chutes-tot','atq-perig','esc-min','diff-max','red-max','btts-prob'];
+
+function lerGlobal(){
+  const g={};
+  CAMPOS_GLOBAIS.forEach(c=>{g[c]=gv('g-'+c);});
+  return g;
 }
 
-function setVal(id, val) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  if (el.type === 'checkbox') el.checked = !!val;
-  else el.value = val;
-}
-
-async function loadConfig() {
-  status('🔄 Carregando...', 'loading');
-  const TOKEN = getToken();
-  if (!TOKEN) { status('❌ Token necessário', 'err'); return; }
-  
-  try {
-    const r = await fetch(`https://api.github.com/repos/${REPO}/contents/${CONFIG_PATH}`, {
-      headers: { 'Authorization': `Bearer ${TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
-    });
-    if (!r.ok) throw new Error('Erro ao carregar do GitHub');
-    const d = await r.json();
-    window._configSha = d.sha;
-    const cfg = JSON.parse(atob(d.content));
-    
-    // Globais
-    const g = cfg.geral || {};
-    setVal('g-appm-time', g.appm_min_por_time);
-    setVal('g-appm-total', g.appm_min_total);
-    setVal('g-media-partida', g.media_gols_partida_min);
-    setVal('g-atq-perig', g.ataques_perigosos_min);
-    setVal('g-chutes_alvo', g.chutes_alvo_min);
-    setVal('g-diff-max', g.diferenca_gols_fav_max);
-    
-    // Mercados
-    const m = cfg.mercados || {};
-    const ht = m.over_05_ht || {};
-    setVal('ht-ativo', ht.ativo);
-    setVal('ht-inicio', ht.minuto_inicio);
-    setVal('ht-fim', ht.minuto_fim);
-    setVal('ht-media', (ht.criterios||{}).media_gols_ht_min);
-
-    const btts = m.ambas_marcam || {};
-    setVal('btts-ativo', btts.ativo);
-    setVal('btts-inicio', btts.minuto_inicio);
-    setVal('btts-fim', btts.minuto_fim);
-    setVal('btts-prob', (btts.criterios||{}).btts_probabilidade_min);
-
-    const og = m.over_gol_partida || {};
-    setVal('og-ativo', og.ativo);
-    setVal('og-inicio', og.minuto_inicio);
-    setVal('og-fim', og.minuto_fim);
-    
-    const cht = m.escanteio_ht || {};
-    setVal('cht-ativo', cht.ativo);
-    setVal('cht-inicio', cht.minuto_inicio);
-    setVal('cht-fim', cht.minuto_fim);
-    setVal('cht-esc', (cht.criterios||{}).escanteios_minimos);
-
-    const cft = m.escanteio_ft || {};
-    setVal('cft-ativo', cft.ativo);
-    setVal('cft-inicio', cft.minuto_inicio);
-    setVal('cft-fim', cft.minuto_fim);
-    setVal('cft-esc', (cft.criterios||{}).escanteios_minimos);
-
-    status('✅ Pronto!', 'ok');
-  } catch (e) {
-    status('❌ Erro: ' + e.message, 'err');
-  }
-}
-
-async function salvarConfig() {
-  const btn = document.getElementById('btnSalvar');
-  btn.disabled = true;
-  status('💾 Salvando...', 'loading');
-  const TOKEN = getToken();
-
-  try {
-    // Monta o JSON (Preservando estrutura)
-    const cfg = {
-      geral: {
-        appm_min_por_time: getVal('g-appm-time'),
-        appm_min_total: getVal('g-appm-total'),
-        media_gols_partida_min: getVal('g-media-partida'),
-        ataques_perigosos_min: getVal('g-atq-perig'),
-        chutes_alvo_min: getVal('g-chutes-alvo'),
-        diferenca_gols_fav_max: getVal('g-diff-max')
-      },
-      mercados: {
-        over_05_ht: {
-          ativo: getVal('ht-ativo'),
-          minuto_inicio: getVal('ht-inicio'),
-          minuto_fim: getVal('ht-fim'),
-          criterios: { media_gols_ht_min: getVal('ht-media') }
-        },
-        ambas_marcam: {
-          ativo: getVal('btts-ativo'),
-          minuto_inicio: getVal('btts-inicio'),
-          minuto_fim: getVal('btts-fim'),
-          criterios: { btts_probabilidade_min: getVal('btts-prob') }
-        },
-        over_gol_partida: {
-          ativo: getVal('og-ativo'),
-          minuto_inicio: getVal('og-inicio'),
-          minuto_fim: getVal('og-fim')
-        },
-        escanteio_ht: {
-          ativo: getVal('cht-ativo'),
-          minuto_inicio: getVal('cht-inicio'),
-          minuto_fim: getVal('cht-fim'),
-          criterios: { escanteios_minimos: getVal('cht-esc') }
-        },
-        escanteio_ft: {
-          ativo: getVal('cft-ativo'),
-          minuto_inicio: getVal('cft-inicio'),
-          minuto_fim: getVal('cft-fim'),
-          criterios: { escanteios_minimos: getVal('cft-esc') }
-        }
-      }
-    };
-
-    const content = btoa(unescape(encodeURIComponent(JSON.stringify(cfg, null, 2))));
-    const r = await fetch(`https://api.github.com/repos/${REPO}/contents/${CONFIG_PATH}`, {
-      method: 'PUT',
-      headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: 'painel: atualiza config', content, sha: window._configSha })
-    });
-    
-    if (!r.ok) throw new Error('Erro ao salvar');
-    const res = await r.json();
-    window._configSha = res.content.sha;
-    status('✅ Salvo com sucesso!', 'ok');
-    btn.disabled = false;
-  } catch (e) {
-    status('❌ Erro: ' + e.message, 'err');
-    btn.disabled = false;
-  }
-}
-
-// PWA: Service Worker
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+function lerMercado(pref){
+  const m={};
+  CAMPOS_MERCADO.forEach(c=>{
+    const id=pref+'-'+c;
+    const el=document.getElementById(id);
+    if(!el)return;
+    if(el.type==='checkbox')m[c]=el.checked;
+    else if(el.value!=='')m[c]=gv(id);
   });
+  return m;
 }
 
-// Install Prompt
-let deferredPrompt;
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  document.getElementById('btnInstall').style.display = 'block';
-});
+async function loadConfig(){
+  st('🔄 Carregando...','loading');
+  const TOKEN=getToken();
+  if(!TOKEN){st('❌ Token necessário','err');return;}
+  try{
+    const r=await fetch(`https://api.github.com/repos/${REPO}/contents/${PATH}`,{
+      headers:{'Authorization':`Bearer ${TOKEN}`,'Accept':'application/vnd.github.v3+json'}
+    });
+    if(!r.ok)throw new Error('Erro ao carregar');
+    const d=await r.json();
+    window._configSha=d.sha;
+    const cfg=JSON.parse(atob(d.content));
+    const g=cfg.geral||{};
+    sv('g-appm-time',g.appm_min_por_time);
+    sv('g-appm-total',g.appm_min_total);
+    sv('g-media-partida',g.media_gols_partida_min);
+    sv('g-media-ht',g.media_gols_ht_min);
+    sv('g-media-ft',g.media_gols_ft_min);
+    sv('g-chutes-alvo',g.chutes_alvo_min);
+    sv('g-chutes-tot',g.chutes_totais_min);
+    sv('g-atq-perig',g.ataques_perigosos_min);
+    sv('g-esc-min',g.escanteios_minimos);
+    sv('g-diff-max',g.diferenca_gols_fav_max);
+    sv('g-red-max',g.max_red_card_fav);
+    sv('g-btts-prob',g.btts_probabilidade_min);
+    const merc=cfg.mercados||{};
+    Object.values(MERCADOS).forEach(m=>{
+      const md=merc[m.key]||{};
+      const cr=(md.criterios||{});
+      const pref=m.key.replace('over_05_ht','m1').replace('ambas_marcam','m2').replace('over_15_ft','m3').replace('over_gol_partida','m4').replace('escanteio_ht','m5').replace('escanteio_ft','m6');
+      sv(pref+'-ativo',md.ativo);
+      sv(pref+'-inicio',md.minuto_inicio);
+      sv(pref+'-fim',md.minuto_fim);
+      sv(pref+'-periodo',md.periodo);
+      sv(pref+'-placar',md.placar_valido||md.placares_validos);
+      sv(pref+'-appm-time',cr.appm_min_por_time);
+      sv(pref+'-appm-total',cr.appm_min_total);
+      sv(pref+'-media-partida',cr.media_gols_partida_min);
+      sv(pref+'-media-ht',cr.media_gols_ht_min);
+      sv(pref+'-media-ft',cr.media_gols_ft_min);
+      sv(pref+'-chutes-alvo',cr.chutes_alvo_min);
+      sv(pref+'-chutes-tot',cr.chutes_totais_min);
+      sv(pref+'-atq-perig',cr.ataques_perigosos_min);
+      sv(pref+'-esc-min',cr.escanteios_minimos);
+      sv(pref+'-red-max',cr.max_red_card_fav);
+      sv(pref+'-diff-max',cr.diferenca_gols_fav_max);
+      sv(pref+'-btts-prob',cr.btts_probabilidade_min);
+      sv(pref+'-linha-dinamica',cr.linha_dinamica);
+    });
+    st('✅ Pronto!','ok');
+  }catch(e){st('❌ Erro: '+e.message,'err');}
+}
 
-document.getElementById('btnInstall').addEventListener('click', async () => {
-  if (deferredPrompt) {
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-        document.getElementById('btnInstall').style.display = 'none';
-    }
-    deferredPrompt = null;
-  }
-});
+async function salvarConfig(){
+  document.getElementById('btnSalvar').disabled=true;
+  st('💾 Salvando...','loading');
+  const TOKEN=getToken();
+  try{
+    const g=lerGlobal();
+    const cfg={geral:{
+      appm_min_por_time:g['appm-time'],
+      appm_min_total:g['appm-total'],
+      media_gols_partida_min:g['media-partida'],
+      media_gols_ht_min:g['media-ht'],
+      media_gols_ft_min:g['media-ft'],
+      chutes_alvo_min:g['chutes-alvo'],
+      chutes_totais_min:g['chutes-tot'],
+      ataques_perigosos_min:g['atq-perig'],
+      escanteios_minimos:g['esc-min'],
+      diferenca_gols_fav_max:g['diff-max'],
+      max_red_card_fav:g['red-max'],
+      btts_probabilidade_min:g['btts-prob']
+    },mercados:{}};
+    const prefMap={m1:'over_05_ht',m2:'ambas_marcam',m3:'over_15_ft',m4:'over_gol_partida',m5:'escanteio_ht',m6:'escanteio_ft'};
+    Object.entries(prefMap).forEach(([pref,key])=>{
+      const m=lerMercado(pref);
+      const mercado={ativo:m.ativo};
+      if(m.inicio!==null)mercado.minuto_inicio=m.inicio;
+      if(m.fim!==null)mercado.minuto_fim=m.fim;
+      if(m.periodo!==null)mercado.periodo=m.periodo;
+      if(pref==='m1'){if(m.placar)mercado.placar_valido=m.placar;}
+      else if(pref==='m2'||pref==='m3'){if(m.placar)mercado.placar_valido=m.placar;}
+      else if(pref==='m4'){if(m.placar)mercado.placares_validos=m.placar;}
+      // Monta criterios apenas com campos preenchidos
+      const cr={};
+      if(m['appm-time']!==null)cr.appm_min_por_time=m['appm-time'];
+      if(m['appm-total']!==null)cr.appm_min_total=m['appm-total'];
+      if(m['media-partida']!==null)cr.media_gols_partida_min=m['media-partida'];
+      if(m['media-ht']!==null)cr.media_gols_ht_min=m['media-ht'];
+      if(m['media-ft']!==null)cr.media_gols_ft_min=m['media-ft'];
+      if(m['chutes-alvo']!==null)cr.chutes_alvo_min=m['chutes-alvo'];
+      if(m['chutes-tot']!==null)cr.chutes_totais_min=m['chutes-tot'];
+      if(m['atq-perig']!==null)cr.ataques_perigosos_min=m['atq-perig'];
+      if(m['esc-min']!==null)cr.escanteios_minimos=m['esc-min'];
+      if(m['red-max']!==null)cr.max_red_card_fav=m['red-max'];
+      if(m['diff-max']!==null)cr.diferenca_gols_fav_max=m['diff-max'];
+      if(m['btts-prob']!==null)cr.btts_probabilidade_min=m['btts-prob'];
+      if(m['linha-dinamica']!==null)cr.linha_dinamica=m['linha-dinamica'];
+      if(Object.keys(cr).length>0)mercado.criterios=cr;
+      cfg.mercados[key]=mercado;
+    });
+    const content=btoa(unescape(encodeURIComponent(JSON.stringify(cfg,null,2))));
+    const r=await fetch(`https://api.github.com/repos/${REPO}/contents/${PATH}`,{
+      method:'PUT',
+      headers:{'Authorization':`Bearer ${TOKEN}`,'Content-Type':'application/json'},
+      body:JSON.stringify({message:'painel: atualiza config',content,sha:window._configSha})
+    });
+    if(!r.ok)throw new Error('Erro ao salvar');
+    const res=await r.json();
+    window._configSha=res.content.sha;
+    st('✅ Salvo com sucesso!','ok');
+  }catch(e){st('❌ Erro: '+e.message,'err');}
+  document.getElementById('btnSalvar').disabled=false;
+}
+
+document.getElementById('btnSalvar').onclick=salvarConfig;
+
+// PWA
+if('serviceWorker'in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();deferredPrompt=e;document.getElementById('btnInstall').style.display='block';});
+document.getElementById('btnInstall').addEventListener('click',async()=>{if(deferredPrompt){deferredPrompt.prompt();const{outcome}=await deferredPrompt.userChoice;if(outcome==='accepted')document.getElementById('btnInstall').style.display='none';deferredPrompt=null;}});
 
 loadConfig();
 </script>
