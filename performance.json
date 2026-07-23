@@ -26,8 +26,8 @@
   },
   "CORNER_FT": {
     "green": 3,
-    "red": 1,
-    "total": 4
+    "red": 2,
+    "total": 5
   },
   "LIMITEHT": {
     "green": 1,
