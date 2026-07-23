@@ -95,12 +95,15 @@ input:focus { border-color:#ffd700; outline:none; }
   </div>
 
   <!-- 1 - OVER GOL INTERVALO -->
-  <div class="card">
+  <div class="card" id="card-m1">
     <div class="switch-field">
       <span class="titulo-mercado">⚽️🔥OVER GOL INTERVALO🔥⚽️</span>
-      <input type="checkbox" id="m1-ativo" checked>
+      <label class="toggle-switch">
+        <input type="checkbox" id="m1-ativo" checked>
+        <span class="toggle-slider"></span>
+      </label>
     </div>
-    <div class="grid">
+    <div class="grid" id="fields-m1">
       <div class="field"><label>Minuto Início</label><input type="number" id="m1-inicio"></div>
       <div class="field"><label>Minuto Fim</label><input type="number" id="m1-fim"></div>
       <div class="field"><label>Período (1=HT, 2=FT)</label><input type="number" id="m1-periodo"></div>
@@ -118,12 +121,15 @@ input:focus { border-color:#ffd700; outline:none; }
   </div>
 
   <!-- 2 - AMBAS MARCAM -->
-  <div class="card">
+  <div class="card" id="card-m2">
     <div class="switch-field">
       <span class="titulo-mercado">⚽️🔥AMBAS MARCAM🔥⚽️</span>
-      <input type="checkbox" id="m2-ativo" checked>
+      <label class="toggle-switch">
+        <input type="checkbox" id="m2-ativo" checked>
+        <span class="toggle-slider"></span>
+      </label>
     </div>
-    <div class="grid">
+    <div class="grid" id="fields-m2">
       <div class="field"><label>Minuto Início</label><input type="number" id="m2-inicio"></div>
       <div class="field"><label>Minuto Fim</label><input type="number" id="m2-fim"></div>
       <div class="field"><label>Período (1=HT, 2=FT)</label><input type="number" id="m2-periodo"></div>
@@ -142,12 +148,15 @@ input:focus { border-color:#ffd700; outline:none; }
   </div>
 
   <!-- 3 - OVER 1.5 GOLS PARTIDA -->
-  <div class="card">
+  <div class="card" id="card-m3">
     <div class="switch-field">
       <span class="titulo-mercado">⚽️🔥OVER 1.5 GOLS PARTIDA🔥⚽️</span>
-      <input type="checkbox" id="m3-ativo" checked>
+      <label class="toggle-switch">
+        <input type="checkbox" id="m3-ativo" checked>
+        <span class="toggle-slider"></span>
+      </label>
     </div>
-    <div class="grid">
+    <div class="grid" id="fields-m3">
       <div class="field"><label>Minuto Início</label><input type="number" id="m3-inicio"></div>
       <div class="field"><label>Minuto Fim</label><input type="number" id="m3-fim"></div>
       <div class="field"><label>Período (1=HT, 2=FT)</label><input type="number" id="m3-periodo"></div>
@@ -165,12 +174,15 @@ input:focus { border-color:#ffd700; outline:none; }
   </div>
 
   <!-- 4 - OVER GOL PARTIDA -->
-  <div class="card">
+  <div class="card" id="card-m4">
     <div class="switch-field">
       <span class="titulo-mercado">⚽️🔥OVER GOL PARTIDA🔥⚽️</span>
-      <input type="checkbox" id="m4-ativo" checked>
+      <label class="toggle-switch">
+        <input type="checkbox" id="m4-ativo" checked>
+        <span class="toggle-slider"></span>
+      </label>
     </div>
-    <div class="grid">
+    <div class="grid" id="fields-m4">
       <div class="field"><label>Minuto Início</label><input type="number" id="m4-inicio"></div>
       <div class="field"><label>Minuto Fim</label><input type="number" id="m4-fim"></div>
       <div class="field"><label>Período (1=HT, 2=FT)</label><input type="number" id="m4-periodo"></div>
@@ -192,12 +204,15 @@ input:focus { border-color:#ffd700; outline:none; }
   </div>
 
   <!-- 5 - ESCANTEIO HT -->
-  <div class="card">
+  <div class="card" id="card-m5">
     <div class="switch-field">
       <span class="titulo-mercado">🚩🔥ESCANTEIO ÁSIAT/LMT HT🔥🚩</span>
-      <input type="checkbox" id="m5-ativo" checked>
+      <label class="toggle-switch">
+        <input type="checkbox" id="m5-ativo" checked>
+        <span class="toggle-slider"></span>
+      </label>
     </div>
-    <div class="grid">
+    <div class="grid" id="fields-m5">
       <div class="field"><label>Minuto Início</label><input type="number" id="m5-inicio"></div>
       <div class="field"><label>Minuto Fim</label><input type="number" id="m5-fim"></div>
       <div class="field"><label>Período (1=HT, 2=FT)</label><input type="number" id="m5-periodo"></div>
@@ -210,12 +225,15 @@ input:focus { border-color:#ffd700; outline:none; }
   </div>
 
   <!-- 6 - ESCANTEIO FT -->
-  <div class="card">
+  <div class="card" id="card-m6">
     <div class="switch-field">
       <span class="titulo-mercado">🚩🔥ESCANTEIO ÁSIAT/LMT FT🔥🚩</span>
-      <input type="checkbox" id="m6-ativo" checked>
+      <label class="toggle-switch">
+        <input type="checkbox" id="m6-ativo" checked>
+        <span class="toggle-slider"></span>
+      </label>
     </div>
-    <div class="grid">
+    <div class="grid" id="fields-m6">
       <div class="field"><label>Minuto Início</label><input type="number" id="m6-inicio"></div>
       <div class="field"><label>Minuto Fim</label><input type="number" id="m6-fim"></div>
       <div class="field"><label>Período (1=HT, 2=FT)</label><input type="number" id="m6-periodo"></div>
@@ -420,6 +438,22 @@ document.getElementById('g-ativo').addEventListener('change',function(){
     fields.classList.add('global-disabled');
     fields.querySelectorAll('input').forEach(el=>el.disabled=true);
   }
+});
+
+// Toggle de cada mercado
+['m1','m2','m3','m4','m5','m6'].forEach(pref=>{
+  const el=document.getElementById(pref+'-ativo');
+  if(!el)return;
+  el.addEventListener('change',function(){
+    const fields=document.getElementById('fields-'+pref);
+    if(this.checked){
+      fields.classList.remove('global-disabled');
+      fields.querySelectorAll('input').forEach(el=>el.disabled=false);
+    }else{
+      fields.classList.add('global-disabled');
+      fields.querySelectorAll('input').forEach(el=>el.disabled=true);
+    }
+  });
 });
 
 // PWA
