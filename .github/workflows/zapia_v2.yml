@@ -1,4 +1,4 @@
-name: ZAPIA OFICIAL 24H
+name: MÁQUINA DE GREENS VIP 24H
 on:
   schedule:
     - cron: '*/5 * * * *'
