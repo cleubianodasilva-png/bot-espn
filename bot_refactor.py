@@ -1809,8 +1809,10 @@ def run():
             chutes_gol_total = (stats.get("chutes_gol_h", 0) + stats.get("chutes_gol_a", 0)) if stats else 0
             prob_15_ft, prob_05_ht = calcular_prob_gols_ht(chutes_tot_total, chutes_gol_total, m)
             
+            odd_fav_num = odd_h if fav_final == "h" else (odd_a or 0)
+            
             # Fallback: se não tem stats de chutes, usa odd do favorito como proxy
-            if chutes_tot_total == 0 and odd_fav_num <= 1.80:
+            if chutes_tot_total == 0 and odd_fav_num and odd_fav_num <= 1.80:
                 prob_15_ft = max(prob_15_ft, 65)
                 prob_05_ht = max(prob_05_ht, 55)
             
