@@ -1585,11 +1585,14 @@ def run():
                     # ESPN tem chutes → funde com stats da Bzzoiro
                     for chave_espn, val_espn in sa_espn.items():
                         stats[chave_espn] = val_espn
-                    # Preserva ataques_perigosos e posse da Bzzoiro (ESPN zera esses campos)
+                    # Preserva ataques_perigosos da Bzzoiro (ESPN zera esses campos)
                     if bzz_base.get("ataques_perigosos_h", 0) > 0:
                         stats["ataques_perigosos_h"] = bzz_base["ataques_perigosos_h"]
                         stats["ataques_perigosos_a"] = bzz_base["ataques_perigosos_a"]
-                    if bzz_base.get("posse_h", 0) > 0:
+                    
+                    # Prioridade Posse: Se Bzzoiro deu algo DIFERENTE de 50/50, usa Bzzoiro. 
+                    # Caso contrário, mantém o da ESPN.
+                    if bzz_base.get("posse_h", 50) != 50:
                         stats["posse_h"] = bzz_base["posse_h"]
                         stats["posse_a"] = bzz_base["posse_a"]
                     # Escanteios: pega o MAIOR entre Bzzoiro e ESPN
@@ -1615,11 +1618,13 @@ def run():
                     # Funde Promiedos com stats existentes
                     for chave_prom, val_prom in sa_prom.items():
                         stats[chave_prom] = val_prom
-                    # Preserva Bzzoiro
+                    # Preserva ataques_perigosos da Bzzoiro
                     if bzz_base.get("ataques_perigosos_h", 0) > 0:
                         stats["ataques_perigosos_h"] = bzz_base["ataques_perigosos_h"]
                         stats["ataques_perigosos_a"] = bzz_base["ataques_perigosos_a"]
-                    if bzz_base.get("posse_h", 0) > 0:
+                    
+                    # Prioridade Posse
+                    if bzz_base.get("posse_h", 50) != 50:
                         stats["posse_h"] = bzz_base["posse_h"]
                         stats["posse_a"] = bzz_base["posse_a"]
                     bzz_esc_h = bzz_base.get("escanteios_h", -1)
