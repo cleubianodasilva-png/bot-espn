@@ -1,6 +1,6 @@
 
 
-def analisar_e_disparar(game, stats, p, m, sh, sa, odd_h, odd_a, sent_vistos):
+def analisar_e_disparar(game, stats, p, m, sh, sa, odd_h, odd_a, sent_vistos, cfg=None):
     # IDENTIFICAÇÃO DO FAVORITO PRÉ-LIVE (OBRIGATÓRIO)
     try:
         oh = float(odd_h) if odd_h else 3.0
@@ -14,36 +14,51 @@ def analisar_e_disparar(game, stats, p, m, sh, sa, odd_h, odd_a, sent_vistos):
     adv_gols = sa if fav_side == "h" else sh
     red_fav = stats.get(f"red_cards_{fav_side}", 0)
     
+    # Carrega config pra obter os ranges
+    merc = (cfg or {}).get("mercados", {})
+    M_HT   = merc.get("over_05_ht", {})
+    M_OG   = merc.get("over_gol_partida", {})
+    M_BTTS = merc.get("ambas_marcam", {})
+    M_OFT  = merc.get("over_15_ft", {})
+    M_CHT  = merc.get("escanteio_ht", {})
+    M_CFT  = merc.get("escanteio_ft", {})
+    
     # MERCADOS
     
     # 1. OVER GOL INTERVALO (HT)
-    if p == 1 and 15 <= m <= 27:
+    hti, htf = M_HT.get("minuto_inicio", 15), M_HT.get("minuto_fim", 27)
+    if M_HT.get("ativo", True) and p == M_HT.get("periodo", 1) and hti <= m <= htf:
         if sh == 0 and sa == 0 and red_fav == 0:
             return "HT", "Over 0.5 Gols HT"
 
     # 2. OVER GOL PARTIDA (FT)
-    if p == 2 and 55 <= m <= 75:
+    ogi, ogf = M_OG.get("minuto_inicio", 55), M_OG.get("minuto_fim", 75)
+    if M_OG.get("ativo", True) and p == M_OG.get("periodo", 2) and ogi <= m <= ogf:
         if (fav_gols <= adv_gols) and (adv_gols - fav_gols <= 1) and red_fav == 0:
             total_gols = sh + sa
             return "OVERGOAL", f"Mais de {total_gols + 0.5} Gols"
 
     # 3. AMBAS MARCAM (BTTS)
-    if p == 2 and 55 <= m <= 75:
+    bi, bf = M_BTTS.get("minuto_inicio", 55), M_BTTS.get("minuto_fim", 75)
+    if M_BTTS.get("ativo", True) and p == M_BTTS.get("periodo", 2) and bi <= m <= bf:
         if (sh + sa == 1) and (fav_gols == 0 and adv_gols == 1) and red_fav == 0:
             return "BTTS", "Ambas Marcam"
 
     # 4. OVER 1.5 GOLS PARTIDA
-    if p == 2 and 55 <= m <= 75:
+    oi, of_ = M_OFT.get("minuto_inicio", 55), M_OFT.get("minuto_fim", 75)
+    if M_OFT.get("ativo", True) and p == M_OFT.get("periodo", 2) and oi <= m <= of_:
         if (sh + sa == 1) and (fav_gols == 0 and adv_gols == 1) and red_fav == 0:
             return "OFT", "Mais de 1.5 Gols Partida"
 
     # 5. ESCANTEIO LIMITE HT
-    if p == 1 and 28 <= m <= 38:
+    chi, chf = M_CHT.get("minuto_inicio", 32), M_CHT.get("minuto_fim", 38)
+    if M_CHT.get("ativo", True) and p == M_CHT.get("periodo", 1) and chi <= m <= chf:
         if (fav_gols <= adv_gols) and (adv_gols - fav_gols <= 1) and red_fav == 0:
             return "CORNER_HT", "Escanteio Limite HT"
 
     # 6. ESCANTEIO LIMITE FT
-    if p == 2 and 78 <= m <= 88:
+    cfi, cff = M_CFT.get("minuto_inicio", 82), M_CFT.get("minuto_fim", 88)
+    if M_CFT.get("ativo", True) and p == M_CFT.get("periodo", 2) and cfi <= m <= cff:
         if (fav_gols <= adv_gols) and (adv_gols - fav_gols <= 1) and red_fav == 0:
             return "CORNER_FT", "Escanteio Limite FT"
 
@@ -251,6 +266,43 @@ def _github_headers():
         "Accept": "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28"
     }
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# CONFIG DINÂMICA — carrega parâmetros do config.json (GitHub + local)
+# ═══════════════════════════════════════════════════════════════════════════════
+def _load_config():
+    """
+    Carrega config.json do GitHub (fonte de verdade) + local como fallback.
+    Retorna dict com defaults se nada disponível.
+    """
+    default = {
+        "geral": {"appm_min_por_time": 0.7, "appm_min_total": 1.4, "media_gols_minima": 2.2},
+        "mercados": {}
+    }
+    try:
+        if GITHUB_TOKEN and GITHUB_REPO:
+            url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{CONFIG_API_PATH}"
+            r = requests.get(url, headers=_github_headers(), timeout=8)
+            if r.status_code == 200:
+                import base64 as _b64
+                data = json.loads(_b64.b64decode(r.json()["content"]).decode())
+                # Salva localmente
+                with open(CONFIG_FILE, 'w') as f:
+                    json.dump(data, f, indent=2, ensure_ascii=False)
+                print(f"[CONFIG] Carregado do GitHub: {len(data.get('mercados', {}))} mercados")
+                return data
+    except Exception as e:
+        print(f"[CONFIG] Erro GitHub load: {e}")
+    # Fallback local
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(CONFIG_FILE, 'r') as f:
+                data = json.load(f)
+                print(f"[CONFIG] Carregado local: {len(data.get('mercados', {}))} mercados")
+                return data
+        except: pass
+    print("[CONFIG] Usando defaults")
+    return default
 
 def load_sent():
     """Carrega sent do GitHub (fonte de verdade) + arquivo local como fallback."""
@@ -1926,6 +1978,20 @@ def run():
         BOT_SOURCE = "sokkerpro"
 
     print(f"[Iniciando monitoramento — Fonte: {BOT_SOURCE.upper()} | Repo: {_repo_atual}]")
+    # Carrega config dinâmico
+    cfg = _load_config()
+    GERAL = cfg.get("geral", {})
+    APPM_POR_TIME = GERAL.get("appm_min_por_time", 0.7)
+    APPM_TOTAL    = GERAL.get("appm_min_total", 1.4)
+    MEDIA_GOLS_MIN = GERAL.get("media_gols_minima", 2.2)
+    MERCADOS = cfg.get("mercados", {})
+    # Atalhos para cada mercado
+    M_HT    = MERCADOS.get("over_05_ht", {})
+    M_BTTS  = MERCADOS.get("ambas_marcam", {})
+    M_OFT   = MERCADOS.get("over_15_ft", {})
+    M_OG    = MERCADOS.get("over_gol_partida", {})
+    M_CHT   = MERCADOS.get("escanteio_ht", {})
+    M_CFT   = MERCADOS.get("escanteio_ft", {})
     sent      = load_sent()
     total_env = 0
     janela_id = datetime.now(BRT).strftime('%Y%m%d%H')
@@ -2159,8 +2225,8 @@ def run():
         _appm_h = round(_aph_val / m, 2) if m > 0 else 0
         _appm_a = round(_apa_val / m, 2) if m > 0 else 0
         # APPM universal — mínimo 0.70 em todos os mercados (anti-jogo morno)
-        appm_valido   = _appm_h >= 0.7 or _appm_a >= 0.7 or _appm_total >= 1.4
-        appm_gols_ok  = _appm_h >= 0.7 or _appm_a >= 0.7 or _appm_total >= 1.4
+        appm_valido   = _appm_h >= APPM_POR_TIME or _appm_a >= APPM_POR_TIME or _appm_total >= APPM_TOTAL
+        appm_gols_ok  = _appm_h >= APPM_POR_TIME or _appm_a >= APPM_POR_TIME or _appm_total >= APPM_TOTAL
         if not appm_valido:
             print(f"[APPM-BLOQUEADO] {h} x {a} — APPM casa={_appm_h} fora={_appm_a} total={_appm_total} (mín: 0.7/time ou 1.4 total)")
 
@@ -2173,16 +2239,18 @@ def run():
         if BOT_SOURCE == "sokkerpro":
             # SokkerPro: usa médias nativas da própria API SokkerPro
             media_hist = get_media_gols_historica_skp(h, a, stats)
-            hist_ok = media_hist >= 2.2  # -1 = sem dados, bloqueia
+            hist_ok = media_hist >= MEDIA_GOLS_MIN  # -1 = sem dados, bloqueia
         else:
             if home_id and away_id:
                 media_hist = get_media_gols_historica(home_id, away_id)
-            hist_ok = media_hist >= 2.2  # mínimo 2.2 gols de média; -1 = sem dados, bloqueia
+            hist_ok = media_hist >= MEDIA_GOLS_MIN  # mínimo; -1 = sem dados, bloqueia
         if not hist_ok:
             print(f"[HIST-BLOQUEADO] {h} x {a} — média {media_hist:.1f} < 2.2, pulando mercados de gol")
 
-        # MERCADO 1: OVER 0.5 HT (15-27 min, 0x0, favorito empatando, sem vermelho do fav, média hist ≥ 2.0)
-        if p == 1 and 15 <= m <= 27:
+        # MERCADO 1: OVER 0.5 HT
+        ht_ini = M_HT.get("minuto_inicio", 15)
+        ht_fim = M_HT.get("minuto_fim", 27)
+        if M_HT.get("ativo", True) and p == M_HT.get("periodo", 1) and ht_ini <= m <= ht_fim:
             if not (sh == 0 and sa == 0):
                 print(f"[DIAG-HT-BARRA] {h} x {a} — placar não é 0x0 ({placar}), pulando")
             elif not fav_empatando:
@@ -2206,8 +2274,10 @@ def run():
                         sent.add(key); total_env += 1
                         registrar_sinal(fid, "HT", h, a, mid)
 
-        # MERCADO 2: AMBAS MARCAM BTTS (55-75 min, fav perdendo por 1, sem vermelho do fav, média hist ≥ 2.0)
-        if p == 2 and 55 <= m <= 75 and ((sh == 1 and sa == 0) or (sh == 0 and sa == 1)):
+        # MERCADO 2: AMBAS MARCAM BTTS
+        btts_ini = M_BTTS.get("minuto_inicio", 55)
+        btts_fim = M_BTTS.get("minuto_fim", 75)
+        if M_BTTS.get("ativo", True) and p == M_BTTS.get("periodo", 2) and btts_ini <= m <= btts_fim and ((sh == 1 and sa == 0) or (sh == 0 and sa == 1)):
             if not fav_perdendo_1:
                 print(f"[DIAG-BTTS-BARRA] {h} x {a} — favorito não perdendo por 1 (fav_gols={fav_gols} adv={adv_gols}), pulando")
             elif red_fav != 0:
@@ -2229,8 +2299,10 @@ def run():
                         sent.add(key); total_env += 1
                         registrar_sinal(fid, "BTTS", h, a, mid)
 
-        # MERCADO 3: OVER 1.5 FT (55-75 min, fav perdendo por 1, placar 1x0/0x1, sem vermelho do fav, média hist ≥ 2.0)
-        if p == 2 and 55 <= m <= 75 and ((sh == 1 and sa == 0) or (sh == 0 and sa == 1)):
+        # MERCADO 3: OVER 1.5 FT
+        oft_ini = M_OFT.get("minuto_inicio", 55)
+        oft_fim = M_OFT.get("minuto_fim", 75)
+        if M_OFT.get("ativo", True) and p == M_OFT.get("periodo", 2) and oft_ini <= m <= oft_fim and ((sh == 1 and sa == 0) or (sh == 0 and sa == 1)):
             if not fav_perdendo_1:
                 print(f"[DIAG-OFT-BARRA] {h} x {a} — favorito não perdendo por 1 (fav_gols={fav_gols} adv={adv_gols}), pulando")
             elif red_fav != 0:
@@ -2253,9 +2325,11 @@ def run():
                     sent.add(key); total_env += 1
                     registrar_sinal(fid, "OFT", h, a, mid)
 
-        # MERCADO 4: OVER GOL PARTIDA (55-75 min, placares 0x0/1x1/0x1/1x0, favorito empatando ou perdendo por 1, média hist ≥ 2.0)
+        # MERCADO 4: OVER GOL PARTIDA
+        og_ini = M_OG.get("minuto_inicio", 55)
+        og_fim = M_OG.get("minuto_fim", 75)
         overgoal_valido = (fav_empatando or fav_perdendo_1)
-        if p == 2 and 55 <= m <= 75:
+        if M_OG.get("ativo", True) and p == M_OG.get("periodo", 2) and og_ini <= m <= og_fim:
             if not overgoal_valido:
                 print(f"[DIAG-OVERGOAL-BARRA] {h} x {a} — favorito não empata nem perde por 1 (fav_empatando={fav_empatando} fav_perdendo_1={fav_perdendo_1}), pulando")
             elif red_fav != 0:
@@ -2290,8 +2364,10 @@ def run():
                     sent.add(key); total_env += 1
                     registrar_sinal(fid, "OVERGOAL", h, a, mid, extra_val=total_gols)
 
-        # MERCADO 5: ESCANTEIO LIMITE HT (32-38 min, fav confirmado, empatando ou perdendo por 1, sem vermelho, APPM ≥ 1)
-        if p == 1 and 32 <= m <= 38:
+        # MERCADO 5: ESCANTEIO LIMITE HT
+        cht_ini = M_CHT.get("minuto_inicio", 32)
+        cht_fim = M_CHT.get("minuto_fim", 38)
+        if M_CHT.get("ativo", True) and p == M_CHT.get("periodo", 1) and cht_ini <= m <= cht_fim:
             corner_cond = corner_valido
             if not corner_cond:
                 print(f"[DIAG-CORNER-HT-BARRA] {h} x {a} — favorito não empata nem perde por 1 (fav_empatando={fav_empatando} fav_perdendo_1={fav_perdendo_1}), pulando")
@@ -2318,8 +2394,10 @@ def run():
                     sent.add(key); total_env += 1
                     registrar_sinal(fid, "CORNER_HT", h, a, mid, extra_val=cantos)
 
-        # MERCADO 6: ESCANTEIO LIMITE FT (82-88 min, fav confirmado, empatando ou perdendo por 1, sem vermelho)
-        if p == 2 and 82 <= m <= 88:
+        # MERCADO 6: ESCANTEIO LIMITE FT
+        cft_ini = M_CFT.get("minuto_inicio", 82)
+        cft_fim = M_CFT.get("minuto_fim", 88)
+        if M_CFT.get("ativo", True) and p == M_CFT.get("periodo", 2) and cft_ini <= m <= cft_fim:
             corner_ft_cond = corner_valido
             if not corner_ft_cond:
                 print(f"[DIAG-CORNER-FT-BARRA] {h} x {a} — favorito não empata nem perde por 1 (fav_empatando={fav_empatando} fav_perdendo_1={fav_perdendo_1}), pulando")
