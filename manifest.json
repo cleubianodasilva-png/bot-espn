@@ -1,17 +1,25 @@
 {
   "name": "Máquina de Greens VIP",
   "short_name": "Greens VIP",
-  "description": "Painel de Controle Máquina de Greens VIP",
+  "description": "Painel de Controle Oficial - Máquina de Greens VIP",
   "start_url": "painel.html",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#1a1a2e",
   "theme_color": "#1a1a2e",
+  "id": "/maquina-de-greens-vip/painel.html",
   "icons": [
     {
       "src": "icon.jpg",
       "sizes": "1024x1024",
       "type": "image/jpeg",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icon.jpg",
+      "sizes": "1024x1024",
+      "type": "image/jpeg",
+      "purpose": "maskable"
     }
   ]
 }
