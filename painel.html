@@ -400,10 +400,10 @@ const MERCADOS={
 };
 
 // Campos de cada mercado (prefixo m1..m6)
-const CAMPOS_MERCADO=['ativo','inicio','fim','periodo','placar','appm-time',
+const CAMPOS_MERCADO=['ativo','inicio','fim','periodo','placar','appm-time','appm-total',
   'media-partida','media-ht','media-ft','chutes-alvo','chutes-tot','atq-perig',
   'esc-min','posse','red-max','diff-max','btts-prob','linha-dinamica','situacao-fav'];
-const CAMPOS_GLOBAIS=['appm-time','media-partida','media-ht','media-ft',
+const CAMPOS_GLOBAIS=['appm-time','appm-total','media-partida','media-ht','media-ft',
   'chutes-alvo','chutes-tot','atq-perig','esc-min','diff-max','red-max','btts-prob','situacao-fav'];
 
 function lerGlobal(){
@@ -438,6 +438,7 @@ async function loadConfig(){
     const cfg=JSON.parse(atob(d.content));
     const g=cfg.geral||{};
     sv('g-appm-time',g.appm_min_por_time);
+    sv('g-appm-total',g.appm_min_total);
     sv('g-media-partida',g.media_gols_partida_min);
     sv('g-media-ht',g.media_gols_ht_min);
     sv('g-media-ft',g.media_gols_ft_min);
@@ -461,6 +462,7 @@ async function loadConfig(){
       sv(pref+'-periodo',md.periodo);
       sv(pref+'-placar',md.placar_valido||md.placares_validos);
       sv(pref+'-appm-time',cr.appm_min_por_time);
+      sv(pref+'-appm-total',cr.appm_min_total);
       sv(pref+'-media-partida',cr.media_gols_partida_min);
       sv(pref+'-media-ht',cr.media_gols_ht_min);
       sv(pref+'-media-ft',cr.media_gols_ft_min);
@@ -522,6 +524,7 @@ async function salvarConfig(){
     if(g.ativo){
       cfg.geral={
         appm_min_por_time:g['appm-time'],
+        appm_min_total:g['appm-total'],
         media_gols_partida_min:g['media-partida'],
         media_gols_ht_min:g['media-ht'],
         media_gols_ft_min:g['media-ft'],
@@ -551,6 +554,7 @@ async function salvarConfig(){
       // Monta criterios apenas com campos preenchidos
       const cr={};
       if(m['appm-time']!==null)cr.appm_min_por_time=m['appm-time'];
+      if(m['appm-total']!==null)cr.appm_min_total=m['appm-total'];
       if(m['media-partida']!==null)cr.media_gols_partida_min=m['media-partida'];
       if(m['media-ht']!==null)cr.media_gols_ht_min=m['media-ht'];
       if(m['media-ft']!==null)cr.media_gols_ft_min=m['media-ft'];
