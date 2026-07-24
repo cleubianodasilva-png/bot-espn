@@ -874,5 +874,11 @@
     "resultado": "green",
     "mercado": "OVERGOAL",
     "timestamp": "2026-07-24T09:30:25.874815-03:00"
+  },
+  {
+    "data": "2026-07-24",
+    "resultado": "green",
+    "mercado": "OVERGOAL",
+    "timestamp": "2026-07-24T09:30:28.673653-03:00"
   }
 ]
