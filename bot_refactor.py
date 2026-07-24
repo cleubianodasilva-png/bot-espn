@@ -2279,6 +2279,10 @@ def run():
                 print(f"[DIAG-BTTS-BARRA] {h} x {a} — média histórica {media_hist:.1f} < {b_media}, pulando")
             elif not b_chutes_ok:
                 print(f"[DIAG-BTTS-BARRA] {h} x {a} — chutes no alvo ({_chutes_alvo_h+_chutes_alvo_a} < {b_chutes_alvo}), pulando")
+            elif not (_chutes_tot_h + _chutes_tot_a) >= b_chutes_tot:
+                print(f"[DIAG-BTTS-BARRA] {h} x {a} — chutes totais insuficientes ({_chutes_tot_h+_chutes_tot_a} < {b_chutes_tot}), pulando")
+            elif not (_ataques_perigosos_h + _ataques_perigosos_a) >= b_atq:
+                print(f"[DIAG-BTTS-BARRA] {h} x {a} — ataques perigosos insuficientes ({_ataques_perigosos_h+_ataques_perigosos_a} < {b_atq}), pulando")
             else:
                 hoje = datetime.now(BRT).strftime('%Y%m%d')
                 key = f"{dedup_id}_btts_{hoje}"
@@ -2300,6 +2304,8 @@ def run():
             o_appm_total = _crit(M_OFT, GERAL, "appm_min_total", 1.4)
             o_media = _crit(M_OFT, GERAL, "media_gols_partida_min", 2.2)
             o_chutes_alvo = _crit(M_OFT, GERAL, "chutes_alvo_min", 3)
+            o_chutes_tot = _crit(M_OFT, GERAL, "chutes_totais_min", 0)
+            o_atq = _crit(M_OFT, GERAL, "ataques_perigosos_min", 0)
             o_red_max = _crit(M_OFT, GERAL, "max_red_card_fav", 0)
             o_appm_ok = _appm_h >= o_appm_time or _appm_a >= o_appm_time or _appm_total >= o_appm_total
             o_media_ok = media_hist >= o_media if media_hist >= 0 else False
@@ -2311,6 +2317,12 @@ def run():
                 print(f"[DIAG-OFT-BARRA] {h} x {a} — APPM insuficiente (casa={_appm_h} fora={_appm_a} total={_appm_total}), pulando")
             elif not o_media_ok:
                 print(f"[DIAG-OFT-BARRA] {h} x {a} — média histórica {media_hist:.1f} < {o_media}, pulando")
+            elif not (_chutes_alvo_h + _chutes_alvo_a) >= o_chutes_alvo:
+                print(f"[DIAG-OFT-BARRA] {h} x {a} — chutes no alvo insuficientes ({_chutes_alvo_h+_chutes_alvo_a} < {o_chutes_alvo}), pulando")
+            elif not (_chutes_tot_h + _chutes_tot_a) >= o_chutes_tot:
+                print(f"[DIAG-OFT-BARRA] {h} x {a} — chutes totais insuficientes ({_chutes_tot_h+_chutes_tot_a} < {o_chutes_tot}), pulando")
+            elif not (_ataques_perigosos_h + _ataques_perigosos_a) >= o_atq:
+                print(f"[DIAG-OFT-BARRA] {h} x {a} — ataques perigosos insuficientes ({_ataques_perigosos_h+_ataques_perigosos_a} < {o_atq}), pulando")
             else:
                 hoje = datetime.now(BRT).strftime('%Y%m%d')
                 key = f"{dedup_id}_oft_{hoje}"
@@ -2350,6 +2362,12 @@ def run():
                 print(f"[DIAG-OVERGOAL-BARRA] {h} x {a} — posse de bola insuficiente (casa={_posse_h}% fora={_posse_a}% < {og_posse}%), pulando")
             elif not og_media_ok:
                 print(f"[DIAG-OVERGOAL-BARRA] {h} x {a} — média histórica {media_hist:.1f} < {og_media}, pulando")
+            elif not (_chutes_alvo_h + _chutes_alvo_a) >= og_chutes_alvo:
+                print(f"[DIAG-OVERGOAL-BARRA] {h} x {a} — chutes no alvo insuficientes ({_chutes_alvo_h+_chutes_alvo_a} < {og_chutes_alvo}), pulando")
+            elif not (_chutes_tot_h + _chutes_tot_a) >= og_chutes_tot:
+                print(f"[DIAG-OVERGOAL-BARRA] {h} x {a} — chutes totais insuficientes ({_chutes_tot_h+_chutes_tot_a} < {og_chutes_tot}), pulando")
+            elif not (_ataques_perigosos_h + _ataques_perigosos_a) >= og_atq:
+                print(f"[DIAG-OVERGOAL-BARRA] {h} x {a} — ataques perigosos insuficientes ({_ataques_perigosos_h+_ataques_perigosos_a} < {og_atq}), pulando")
             else:
                 hoje = datetime.now(BRT).strftime('%Y%m%d')
                 key = f"{dedup_id}_overgoal_{hoje}"
