@@ -1917,51 +1917,9 @@ def check_status_command(total_jogos_live=0, jogos_live=None, jogos_na_janela=No
         print(f"[CMD] Erro ao processar comandos: {e}")
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# HISTÓRICO — Média de gols (usando H2H da apifootball)
+# HISTÓRICO — Média de gols (SokkerPro)
 # ═══════════════════════════════════════════════════════════════════════════════
 _HIST_CACHE = {}
-def get_media_gols_historica(home_id, away_id):
-    """Retorna a média de gols por partida (jogo todo) dos últimos 10 jogos de cada time.
-    Usa a API H2H da apifootball. Cache em memória pra evitar chamadas repetidas."""
-    chave = f"{home_id}_{away_id}"
-    if chave in _HIST_CACHE:
-        return _HIST_CACHE[chave]
-
-    if not home_id or not away_id or home_id == "" or away_id == "":
-        _HIST_CACHE[chave] = -1.0
-        return -1.0
-
-    try:
-        params = {"action": "get_H2H", "firstTeamId": home_id, "secondTeamId": away_id, "APIkey": APIFOOTBALL_COM_KEY}
-        r = requests.get(APIFOOTBALL_URL, params=params, timeout=10)
-        data = r.json()
-        if not isinstance(data, dict):
-            _HIST_CACHE[chave] = -1.0
-            return -1.0
-
-        # Junta todos os resultados dos dois times
-        todos_jogos = []
-        for chave_lista in ["firstTeam_lastResults", "secondTeam_lastResults"]:
-            lista = data.get(chave_lista, [])
-            if isinstance(lista, list):
-                for j in lista:
-                    try:
-                        ph = int(j.get("match_hometeam_score", 0) or 0)
-                        pa = int(j.get("match_awayteam_score", 0) or 0)
-                        todos_jogos.append(ph + pa)
-                    except: pass
-
-        if len(todos_jogos) < 4:
-            _HIST_CACHE[chave] = -1.0
-            return -1.0
-
-        media = round(sum(todos_jogos) / len(todos_jogos), 1)
-        _HIST_CACHE[chave] = media
-        return media
-    except:
-        _HIST_CACHE[chave] = 0.0
-        return 0.0
-
 def get_media_gols_historica_skp(home, away, stats):
     """Retorna a média de gols usando os campos medias da própria API SokkerPro.
     As médias são fornecidas pela SokkerPro (mínimo 10 jogos).
@@ -2237,14 +2195,8 @@ def run():
         _escanteios_h = stats.get("escanteios_h", -1) if stats else -1
         _escanteios_a = stats.get("escanteios_a", -1) if stats else -1
 
-        # HISTÓRICO — Média de gols por partida
-        home_id = j.get("home_id", "")
-        away_id = j.get("away_id", "")
-        media_hist = 0.0
-        if BOT_SOURCE == "sokkerpro":
-            media_hist = get_media_gols_historica_skp(h, a, stats)
-        elif home_id and away_id:
-            media_hist = get_media_gols_historica(home_id, away_id)
+        # HISTÓRICO — Média de gols por partida (SokkerPro)
+        media_hist = get_media_gols_historica_skp(h, a, stats)
 
         # MERCADO 1: OVER 0.5 HT
         ht_ini = M_HT.get("minuto_inicio", 15)
